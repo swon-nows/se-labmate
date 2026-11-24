@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { isSaveInput, validateProfile } from '../../src/main/core/profile'
+import { applyProfile, isSaveInput, validateProfile } from '../../src/main/core/profile'
 import type { Profile, Settings } from '../../src/shared/types'
+import { NOW, st } from '../helpers'
 
 const profile: Profile = { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' }
 const settings: Settings = {
@@ -48,5 +49,32 @@ describe('isSaveInput', () => {
     ['숫자 openAlexKey', { ...base, openAlexKey: 1 }]
   ])('%s → 거부', (_name, input) => {
     expect(isSaveInput(input)).toBe(false)
+  })
+})
+
+describe('applyProfile', () => {
+  const enc = (k: string): string => `enc(${k})`
+  test('처음 만든 프로필이면 lastDailyRunAt을 지금으로 둔다', () => {
+    const out = applyProfile(st(), base, enc, NOW)
+    expect(out).toMatchObject({ profile, settings, lastDailyRunAt: NOW, openAlexKeyEnc: null })
+  })
+  test('기존 프로필을 고치면 lastDailyRunAt을 그대로 둔다', () => {
+    const before = st({ profile, lastDailyRunAt: '2026-11-01T00:00:00.000Z' })
+    expect(applyProfile(before, base, enc, NOW).lastDailyRunAt).toBe('2026-11-01T00:00:00.000Z')
+  })
+  test('키: undefined 유지, null과 공백 삭제, 문자열은 공백을 떼고 암호화', () => {
+    const before = st({ profile, openAlexKeyEnc: 'old' })
+    const key = (k?: string | null): string | null =>
+      applyProfile(before, { ...base, openAlexKey: k }, enc, NOW).openAlexKeyEnc
+    expect(key(undefined)).toBe('old')
+    expect(key(null)).toBeNull()
+    expect(key('   ')).toBeNull()
+    expect(key(' abc ')).toBe('enc(abc)')
+  })
+  test('암호화가 던지면 그대로 던진다', () => {
+    const fail = (): string => {
+      throw new Error('no keychain')
+    }
+    expect(() => applyProfile(st(), { ...base, openAlexKey: 'k' }, fail, NOW)).toThrow()
   })
 })

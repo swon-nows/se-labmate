@@ -1,5 +1,5 @@
 import { CATEGORIES } from '../../shared/types'
-import type { Profile, SaveInput, Settings } from '../../shared/types'
+import type { AppState, Profile, SaveInput, Settings } from '../../shared/types'
 import { cleanKeywords } from './text'
 
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -41,4 +41,22 @@ export function isSaveInput(x: unknown): x is SaveInput {
     CATEGORIES.every((c) => typeof enabled[c] === 'boolean') &&
     (k === undefined || k === null || typeof k === 'string')
   )
+}
+
+// 키: undefined면 저장된 키 유지, null이나 공백뿐이면 삭제, 그 밖은 앞뒤 공백을 떼고 encrypt한 값.
+// 처음 만든 프로필이면 오늘 일정은 이미 돈 것으로 친다(저장 직후 바로 수집하므로).
+export function applyProfile(
+  state: AppState,
+  input: SaveInput,
+  encrypt: (key: string) => string,
+  now: string
+): AppState {
+  const key = input.openAlexKey === null ? '' : input.openAlexKey?.trim()
+  return {
+    ...state,
+    profile: input.profile,
+    settings: input.settings,
+    openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
+    lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt
+  }
 }
