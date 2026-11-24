@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="ring" gradientUnits="userSpaceOnUse" x1="337" y1="337" x2="687" y2="687">
+      <stop offset="0" stop-color="#9c43fe" />
+      <stop offset="1" stop-color="#4cc2e9" />
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="34" />
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#0E0B1F" />
+  <circle cx="512" cy="512" r="217.5" fill="none" stroke="url(#ring)" stroke-width="59" opacity="0.55" filter="url(#glow)" />
+  <circle cx="512" cy="512" r="217.5" fill="none" stroke="url(#ring)" stroke-width="59" />
+</svg>
