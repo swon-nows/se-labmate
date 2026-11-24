@@ -1,5 +1,8 @@
 export function normalizeTitle(title: string): string {
-  return title.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+  return title
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
 }
 
 export function matchKeywords(text: string, keywords: string[]): string[] {
