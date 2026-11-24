@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   BURST_DECAY,
   approach,
-  dotBase,
+  dotRadius,
   pointCount,
   project,
   speedTarget,
@@ -70,12 +70,11 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
         busy: input.current.busy,
         burst: m.burst
       }
-      const base = dotBase(size)
       for (const p of points) {
         const q = project(p, frame, 0.36 * size)
         ctx.globalAlpha = 0.22 + 0.78 * q.d
         ctx.beginPath()
-        ctx.arc(size / 2 + q.x, size / 2 + q.y, base * (0.45 + 0.75 * q.d), 0, 2 * Math.PI)
+        ctx.arc(size / 2 + q.x, size / 2 + q.y, dotRadius(size, q.d), 0, 2 * Math.PI)
         ctx.fill()
       }
     }
@@ -111,6 +110,7 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
       if (moving()) {
         if (!raf) {
           last = 0
+          m.wasBusy = input.current.busy // 멈춘 동안 끝난 수집으로 다시 돌 때 늦게 튀지 않게 한다
           raf = requestAnimationFrame(tick)
         }
         return

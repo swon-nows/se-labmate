@@ -113,8 +113,9 @@ select {
   margin-left: auto;
 }
 
-/* 새로 고침: 오브와 글자. 너비가 정해져 있어 글자가 바뀌어도 줄이 움직이지 않는다. */
-.refresh-btn {
+/* 새로 고침: 오브와 글자. 너비가 정해져 있어 글자가 바뀌어도 줄이 움직이지 않는다.
+   .btn이 뒤에 오므로 두 클래스로 써야 안쪽 여백이 이긴다. */
+.btn.refresh-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;

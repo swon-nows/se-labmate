@@ -26,11 +26,15 @@ export function spherePoints(n: number): Point[] {
   })
 }
 
-// 작은 오브에서도 점이 뭉치지 않게: 1.5·size + 15개, 24~150개 (22px → 48, 100px 이상 → 150).
+// 작은 오브는 점을 키운 만큼 적게: 1.5·size − 5개, 22~150개 (16px → 22, 22px → 28, 103px 이상 → 150).
 export const pointCount = (size: number): number =>
-  Math.min(150, Math.max(24, Math.round(1.5 * size + 15)))
+  Math.min(150, Math.max(22, Math.round(1.5 * size - 5)))
 
-export const dotBase = (size: number): number => Math.max(0.6, size * 0.0105)
+export const dotBase = (size: number): number => Math.max(1, size * 0.0105)
+
+// 1배 화면의 22px·16px 오브에서도 점이 보이도록 0.9px 아래로 내리지 않는다. 200px 오브는 가장 작은 점도 0.945px라 그대로다.
+export const dotRadius = (size: number, depth: number): number =>
+  Math.max(0.9, dotBase(size) * (0.45 + 0.75 * depth))
 
 export const speedTarget = (busy: boolean, hover: boolean): number =>
   busy ? 2.8 : hover ? 1.1 : 0.35

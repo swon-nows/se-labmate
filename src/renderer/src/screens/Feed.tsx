@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { allFailed } from '../../../shared/sources'
 import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, CollectStatus, Item } from '../../../shared/types'
 import { CategoryChips } from '../components/CategoryChips'
@@ -10,6 +11,8 @@ import { mergeBatch } from '../session'
 interface Props {
   status: CollectStatus
   enabled: Record<Category, boolean> // 설정에서 끈 카테고리는 바로 사라진다
+  sources: string[] // 켜진 출처(activeSources). 모두 실패했는지 보는 데 쓴다
+  active: boolean // 피드 화면인가(설정을 연 동안 false)
   onCount: (n: number) => void
 }
 
@@ -21,7 +24,7 @@ const TABS: [Tab, string][] = [
 ]
 const FIRST_ROWS = 5
 
-export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
+export function Feed({ status, enabled, sources, active, onCount }: Props): React.JSX.Element {
   const ids = useId()
   const [tab, setTab] = useState<Tab>('new')
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
@@ -29,13 +32,15 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
   const [load, setLoad] = useState<'pending' | 'done' | 'failed'>('pending')
   const [expanded, setExpanded] = useState<Category[]>([])
   const [shown, setShown] = useState<Category[]>(ACTIVE_CATEGORIES)
-  const [past, setPast] = useState<Item[] | null>(null)
-  const [saved, setSaved] = useState<Item[] | null>(null)
+  const [past, setPast] = useState<Item[] | null | 'failed'>(null)
+  const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
   const [savedNow, setSavedNow] = useState<ReadonlyMap<string, boolean>>(new Map())
   const [firstRun, setFirstRun] = useState<boolean | null>(null) // 아직 아무것도 모은 적이 없는가
   const seq = useRef(0) // 가장 최근 takeNew만 load를 정한다
   const windowVisible = useRef<boolean | null>(null)
+  const [visible, setVisible] = useState(false)
+  const [visit, setVisit] = useState(0) // 창이 보인다는 알림을 받을 때마다 는다
 
   const take = useCallback(() => {
     const n = ++seq.current
@@ -46,6 +51,7 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
     window.api.takeNew().then(
       (groups) => {
         if (groups.length > 0) setFirstRun(false)
+        // 창을 숨긴 뒤 온 답도 (비운) 목록에 넣는다: 이미 확인함이 된 항목이라 버리면 보이지 않은 채 지난 소식으로 간다.
         setSession((s) => mergeBatch(s, groups))
         settle('done')
       },
@@ -58,23 +64,39 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
       (p) => setFirstRun((f) => f ?? p.length === 0),
       () => setFirstRun(false)
     )
-    take()
-    return window.api.onWindowVisible((visible) => {
-      windowVisible.current = visible
-      if (visible) return take()
-      // 창을 숨기거나 내리면 비워서, 다음에 열 때는 아직 보지 않은 것만 뜬다.
+    return window.api.onWindowVisible((v) => {
+      windowVisible.current = v
+      setVisible(v)
+      if (v) return setVisit((n) => n + 1)
+      // 창을 숨기거나 내리면 비우고 새 소식 탭·칩 모두 켬으로 돌린다. 다음에 열 때는 아직 보지 않은 것만 뜬다.
       seq.current++
       setSession([])
       setExpanded([])
       setLoad('pending')
+      setTab('new')
+      setShown(ACTIVE_CATEGORIES)
     })
-  }, [take])
+  }, [])
+
+  // takeNew는 받은 항목을 확인함으로 바꾸므로, 새 소식 목록이 실제로 보일 때만 부른다:
+  // 그렇게 될 때마다, 보이는 동안 창이 보인다는 알림이 다시 올 때마다, 보이는 동안 수집이 끝날 때마다.
+  const showingNew = visible && active && tab === 'new'
+  useEffect(() => {
+    if (showingNew) take()
+  }, [showingNew, visit, take])
 
   const wasRunning = useRef(status.running)
   useEffect(() => {
-    if (wasRunning.current && !status.running) take()
+    if (wasRunning.current && !status.running && showingNew) take()
     wasRunning.current = status.running
-  }, [status.running, take])
+  }, [status.running, showingNew, take])
+
+  // 열린 탭의 목록은 탭을 열 때와 창이 다시 보일 때 불러온다.
+  useEffect(() => {
+    if (!visible) return
+    if (tab === 'past') window.api.getPast().then(setPast, () => setPast('failed'))
+    if (tab === 'saved') window.api.getSaved().then(setSaved, () => setSaved('failed'))
+  }, [visible, visit, tab])
 
   const fresh = session.filter((i) => !hidden.has(i.id) && enabled[i.category])
   useEffect(() => {
@@ -83,12 +105,6 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
 
   const categories = ACTIVE_CATEGORIES.filter((c) => enabled[c])
   const visibleCats = categories.filter((c) => shown.includes(c))
-
-  const openTab = (t: Tab): void => {
-    setTab(t)
-    if (t === 'past') window.api.getPast().then(setPast, () => undefined)
-    if (t === 'saved') window.api.getSaved().then(setSaved, () => undefined)
-  }
 
   const isSaved = (i: Item): boolean => savedNow.get(i.id) ?? i.saved
   const toggleSave = (i: Item): Promise<void> => {
@@ -155,7 +171,9 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
           />
           <p className="muted" role="status">
             {!status.running
-              ? '새 소식을 모두 확인했습니다'
+              ? allFailed(sources, status.errors)
+                ? '소식을 가져오지 못했습니다. 설정의 출처 상태를 확인해 주십시오.'
+                : '새 소식을 모두 확인했습니다'
               : firstRun
                 ? '첫 소식을 모으는 중입니다'
                 : '새 소식을 확인하는 중입니다'}
@@ -201,11 +219,17 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
 
   // except: 지난 소식에서는 이번 새 소식 목록에 아직 있는 항목을 뺀다.
   const flatItems = (
-    list: Item[] | null,
+    list: Item[] | null | 'failed',
     emptyText: string,
     except?: ReadonlySet<string>
   ): React.ReactNode => {
     if (list === null) return null
+    if (list === 'failed')
+      return (
+        <p className="note muted" role="alert">
+          목록을 불러오지 못했습니다.
+        </p>
+      )
     const items = list.filter((i) => !hidden.has(i.id) && enabled[i.category] && !except?.has(i.id))
     if (items.length === 0) return <p className="note muted">{emptyText}</p>
     if (visibleCats.length === 0) return noCategory
@@ -225,7 +249,7 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
             role="tab"
             className="tab"
             aria-selected={tab === t}
-            onClick={() => openTab(t)}
+            onClick={() => setTab(t)}
           >
             {label}
           </button>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { activeSources } from '../../shared/sources'
 import type { PublicState } from '../../shared/types'
 import { LiveOrb } from './components/LiveOrb'
 import { Feed } from './screens/Feed'
@@ -50,6 +51,14 @@ function App(): React.JSX.Element | null {
     void load()
     return window.api.onStatus((status) => setState((s) => (s ? { ...s, status } : s)))
   }, [load])
+  // 창을 숨기거나 내리면 피드로 돌아간다. 다음에 열 때(알림을 눌렀을 때 등) 새 소식부터 보인다.
+  useEffect(
+    () =>
+      window.api.onWindowVisible((visible) => {
+        if (!visible) setScreen('feed')
+      }),
+    []
+  )
 
   if (loadFailed)
     return (
@@ -87,7 +96,13 @@ function App(): React.JSX.Element | null {
       <main className="content">
         {/* 설정을 다녀와도 이번 새 소식 목록이 남도록 피드는 숨기기만 한다. */}
         <div hidden={screen !== 'feed'}>
-          <Feed status={status} enabled={state.settings.enabled} onCount={setCount} />
+          <Feed
+            status={status}
+            enabled={state.settings.enabled}
+            sources={activeSources(state.profile, state.settings, state.hasOpenAlexKey)}
+            active={screen === 'feed'}
+            onCount={setCount}
+          />
         </div>
         {screen === 'settings' && <Settings state={state} status={status} onSaved={load} />}
       </main>

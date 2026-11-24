@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatStars, relativeDate } from '../src/renderer/src/format'
-import { activeSources } from '../src/shared/sources'
+import { activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
 import type { Profile, Settings } from '../src/shared/types'
 
 describe('relativeDate', () => {
@@ -73,5 +73,31 @@ describe('activeSources', () => {
       'Google 뉴스(영문)'
     ])
     expect(activeSources(profile, off('repo'), true)).not.toContain('GitHub')
+  })
+})
+
+describe('allFailed', () => {
+  it('켜진 출처가 하나 이상이고 모두 오류가 있을 때만 참', () => {
+    expect(allFailed(['arXiv', 'GitHub'], { arXiv: 'HTTP 503', GitHub: 'HTTP 403' })).toBe(true)
+    expect(allFailed(['arXiv', 'GitHub'], { arXiv: 'HTTP 503' })).toBe(false)
+    expect(allFailed([], {})).toBe(false)
+    expect(allFailed([], { arXiv: 'HTTP 503' })).toBe(false)
+  })
+})
+
+describe('sourceErrorText', () => {
+  const KEY = '키가 올바르지 않습니다. 설정에서 키를 확인해 주십시오.'
+  const LIMIT = '요청 한도를 넘었습니다. 다음 수집 때 다시 시도합니다.'
+  it('OpenAlex 401·403은 키 안내, GitHub 403·429는 한도 안내', () => {
+    expect(sourceErrorText('OpenAlex', 'HTTP 401')).toBe(KEY)
+    expect(sourceErrorText('OpenAlex', 'HTTP 403')).toBe(KEY)
+    expect(sourceErrorText('GitHub', 'HTTP 403')).toBe(LIMIT)
+    expect(sourceErrorText('GitHub', 'HTTP 429')).toBe(LIMIT)
+  })
+  it('그 밖은 메시지 그대로', () => {
+    expect(sourceErrorText('OpenAlex', 'HTTP 429')).toBe('HTTP 429')
+    expect(sourceErrorText('GitHub', 'HTTP 401')).toBe('HTTP 401')
+    expect(sourceErrorText('arXiv', 'HTTP 403')).toBe('HTTP 403')
+    expect(sourceErrorText('Google 뉴스(영문)', '네트워크 오류')).toBe('네트워크 오류')
   })
 })

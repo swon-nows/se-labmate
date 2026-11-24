@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   approach,
   dotBase,
+  dotRadius,
   pointCount,
   project,
   speedTarget,
@@ -21,16 +22,21 @@ describe('spherePoints', () => {
   })
 })
 
-describe('pointCount, dotBase', () => {
-  it('100px 이상은 150개, 22px은 48개, 작을수록 적다', () => {
-    expect(pointCount(100)).toBe(150)
+describe('pointCount, dotBase, dotRadius', () => {
+  it('200px은 150개 그대로, 작은 오브는 점이 커진 만큼 적다 (22px → 28, 16px → 22)', () => {
     expect(pointCount(200)).toBe(150)
-    expect(pointCount(22)).toBe(48)
-    expect(pointCount(16)).toBeLessThan(pointCount(22))
+    expect(pointCount(22)).toBe(28)
+    expect(pointCount(16)).toBe(22)
   })
-  it('점 기본 반지름은 size·0.0105, 0.6px 아래로 내려가지 않는다', () => {
+  it('점 기본 반지름은 size·0.0105, 1px 아래로 내려가지 않는다', () => {
     expect(dotBase(200)).toBeCloseTo(2.1, 12)
-    expect(dotBase(22)).toBe(0.6)
+    expect(dotBase(22)).toBe(1)
+  })
+  it('점 반지름은 기본·(0.45 + 0.75·깊이), 0.9px 아래로 내려가지 않고, 200px 오브는 바뀌지 않는다', () => {
+    for (const d of [0, 0.5, 1]) expect(dotRadius(200, d)).toBe(dotBase(200) * (0.45 + 0.75 * d))
+    expect(dotRadius(22, 0)).toBe(0.9)
+    expect(dotRadius(22, 1)).toBeCloseTo(1.2, 12)
+    expect(dotRadius(16, 0.2)).toBe(0.9)
   })
 })
 
