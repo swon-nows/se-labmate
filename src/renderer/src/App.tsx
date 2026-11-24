@@ -1,9 +1,31 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { PublicState } from '../../shared/types'
-import { StatusOrb } from './components/StatusOrb'
+import { LiveOrb } from './components/LiveOrb'
 import { Feed } from './screens/Feed'
 import { Onboarding } from './screens/Onboarding'
 import { Settings } from './screens/Settings'
+import { useLasting } from './use-lasting'
+
+// 오브와 글자가 든 한 버튼. 너비가 정해져 있어 수집이 시작·종료돼도 위쪽 줄이 움직이지 않는다.
+function RefreshButton({ running }: { running: boolean }): React.JSX.Element {
+  const [hover, setHover] = useState(false)
+  const collecting = useLasting(running)
+  return (
+    <button
+      type="button"
+      className="btn refresh-btn"
+      aria-disabled={running || undefined}
+      onClick={() => {
+        if (!running) void window.api.refresh()
+      }}
+      onPointerEnter={() => setHover(true)}
+      onPointerLeave={() => setHover(false)}
+    >
+      <LiveOrb size={22} busy={running} hover={hover} />
+      <span>{collecting ? '수집 중' : '새로 고침'}</span>
+    </button>
+  )
+}
 
 function App(): React.JSX.Element | null {
   const [state, setState] = useState<PublicState | null>(null)
@@ -51,15 +73,7 @@ function App(): React.JSX.Element | null {
           <h1 className="app-name">연구비서</h1>
           {count > 0 && <span className="count">{`새 소식 ${count}건`}</span>}
           <div className="topbar-actions">
-            <div className="collect-slot">
-              {status.running ? (
-                <StatusOrb active state="searching" label="수집 중" />
-              ) : (
-                <button type="button" className="btn" onClick={() => void window.api.refresh()}>
-                  새로 고침
-                </button>
-              )}
-            </div>
+            <RefreshButton running={status.running} />
             <button
               type="button"
               className="btn nav-btn"

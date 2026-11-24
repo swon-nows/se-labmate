@@ -110,16 +110,13 @@ select {
   margin-left: auto;
 }
 
-.collect-slot {
-  display: flex;
+/* 새로 고침: 오브와 글자. 너비가 정해져 있어 글자가 바뀌어도 줄이 움직이지 않는다. */
+.refresh-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 104px;
-  height: 32px;
-}
-
-.collect-slot .btn {
-  width: 100%;
+  gap: 6px;
+  width: 112px;
+  padding: 0 10px 0 7px;
 }
 
 .nav-btn {
@@ -158,11 +155,11 @@ select {
   cursor: pointer;
 }
 
-.btn:hover:not(:disabled) {
+.btn:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--surface);
 }
 
-.btn:active:not(:disabled) {
+.btn:active:not(:disabled):not([aria-disabled='true']) {
   background: var(--pressed);
 }
 
@@ -340,28 +337,36 @@ select.input {
   margin-bottom: 12px;
 }
 
-/* 수집 표시: 보이지 않을 때도 자리를 지키므로 둘레가 움직이지 않는다. */
-.status-orb {
+/* 오브: 점 색은 캔버스의 글자색(강조색)이다. */
+.live-orb-canvas {
+  display: block;
+  flex: none;
+  color: var(--accent);
+}
+
+.live-orb-button {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.btn[aria-disabled='true'],
+.live-orb-button[aria-disabled='true'] {
+  cursor: default;
+}
+
+/* 실패한 출처 줄의 확인 표시: 보이지 않을 때도 자리를 지킨다. */
+.checking {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
-.status-orb-label {
+  gap: 6px;
+  width: 5.5rem;
   color: var(--muted);
-}
-
-.status-orb-mark {
-  display: inline-flex;
-  width: 18px;
-  height: 18px;
-}
-
-.status-orb.is-hidden {
-  visibility: hidden;
+  white-space: nowrap;
 }
 
 /* 피드: 탭은 밑줄로, 칩은 테두리와 칠로 켜짐을 보인다. */

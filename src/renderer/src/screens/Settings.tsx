@@ -1,13 +1,29 @@
 import { useState } from 'react'
 import type { CollectStatus, PublicState } from '../../../shared/types'
 import { activeSources } from '../../../shared/sources'
-import { StatusOrb } from '../components/StatusOrb'
+import { LiveOrb } from '../components/LiveOrb'
+import { useLasting } from '../use-lasting'
 import { ProfileForm } from './ProfileForm'
 
 interface Props {
   state: PublicState
   status: CollectStatus
   onSaved: () => Promise<void> // 다시 불러온 상태가 도착하면 끝난다
+}
+
+// 실패한 출처 줄에서 수집이 300ms 넘게 이어지면 보인다. 자리는 늘 지켜서 줄이 움직이지 않는다.
+function Checking({ active }: { active: boolean }): React.JSX.Element {
+  const visible = useLasting(active)
+  return (
+    <span className="checking" role="status">
+      {visible && (
+        <>
+          <LiveOrb size={16} busy />
+          확인 중
+        </>
+      )}
+    </span>
+  )
 }
 
 export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
@@ -48,9 +64,7 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
                 <span className="source-state">
                   {error === undefined ? '정상' : `실패: ${error}`}
                 </span>
-                {error !== undefined && (
-                  <StatusOrb active={status.running} state="retrying" label="확인 중" />
-                )}
+                {error !== undefined && <Checking active={status.running} />}
               </li>
             )
           })}

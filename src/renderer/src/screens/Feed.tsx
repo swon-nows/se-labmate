@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, CollectStatus, Item } from '../../../shared/types'
-import { BigOrb } from '../components/BigOrb'
 import { CategoryChips } from '../components/CategoryChips'
 import { ItemRow } from '../components/ItemRow'
+import { LiveOrb } from '../components/LiveOrb'
 import { mergeBatch } from '../session'
 
 interface Props {
@@ -108,7 +108,12 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
       if (status.running && firstRun === null) return null // 지난 소식을 확인하는 아주 짧은 동안
       return (
         <div className="empty">
-          <BigOrb moving={status.running} />
+          <LiveOrb
+            size={200}
+            busy={status.running}
+            onActivate={() => void window.api.refresh()}
+            label="새로 고침"
+          />
           <p className="muted" role="status">
             {!status.running
               ? '새 소식을 모두 확인했습니다'
