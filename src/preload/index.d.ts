@@ -20,6 +20,8 @@ export interface Api {
   openHelp(which: 'openalex-key'): Promise<void> // https://openalex.org/settings/api
   testNotification(): Promise<void>
   onStatus(cb: (s: CollectStatus) => void): () => void // 구독 해제 함수 반환
+  // 창이 보이는지(isVisible && !isMinimized). 구독하면 지금 값을 한 번 받고, 이후 바뀔 때마다 받는다.
+  onWindowVisible(cb: (visible: boolean) => void): () => void
 }
 declare global {
   interface Window {

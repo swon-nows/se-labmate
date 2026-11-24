@@ -87,7 +87,7 @@ function App(): React.JSX.Element | null {
       <main className="content">
         {/* 설정을 다녀와도 이번 새 소식 목록이 남도록 피드는 숨기기만 한다. */}
         <div hidden={screen !== 'feed'}>
-          <Feed status={status} onCount={setCount} />
+          <Feed status={status} enabled={state.settings.enabled} onCount={setCount} />
         </div>
         {screen === 'settings' && <Settings state={state} status={status} onSaved={load} />}
       </main>

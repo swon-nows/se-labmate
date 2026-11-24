@@ -1,6 +1,6 @@
 import { ipcMain, safeStorage, shell } from 'electron'
 import type { AppState, CollectStatus, Item, PublicState, SaveResult } from '../shared/types'
-import { pastItems, savedItems, takeNew } from './core/feed'
+import { hideItem, pastItems, savedItems, takeNew } from './core/feed'
 import { applyProfile, isSaveInput, validateProfile } from './core/profile'
 import { isHttpUrl } from './core/text'
 
@@ -66,12 +66,18 @@ export function registerIpc(d: IpcDeps): void {
     return groups
   })
 
+  ipcMain.handle('windowVisible', () => d.windowVisible())
   ipcMain.handle('getPast', () => pastItems(d.getState(), 100))
   ipcMain.handle('getSaved', () => savedItems(d.getState()))
   ipcMain.handle('setSaved', (_e, id: unknown, saved: unknown) => {
     if (typeof saved === 'boolean') patchItem(id, { saved })
   })
-  ipcMain.handle('hide', (_e, id: unknown) => patchItem(id, { hidden: true }))
+  ipcMain.handle('hide', (_e, id: unknown) => {
+    if (typeof id !== 'string') return
+    const s = d.getState()
+    const next = hideItem(s, id)
+    if (next !== s) d.update(next)
+  })
   ipcMain.handle('refresh', () => d.collectNow())
 
   ipcMain.handle('openItem', async (_e, id: unknown) => {

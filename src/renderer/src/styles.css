@@ -564,6 +564,10 @@ select.input {
   margin-top: 10px;
 }
 
+.retry {
+  margin-top: 8px;
+}
+
 .note {
   margin-top: 20px;
 }

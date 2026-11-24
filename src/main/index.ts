@@ -83,6 +83,15 @@ function createWindow(hidden: boolean): BrowserWindow {
   })
 
   if (!hidden) w.once('ready-to-show', () => w.show())
+  // 보임 여부는 창 이벤트로만 알린다. macOS에서는 다른 창에 가려지기만 해도 페이지가 숨김으로 바뀐다.
+  // 처음 show를 포함해 show·restore마다 true를 보내므로, 숨긴 채 시작해도 열 때 새 소식을 받는다.
+  const sendVisible = (): void => {
+    if (!w.isDestroyed()) w.webContents.send('window-visible', w.isVisible() && !w.isMinimized())
+  }
+  w.on('show', sendVisible)
+  w.on('hide', sendVisible)
+  w.on('minimize', sendVisible)
+  w.on('restore', sendVisible)
   nativeTheme.on('updated', () => {
     if (!w.isDestroyed()) w.setBackgroundColor(background())
   })

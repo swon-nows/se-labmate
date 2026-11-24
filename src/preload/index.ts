@@ -22,6 +22,22 @@ const api: Api = {
     return () => {
       ipcRenderer.removeListener('status', listener)
     }
+  },
+  onWindowVisible: (cb) => {
+    let subscribed = true
+    const listener = (_e: IpcRendererEvent, visible: boolean): void => cb(visible)
+    ipcRenderer.on('window-visible', listener)
+    // 창이 먼저 보여졌어도 놓치지 않게 지금 값을 한 번 묻는다. 같은 통로라 순서가 지켜진다.
+    ipcRenderer.invoke('windowVisible').then(
+      (visible: boolean) => {
+        if (subscribed) cb(visible)
+      },
+      () => undefined
+    )
+    return () => {
+      subscribed = false
+      ipcRenderer.removeListener('window-visible', listener)
+    }
   }
 }
 

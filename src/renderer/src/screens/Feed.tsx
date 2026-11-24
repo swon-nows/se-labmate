@@ -9,6 +9,7 @@ import { mergeBatch } from '../session'
 
 interface Props {
   status: CollectStatus
+  enabled: Record<Category, boolean> // 설정에서 끈 카테고리는 바로 사라진다
   onCount: (n: number) => void
 }
 
@@ -20,10 +21,12 @@ const TABS: [Tab, string][] = [
 ]
 const FIRST_ROWS = 5
 
-export function Feed({ status, onCount }: Props): React.JSX.Element {
+export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
   const ids = useId()
   const [tab, setTab] = useState<Tab>('new')
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
+  // 이번 보기에서 takeNew가 답했는가. 답하기 전에는 "모두 확인했습니다"라고 말하지 않는다.
+  const [load, setLoad] = useState<'pending' | 'done' | 'failed'>('pending')
   const [expanded, setExpanded] = useState<Category[]>([])
   const [shown, setShown] = useState<Category[]>(ACTIVE_CATEGORIES)
   const [past, setPast] = useState<Item[] | null>(null)
@@ -31,15 +34,22 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
   const [savedNow, setSavedNow] = useState<ReadonlyMap<string, boolean>>(new Map())
   const [firstRun, setFirstRun] = useState<boolean | null>(null) // 아직 아무것도 모은 적이 없는가
+  const seq = useRef(0) // 가장 최근 takeNew만 load를 정한다
+  const windowVisible = useRef<boolean | null>(null)
 
   const take = useCallback(() => {
-    if (document.visibilityState !== 'visible') return
+    const n = ++seq.current
+    const settle = (result: 'done' | 'failed'): void => {
+      // 창이 보이지 않을 때 받은 빈 답은 이번 보기의 답이 아니다.
+      if (n === seq.current && windowVisible.current !== false) setLoad(result)
+    }
     window.api.takeNew().then(
       (groups) => {
         if (groups.length > 0) setFirstRun(false)
         setSession((s) => mergeBatch(s, groups))
+        settle('done')
       },
-      () => undefined
+      () => settle('failed')
     )
   }, [])
 
@@ -49,14 +59,19 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
       () => setFirstRun(false)
     )
     take()
-    const onVisibility = (): void => {
-      if (document.visibilityState === 'visible') return take()
-      // 숨겨지면 비워서, 다음에 열 때는 아직 보지 않은 것만 뜬다.
+    return window.api.onWindowVisible((visible) => {
+      windowVisible.current = visible
+      if (visible) {
+        setLoad('pending')
+        take()
+        return
+      }
+      // 창을 숨기거나 내리면 비워서, 다음에 열 때는 아직 보지 않은 것만 뜬다.
+      seq.current++
       setSession([])
       setExpanded([])
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
+      setLoad('pending')
+    })
   }, [take])
 
   const wasRunning = useRef(status.running)
@@ -65,8 +80,13 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
     wasRunning.current = status.running
   }, [status.running, take])
 
-  const fresh = session.filter((i) => !hidden.has(i.id))
-  useEffect(() => onCount(fresh.length), [fresh.length, onCount])
+  const fresh = session.filter((i) => !hidden.has(i.id) && enabled[i.category])
+  useEffect(() => {
+    onCount(fresh.length)
+  }, [fresh.length, onCount])
+
+  const categories = ACTIVE_CATEGORIES.filter((c) => enabled[c])
+  const visibleCats = categories.filter((c) => shown.includes(c))
 
   const openTab = (t: Tab): void => {
     setTab(t)
@@ -105,10 +125,30 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
   )
 
   const noCategory = <p className="note muted">표시할 카테고리를 선택해 주십시오.</p>
+  const noMatch = <p className="note muted">선택한 카테고리에 표시할 항목이 없습니다.</p>
 
   const newItems = (): React.ReactNode => {
     if (fresh.length === 0) {
+      if (load === 'pending') return null
       if (status.running && firstRun === null) return null // 지난 소식을 확인하는 아주 짧은 동안
+      if (load === 'failed' && !status.running)
+        return (
+          <div className="note">
+            <p className="muted" role="alert">
+              새 소식을 불러오지 못했습니다.
+            </p>
+            <button
+              type="button"
+              className="btn btn-small retry"
+              onClick={() => {
+                setLoad('pending')
+                take()
+              }}
+            >
+              다시 시도
+            </button>
+          </div>
+        )
       return (
         <div className="empty">
           <LiveOrb
@@ -127,10 +167,12 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
         </div>
       )
     }
-    if (shown.length === 0) return noCategory
-    return ACTIVE_CATEGORIES.filter((c) => shown.includes(c)).map((c) => {
-      const items = fresh.filter((i) => i.category === c)
-      if (items.length === 0) return null
+    if (visibleCats.length === 0) return noCategory
+    const groups = visibleCats
+      .map((c) => [c, fresh.filter((i) => i.category === c)] as const)
+      .filter(([, items]) => items.length > 0)
+    if (groups.length === 0) return noMatch
+    return groups.map(([c, items]) => {
       const all = expanded.includes(c)
       return (
         <section key={c} className="feed-group">
@@ -161,16 +203,19 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
     })
   }
 
-  const flatItems = (list: Item[] | null, emptyText: string): React.ReactNode => {
+  // except: 지난 소식에서는 이번 새 소식 목록에 아직 있는 항목을 뺀다.
+  const flatItems = (
+    list: Item[] | null,
+    emptyText: string,
+    except?: ReadonlySet<string>
+  ): React.ReactNode => {
     if (list === null) return null
-    const items = list.filter((i) => !hidden.has(i.id))
+    const items = list.filter((i) => !hidden.has(i.id) && enabled[i.category] && !except?.has(i.id))
     if (items.length === 0) return <p className="note muted">{emptyText}</p>
-    if (shown.length === 0) return noCategory
-    return (
-      <ul className="item-list flat">
-        {items.filter((i) => shown.includes(i.category)).map((i, k) => row(i, true, k))}
-      </ul>
-    )
+    if (visibleCats.length === 0) return noCategory
+    const rows = items.filter((i) => shown.includes(i.category))
+    if (rows.length === 0) return noMatch
+    return <ul className="item-list flat">{rows.map((i, k) => row(i, true, k))}</ul>
   }
 
   return (
@@ -191,12 +236,14 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
         ))}
       </div>
       <CategoryChips
+        categories={categories}
         shown={shown}
         onToggle={(c) => setShown((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]))}
       />
       <div role="tabpanel" aria-labelledby={`${ids}-${tab}`}>
         {tab === 'new' && newItems()}
-        {tab === 'past' && flatItems(past, '지난 소식이 없습니다.')}
+        {tab === 'past' &&
+          flatItems(past, '지난 소식이 없습니다.', new Set(session.map((i) => i.id)))}
         {tab === 'saved' && flatItems(saved, '저장한 항목이 없습니다.')}
       </div>
     </>

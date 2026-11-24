@@ -40,6 +40,13 @@ export function savedItems(state: AppState): Item[] {
     .sort(byDateDesc)
 }
 
+// 관심 없음: 숨기면서 저장도 푼다. 저장함은 숨김을 거르지 않으므로 저장이 남으면 다시 나온다.
+export function hideItem(state: AppState, id: string): AppState {
+  if (!Object.hasOwn(state.items, id)) return state
+  const item = { ...state.items[id], hidden: true, saved: false }
+  return { ...state, items: { ...state.items, [id]: item } }
+}
+
 export function unseenCounts(state: AppState): Partial<Record<Category, number>> {
   const counts: Partial<Record<Category, number>> = {}
   for (const i of unseen(state)) counts[i.category] = (counts[i.category] ?? 0) + 1

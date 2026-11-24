@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { pastItems, savedItems, takeNew, unseenCounts } from '../../src/main/core/feed'
+import { hideItem, pastItems, savedItems, takeNew, unseenCounts } from '../../src/main/core/feed'
 import { NOW, mk, st } from '../helpers'
 
 test('takeNew는 보이는 미확인만 묶어 주고 확인 처리한다', () => {
@@ -83,4 +83,26 @@ test('savedItems는 숨김과 상관없이 저장한 항목을 날짜 최신순�
     }
   })
   expect(savedItems(state).map((i) => i.id)).toEqual(['b', 'a'])
+})
+
+describe('hideItem', () => {
+  const state = st({
+    items: {
+      s: mk({ id: 's', saved: true, seenAt: NOW }),
+      o: mk({ id: 'o' })
+    }
+  })
+
+  test('숨기면서 저장도 푼다: 저장함에서 관심 없음을 눌러도 다시 나오지 않는다', () => {
+    const next = hideItem(state, 's')
+    expect(next.items.s).toMatchObject({ hidden: true, saved: false, seenAt: NOW })
+    expect(next.items.o).toBe(state.items.o)
+    expect(savedItems(next)).toEqual([])
+    expect(state.items.s.saved).toBe(true) // 원래 상태는 그대로
+  })
+
+  test('없는 id나 상속된 이름이면 같은 상태를 그대로 돌려준다', () => {
+    expect(hideItem(state, 'nope')).toBe(state)
+    expect(hideItem(state, '__proto__')).toBe(state)
+  })
 })
