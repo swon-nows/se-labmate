@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import {
+  closeSync,
+  existsSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  renameSync,
+  writeFileSync
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { AppState } from '../shared/types'
 
@@ -50,6 +59,13 @@ export function loadState(file: string): AppState {
 export function saveState(file: string, state: AppState): void {
   mkdirSync(dirname(file), { recursive: true })
   const tmp = file + '.tmp'
-  writeFileSync(tmp, JSON.stringify(state))
+  // 이름을 바꾸기 전에 디스크까지 내려 쓴다. 전원이 나가도 빈 state.json이 좋은 파일을 대신하지 않게 한다.
+  const fd = openSync(tmp, 'w')
+  try {
+    writeFileSync(fd, JSON.stringify(state)) // writeSync와 달리 부분 쓰기를 끝까지 이어 쓴다
+    fsyncSync(fd)
+  } finally {
+    closeSync(fd)
+  }
   renameSync(tmp, file)
 }

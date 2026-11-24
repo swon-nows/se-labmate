@@ -18,14 +18,19 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
   if (!profile) return state
   const { keywordsEn: en, keywordsKo: ko } = profile
   const { enabled } = state.settings
-  const key = deps.openAlexKey
+  const key = deps.openAlexKey ?? ''
   const now = deps.now()
   const nowIso = now.toISOString()
 
   const incoming: RawItem[] = []
   const sourceErrors = { ...state.sourceErrors }
   // 출처 하나가 던져도 나머지는 계속한다. 출처는 await로 하나씩 차례로 돌린다.
-  const run = async (name: string, job: () => Promise<RawItem[]>): Promise<void> => {
+  // 건너뛴 출처(on이 false)는 요청하지 않고, 그 출처의 옛 오류도 지운다.
+  const run = async (name: string, on: boolean, job: () => Promise<RawItem[]>): Promise<void> => {
+    if (!on) {
+      delete sourceErrors[name]
+      return
+    }
     try {
       incoming.push(...(await job()))
       delete sourceErrors[name]
@@ -34,27 +39,24 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
     }
   }
 
-  if (enabled.paper && key)
-    await run('OpenAlex', async () =>
-      parseOpenAlex(await deps.fetchText(buildOpenAlexUrl(en, now, key)))
-    )
-  if (enabled.paper)
-    await run('arXiv', async () => parseArxiv(await deps.fetchText(buildArxivUrl(en))))
-  if (enabled.repo)
-    await run('GitHub', async () => {
-      const out: RawItem[] = []
-      for (const url of buildGithubUrls(en, now))
-        out.push(...parseGithub(await deps.fetchText(url, GITHUB_HEADERS)))
-      return out
-    })
-  if (enabled.news && profile.country === 'KR' && ko.length > 0)
-    await run('Google 뉴스(한국어)', async () =>
-      parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))
-    )
-  if (enabled.news)
-    await run('Google 뉴스(영문)', async () =>
-      parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en')))
-    )
+  await run('OpenAlex', enabled.paper && key !== '', async () =>
+    parseOpenAlex(await deps.fetchText(buildOpenAlexUrl(en, now, key)))
+  )
+  await run('arXiv', enabled.paper, async () => parseArxiv(await deps.fetchText(buildArxivUrl(en))))
+  await run('GitHub', enabled.repo, async () => {
+    const out: RawItem[] = []
+    for (const url of buildGithubUrls(en, now))
+      out.push(...parseGithub(await deps.fetchText(url, GITHUB_HEADERS)))
+    return out
+  })
+  await run(
+    'Google 뉴스(한국어)',
+    enabled.news && profile.country === 'KR' && ko.length > 0,
+    async () => parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))
+  )
+  await run('Google 뉴스(영문)', enabled.news, async () =>
+    parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en')))
+  )
 
   return {
     ...state,
