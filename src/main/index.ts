@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, nativeTheme, net, safeStorage } from 'electron'
+import { app, BrowserWindow, dialog, Menu, nativeTheme, net, safeStorage } from 'electron'
+import type { MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import type { AppState, CollectStatus } from '../shared/types'
@@ -26,7 +27,12 @@ function update(next: AppState): void {
 }
 
 const getState = (): AppState => state
-const showWindow = (): void => win?.show()
+function showWindow(): void {
+  if (!win) return
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+}
 
 function sendStatus(status: CollectStatus): void {
   if (win && !win.isDestroyed()) win.webContents.send('status', status)
@@ -73,6 +79,8 @@ function createWindow(hidden: boolean): BrowserWindow {
     width: 480,
     height: 760,
     show: false,
+    // 숨긴 채 시작하면 페이지도 숨김으로 둔다: 그리지 않고 오브도 돌지 않는다(ready-to-show는 오지 않는다).
+    paintWhenInitiallyHidden: !hidden,
     autoHideMenuBar: true,
     backgroundColor: background(),
     webPreferences: {
@@ -93,6 +101,7 @@ function createWindow(hidden: boolean): BrowserWindow {
   w.on('hide', sendVisible)
   w.on('minimize', sendVisible)
   w.on('restore', sendVisible)
+  w.on('focus', sendVisible) // macOS에서 Cmd+H로 가렸다 다시 보이면 show가 오지 않는다
   nativeTheme.on('updated', () => {
     if (!w.isDestroyed()) w.setBackgroundColor(background())
   })
@@ -116,7 +125,63 @@ function createWindow(hidden: boolean): BrowserWindow {
   return w
 }
 
+// macOS에는 한국어로 된 최소 메뉴(편집 메뉴가 없으면 입력칸의 복사·붙여넣기가 안 된다), 그 밖에는 메뉴 없음.
+// 개발 실행에서만 개발 메뉴를 더한다.
+function setMenu(): void {
+  const dev: MenuItemConstructorOptions[] = app.isPackaged
+    ? []
+    : [
+        {
+          label: '개발',
+          submenu: [
+            { label: '개발자 도구', role: 'toggleDevTools' },
+            { label: '새로 고침', role: 'reload' }
+          ]
+        }
+      ]
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(dev.length > 0 ? Menu.buildFromTemplate(dev) : null)
+    return
+  }
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: '연구비서',
+      submenu: [
+        { label: '연구비서 정보', role: 'about' },
+        { type: 'separator' },
+        { label: '연구비서 가리기', role: 'hide' },
+        { label: '기타 가리기', role: 'hideOthers' },
+        { label: '모두 보기', role: 'unhide' },
+        { type: 'separator' },
+        { label: '연구비서 종료', role: 'quit' }
+      ]
+    },
+    {
+      label: '편집',
+      submenu: [
+        { label: '실행 취소', role: 'undo' },
+        { label: '다시 실행', role: 'redo' },
+        { type: 'separator' },
+        { label: '잘라내기', role: 'cut' },
+        { label: '복사', role: 'copy' },
+        { label: '붙여넣기', role: 'paste' },
+        { label: '전체 선택', role: 'selectAll' }
+      ]
+    },
+    {
+      label: '창',
+      submenu: [
+        { label: '최소화', role: 'minimize' },
+        { label: '닫기', role: 'close' }
+      ]
+    },
+    ...dev
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 function start(corruptBackup: string | null): void {
+  setMenu()
   if (state.profile) setOpenAtLogin(state.settings.openAtLogin)
 
   createTray({ open: showWindow, refresh: () => void runner.collectNow(), quit: () => app.quit() })
