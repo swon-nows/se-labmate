@@ -3,9 +3,11 @@ import type { RawItem } from '../../../shared/types'
 import { isHttpUrl } from '../text'
 
 // parseTagValue: false — 숫자처럼 보이는 제목이 숫자로 바뀌지 않게 한다.
+// htmlEntities: true — 기본 설정이 풀지 않는 &#39; 같은 숫자 참조를 푼다(&amp;lt; 는 &lt; 로 한 번만 풀린다).
 export const xml = new XMLParser({
   ignoreAttributes: false,
   parseTagValue: false,
+  htmlEntities: true,
   isArray: (n) => n === 'entry' || n === 'item'
 })
 
@@ -19,10 +21,12 @@ export function textOf(v: unknown): string {
   return ''
 }
 
-// 공통 규칙: 날짜가 유효하지 않거나 제목이 비었거나 주소가 http(s)가 아니면 null(버림).
+// 공통 규칙: 날짜가 유효하지 않거나 제목이 비었거나 주소가 http(s)가 아니거나
+// id가 접두어뿐이면(제목에 글자·숫자가 없는 경우) null(버림).
 export function finish(raw: Omit<RawItem, 'date'> & { date: string }): RawItem | null {
   const t = new Date(raw.date).getTime()
-  if (Number.isNaN(t) || raw.title.trim() === '' || !isHttpUrl(raw.url)) return null
+  if (Number.isNaN(t) || raw.title.trim() === '' || !isHttpUrl(raw.url) || raw.id.endsWith(':'))
+    return null
   return { ...raw, date: new Date(t).toISOString() }
 }
 

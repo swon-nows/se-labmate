@@ -34,6 +34,26 @@ const ARXIV_ONE = `<?xml version='1.0' encoding='UTF-8'?>
 </feed>`
 const ARXIV_EMPTY = `<?xml version='1.0' encoding='UTF-8'?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>arXiv Query</title></feed>`
+// 실제 응답(2026-11-24, id_list=not-a-valid-id): 정상 피드 안에 오류 entry 하나
+const ARXIV_ERROR = `<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/</id>
+  <title>arXiv Search Results</title>
+  <updated>2026-11-24T02:30:59Z</updated>
+  <opensearch:itemsPerPage>1</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>https://arxiv.org/api/errors#incorrect_id_format_for_not-a-valid-id</id>
+    <title>Error</title>
+    <updated>2026-11-24T02:30:59Z</updated>
+    <link href="https://arxiv.org/api/errors#incorrect_id_format_for_not-a-valid-id" rel="alternate" type="text/html"/>
+    <summary>incorrect id format for not-a-valid-id</summary>
+    <author>
+      <name>arXiv api core</name>
+    </author>
+  </entry>
+</feed>`
 const OPENALEX_ONE = JSON.stringify({
   results: [
     {
@@ -54,6 +74,10 @@ const GNEWS_ONE = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><cha
 const GNEWS_ODD = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title>
 <item><title>R&amp;D 예산 &lt;b&gt;확대&lt;/b&gt; - 전자신문</title><link>https://news.google.com/rss/articles/B?oc=5</link><guid isPermaLink="false">B</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate><source url="https://www.etnews.com">전자신문</source></item>
 <item><title>나쁜 주소 - 전자신문</title><link>javascript:alert(1)</link><guid isPermaLink="false">C</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate><source url="https://www.etnews.com">전자신문</source></item>
+</channel></rss>`
+const GNEWS_NUMERIC = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title>
+<item><title>Don&#39;t panic - X</title><link>https://example.com/n1</link><guid>n1</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate><source url="https://example.com">X</source></item>
+<item><title>Q&amp;#39;s &amp;lt;i&amp;gt; - X</title><link>https://example.com/n2</link><guid>n2</guid><pubDate>Wed, 18 Nov 2026 04:41:40 GMT</pubDate><source url="https://example.com">X</source></item>
 </channel></rss>`
 const GNEWS_PLAIN = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title>
 <item><title>출처 없는 기사 - 어딘가</title><link>https://example.com/1</link><guid>1</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate></item>
@@ -89,6 +113,27 @@ test('글자와 주소', () => {
   expect(items).toHaveLength(1)
   expect(items[0].title).toBe('R&D 예산 <b>확대</b>')
   expect(items[0].source).toBe('전자신문')
+})
+test('숫자 참조는 풀고 이중으로 풀지 않는다', () => {
+  const [a, b] = parseGnews(GNEWS_NUMERIC)
+  expect(a.title).toBe("Don't panic")
+  expect(b.title).toBe('Q&#39;s &lt;i&gt;')
+})
+test('글자 없는 제목은 버린다', () => {
+  const body = JSON.stringify({
+    results: [
+      {
+        id: 'https://openalex.org/W2',
+        doi: 'https://doi.org/10.1/y',
+        title: '???',
+        publication_date: '2026-11-23'
+      }
+    ]
+  })
+  expect(parseOpenAlex(body)).toEqual([])
+})
+test('arXiv 오류 entry는 논문이 아니라 오류다', () => {
+  expect(() => parseArxiv(ARXIV_ERROR)).toThrow('incorrect id format for not-a-valid-id')
 })
 test('Google 뉴스 출처 없음·제목 끝 불일치·limit', () => {
   const [a, b] = parseGnews(GNEWS_PLAIN) // 날짜 최신순이라 20일 기사(a)가 먼저

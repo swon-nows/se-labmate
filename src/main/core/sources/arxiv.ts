@@ -16,6 +16,9 @@ export function parseArxiv(body: string): RawItem[] {
   if (!feed || typeof feed !== 'object') throw new Error('arXiv 응답에 feed가 없습니다')
   const out: RawItem[] = []
   for (const e of (feed.entry ?? []) as Record<string, unknown>[]) {
+    // 오류도 정상 피드 안의 entry 하나로 온다(id가 arxiv.org/api/errors로 시작, 제목 'Error').
+    if (/^https?:\/\/arxiv\.org\/api\/errors/.test(textOf(e.id).trim()))
+      throw new Error(squash(textOf(e.summary)) || 'arXiv 오류 응답')
     const title = squash(textOf(e.title))
     const it = finish({
       id: 'paper:' + normalizeTitle(title),
