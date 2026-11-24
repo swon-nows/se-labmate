@@ -1,0 +1,36 @@
+appId: com.researchassistant.app
+productName: 연구비서
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
+win:
+  executableName: research-assistant
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  artifactName: research-assistant-${version}-${arch}.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+mac:
+  identity: '-'
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+  extendInfo:
+    # 연구비서 in NFD: Electron finds helper apps by CFBundleName, and electron-builder names them in NFD; NFC crashes at launch
+    CFBundleName: "\u110B\u1167\u11AB\u1100\u116E\u1107\u1175\u1109\u1165"
+dmg:
+  artifactName: research-assistant-${version}-${arch}.${ext}
+npmRebuild: false
