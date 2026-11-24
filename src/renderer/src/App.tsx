@@ -71,11 +71,11 @@ function App(): React.JSX.Element | null {
         </div>
       </header>
       <main className="content">
-        {screen === 'feed' ? (
+        {/* 설정을 다녀와도 이번 새 소식 목록이 남도록 피드는 숨기기만 한다. */}
+        <div hidden={screen !== 'feed'}>
           <Feed status={status} onCount={setCount} />
-        ) : (
-          <Settings state={state} status={status} onSaved={load} />
-        )}
+        </div>
+        {screen === 'settings' && <Settings state={state} status={status} onSaved={load} />}
       </main>
     </>
   )

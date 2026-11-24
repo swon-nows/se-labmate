@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Orb } from '@yogesharc/thinking-orbs'
+import { OrbBoundary } from './OrbBoundary'
 
 const SHOW_AFTER_MS = 300
 
@@ -25,7 +26,11 @@ export function StatusOrb({ active, state, label }: Props): React.JSX.Element {
   return (
     <span className={visible ? 'status-orb' : 'status-orb is-hidden'} role="status">
       <span className="status-orb-mark">
-        {visible && <Orb size={18} state={state} label={label} />}
+        {visible && (
+          <OrbBoundary>
+            <Orb size={18} state={state} label={label} />
+          </OrbBoundary>
+        )}
       </span>
       <span className="status-orb-label" aria-hidden="true">
         {label}

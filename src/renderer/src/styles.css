@@ -363,3 +363,156 @@ select.input {
 .status-orb.is-hidden {
   visibility: hidden;
 }
+
+/* 피드: 탭은 밑줄로, 칩은 테두리와 칠로 켜짐을 보인다. */
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  min-height: 40px;
+  margin-bottom: -1px; /* 선택 밑줄이 구분선과 겹친다 */
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab[aria-pressed='true'] {
+  border-bottom-color: var(--text);
+  color: var(--text);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.chip {
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--control-line);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--surface);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--text);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.chip[aria-pressed='true']:hover {
+  background: var(--pressed);
+}
+
+.group {
+  margin-top: 32px;
+}
+
+.group .section-title {
+  margin-bottom: 0;
+}
+
+.item-list {
+  padding: 0;
+  list-style: none;
+}
+
+.item-list.flat {
+  margin-top: 16px;
+}
+
+.item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.item-title {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.item-title:hover {
+  text-decoration: underline;
+}
+
+.item-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.item-summary {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.item-summary + .item-meta {
+  margin-top: 4px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-small {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.more {
+  margin-top: 12px;
+}
+
+.note {
+  margin-top: 24px;
+}
+
+/* 비어 있을 때만 큰 오브를 보인다. 목록 뒤에는 깔지 않는다. */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-top: 48px;
+}
+
+.big-orb {
+  width: 200px;
+  height: 200px;
+}
