@@ -1,10 +1,12 @@
-import { app, BrowserWindow, dialog, safeStorage } from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, net, safeStorage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import type { AppState, CollectStatus } from '../shared/types'
 import { collect } from './collector'
+import { createCollectRunner, markUnreadableKey } from './core/collect-runner'
 import { unseenCounts } from './core/feed'
-import { applyCollected } from './core/merge'
+import { createFetchText } from './core/fetch-text'
+import { createTick } from './core/tick'
 import { registerIpc } from './ipc'
 import { notify } from './notify'
 import { startScheduler } from './scheduler'
@@ -15,77 +17,55 @@ let win: BrowserWindow | null = null
 let quitting = false
 let state: AppState
 let file = ''
-let collecting: Promise<void> | null = null
-let lastFinishedAt: string | null = null
 
+// 저장이 실패하면 메모리 상태도 바꾸지 않는다.
 function update(next: AppState): void {
+  saveState(file, next)
   state = next
-  saveState(file, state)
   setTrayUnseen(Object.keys(unseenCounts(state)).length > 0)
 }
 
+const getState = (): AppState => state
 const showWindow = (): void => win?.show()
 
-const status = (): CollectStatus => ({
-  running: collecting !== null,
-  lastFinishedAt,
-  errors: state.sourceErrors
-})
-
-function sendStatus(): void {
-  if (win && !win.isDestroyed()) win.webContents.send('status', status())
+function sendStatus(status: CollectStatus): void {
+  if (win && !win.isDestroyed()) win.webContents.send('status', status)
 }
 
-// 오류 메시지는 state.json과 화면에 남는다. 원래 메시지에는 키가 든 URL이 섞일 수 있어 고정 문구로 바꾼다.
-const fetchFailed = (e: unknown): never => {
-  throw new Error(
-    e instanceof DOMException && e.name === 'TimeoutError' ? '요청 시간 초과' : '네트워크 오류'
-  )
-}
-
-async function fetchText(url: string, headers?: Record<string, string>): Promise<string> {
-  const res = await fetch(url, { headers, signal: AbortSignal.timeout(20_000) }).catch(fetchFailed)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.text().catch(fetchFailed)
-}
-
-function openAlexKey(): string | null {
-  if (state.openAlexKeyEnc === null) return null
+function decryptKey(enc: string | null): string | null {
+  if (enc === null) return null
   try {
-    return safeStorage.decryptString(Buffer.from(state.openAlexKeyEnc, 'base64'))
+    return safeStorage.decryptString(Buffer.from(enc, 'base64'))
   } catch {
     return null
   }
 }
 
-// 동시에 하나만 돈다. 돌려주는 Promise는 거부하지 않는다.
-function collectNow(): Promise<void> {
-  if (!collecting) {
-    collecting = runCollect()
-    sendStatus()
+const fetchText = createFetchText(fetch)
+const runner = createCollectRunner({
+  getState,
+  update,
+  now: () => new Date(),
+  onStatus: sendStatus,
+  collect: async (s) => {
+    const key = decryptKey(s.openAlexKeyEnc)
+    const collected = await collect(s, { fetchText, now: () => new Date(), openAlexKey: key })
+    return markUnreadableKey(collected, key)
   }
-  return collecting
-}
-
-async function runCollect(): Promise<void> {
-  try {
-    const deps = { fetchText, now: () => new Date(), openAlexKey: openAlexKey() }
-    const collected = await collect(state, deps)
-    // await 뒤에 state를 다시 읽어야 수집 중에 바뀐 확인·저장·숨김을 잃지 않는다(한 줄로 합치지 말 것).
-    update(applyCollected(state, collected, new Date().toISOString()))
-  } catch (e) {
-    console.error('수집 실패', e)
-  } finally {
-    collecting = null
-    lastFinishedAt = new Date().toISOString()
-    sendStatus()
-  }
-}
+})
 
 // 개발 실행에서 Electron 실행 파일이 로그인 항목으로 등록되지 않도록 포장된 앱에서만 건다.
 function setOpenAtLogin(openAtLogin: boolean): void {
-  if (app.isPackaged) app.setLoginItemSettings({ openAtLogin, args: ['--hidden'] })
+  if (!app.isPackaged) return
+  try {
+    app.setLoginItemSettings({ openAtLogin, args: ['--hidden'] })
+  } catch (e) {
+    console.error('로그인 항목 설정 실패', e)
+  }
 }
+
+// 렌더러 styles.css의 --bg와 같은 값: 어두운 모드에서 흰 화면이 번쩍이지 않게 한다.
+const background = (): string => (nativeTheme.shouldUseDarkColors ? '#161618' : '#ffffff')
 
 function createWindow(hidden: boolean): BrowserWindow {
   const w = new BrowserWindow({
@@ -93,6 +73,7 @@ function createWindow(hidden: boolean): BrowserWindow {
     height: 760,
     show: false,
     autoHideMenuBar: true,
+    backgroundColor: background(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -102,6 +83,9 @@ function createWindow(hidden: boolean): BrowserWindow {
   })
 
   if (!hidden) w.once('ready-to-show', () => w.show())
+  nativeTheme.on('updated', () => {
+    if (!w.isDestroyed()) w.setBackgroundColor(background())
+  })
   w.on('close', (e) => {
     if (quitting) return
     e.preventDefault()
@@ -120,6 +104,41 @@ function createWindow(hidden: boolean): BrowserWindow {
     w.loadFile(join(__dirname, '../renderer/index.html'))
   }
   return w
+}
+
+function start(): void {
+  if (state.profile) setOpenAtLogin(state.settings.openAtLogin)
+
+  createTray({ open: showWindow, refresh: () => void runner.collectNow(), quit: () => app.quit() })
+  setTrayUnseen(Object.keys(unseenCounts(state)).length > 0)
+
+  // macOS는 로그인 항목에 args를 넘기지 않으므로 wasOpenedAtLogin으로 안다.
+  const atLogin =
+    process.argv.includes('--hidden') ||
+    (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin)
+  registerIpc({
+    getState,
+    update,
+    status: runner.status,
+    collectNow: runner.collectNow,
+    collectFresh: runner.collectFresh,
+    windowVisible: () => !!win && win.isVisible() && !win.isMinimized(),
+    setOpenAtLogin,
+    testNotification: () => notify('알림 테스트입니다', showWindow)
+  })
+  win = createWindow(atLogin)
+
+  void runner.collectNow()
+  startScheduler(
+    createTick({
+      getState,
+      update,
+      now: () => new Date(),
+      isOnline: () => net.isOnline(),
+      collectNow: runner.collectNow,
+      notify: (body) => notify(body, showWindow)
+    })
+  )
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -144,32 +163,15 @@ if (!app.requestSingleInstanceLock()) {
       app.quit()
       return
     }
-    if (state.profile) setOpenAtLogin(state.settings.openAtLogin)
-
-    createTray({ open: showWindow, refresh: () => void collectNow(), quit: () => app.quit() })
-    setTrayUnseen(Object.keys(unseenCounts(state)).length > 0)
-
-    // macOS는 로그인 항목에 args를 넘기지 않으므로 wasOpenedAtLogin으로 안다.
-    const atLogin =
-      process.argv.includes('--hidden') ||
-      (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin)
-    registerIpc({
-      getState: () => state,
-      update,
-      status,
-      collectNow,
-      windowVisible: () => win?.isVisible() ?? false,
-      setOpenAtLogin,
-      testNotification: () => notify('알림 테스트입니다', showWindow)
-    })
-    win = createWindow(atLogin)
-
-    void collectNow()
-    startScheduler({
-      getState: () => state,
-      update,
-      collectNow,
-      notify: (body) => notify(body, showWindow)
-    })
+    try {
+      start()
+    } catch (e) {
+      // 창 없는 프로세스가 단일 실행 잠금을 쥔 채 남지 않게 바로 끝낸다.
+      dialog.showErrorBox(
+        '연구비서',
+        '시작하지 못했습니다.\n' + (e instanceof Error ? e.message : String(e))
+      )
+      app.exit(1)
+    }
   })
 }

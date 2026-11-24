@@ -9,6 +9,7 @@ export interface IpcDeps {
   update(next: AppState): void
   status(): CollectStatus
   collectNow(): Promise<void> // 거부하지 않는다
+  collectFresh(): Promise<void> // 거부하지 않는다
   windowVisible(): boolean
   setOpenAtLogin(open: boolean): void
   testNotification(): void
@@ -48,9 +49,13 @@ export function registerIpc(d: IpcDeps): void {
     } catch {
       return { ok: false, errors: ['이 컴퓨터에서는 키를 안전하게 저장할 수 없습니다.'] }
     }
-    d.update(next)
+    try {
+      d.update(next) // 저장에 실패하면 메모리 상태도 그대로다
+    } catch {
+      return { ok: false, errors: ['설정을 저장하지 못했습니다.'] }
+    }
     d.setOpenAtLogin(next.settings.openAtLogin)
-    void d.collectNow()
+    void d.collectFresh() // 수집 중이면 끝난 뒤 새 프로필로 한 번 더 돈다
     return { ok: true }
   })
 

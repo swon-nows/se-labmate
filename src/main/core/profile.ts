@@ -52,10 +52,17 @@ export function applyProfile(
   now: string
 ): AppState {
   const key = input.openAlexKey === null ? '' : input.openAlexKey?.trim()
+  const { keywordsEn, keywordsKo, country } = input.profile
+  const { notifyTime, openAtLogin, enabled } = input.settings
+  // 렌더러가 보낸 그 밖의 키는 저장하지 않는다.
   return {
     ...state,
-    profile: input.profile,
-    settings: input.settings,
+    profile: { keywordsEn, keywordsKo, country },
+    settings: {
+      notifyTime,
+      openAtLogin,
+      enabled: Object.fromEntries(CATEGORIES.map((c) => [c, enabled[c]])) as Settings['enabled']
+    },
     openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
     lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt
   }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { applyProfile, isSaveInput, validateProfile } from '../../src/main/core/profile'
+import { CATEGORIES } from '../../src/shared/types'
 import type { Profile, Settings } from '../../src/shared/types'
 import { NOW, st } from '../helpers'
 
@@ -46,7 +47,13 @@ describe('isSaveInput', () => {
     ['notifyTime이 문자열이 아님', { ...base, settings: { ...settings, notifyTime: 900 } }],
     ['openAtLogin이 boolean이 아님', { ...base, settings: { ...settings, openAtLogin: 'yes' } }],
     ['enabled 키 빠짐', { ...base, settings: { ...settings, enabled: missingPaper } }],
-    ['숫자 openAlexKey', { ...base, openAlexKey: 1 }]
+    ['숫자 openAlexKey', { ...base, openAlexKey: 1 }],
+    [
+      'enabled 안의 boolean 아닌 값',
+      { ...base, settings: { ...settings, enabled: { ...settings.enabled, news: 'yes' } } }
+    ],
+    ['배열로 온 profile', { ...base, profile: [profile] }],
+    ['객체가 아닌 settings', { ...base, settings: 'x' }]
   ])('%s → 거부', (_name, input) => {
     expect(isSaveInput(input)).toBe(false)
   })
@@ -70,6 +77,18 @@ describe('applyProfile', () => {
     expect(key(null)).toBeNull()
     expect(key('   ')).toBeNull()
     expect(key(' abc ')).toBe('enc(abc)')
+  })
+  test('알려진 필드만 저장한다', () => {
+    const input = {
+      profile: { ...profile, extra: 1 },
+      settings: { ...settings, extra: 2, enabled: { ...settings.enabled, extra: true } },
+      extra: 3
+    }
+    const out = applyProfile(st(), input, enc, NOW)
+    expect(out.profile).toEqual(profile)
+    expect(out.settings).toEqual(settings)
+    expect(Object.keys(out.settings.enabled).sort()).toEqual([...CATEGORIES].sort())
+    expect(out).not.toHaveProperty('extra')
   })
   test('암호화가 던지면 그대로 던진다', () => {
     const fail = (): string => {
