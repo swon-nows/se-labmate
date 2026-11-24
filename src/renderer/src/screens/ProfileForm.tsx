@@ -4,7 +4,9 @@ import type { Category, Profile, PublicState, SaveInput } from '../../../shared/
 
 interface Props {
   initial: PublicState
-  onSaved: () => void
+  // 저장이 끝난 뒤 화면을 다시 불러오는 일을 돌려주면 그 동안 저장 버튼을 잠근다.
+  onSaved: () => void | Promise<void>
+  onSubmitStart?: () => void
   submitLabel: string
   showCategories?: boolean
 }
@@ -18,6 +20,7 @@ const splitKeywords = (text: string): string[] =>
 export function ProfileForm({
   initial,
   onSaved,
+  onSubmitStart,
   submitLabel,
   showCategories = false
 }: Props): React.JSX.Element {
@@ -52,14 +55,14 @@ export function ProfileForm({
     if (typedKey) input.openAlexKey = keyText
     else if (willDelete) input.openAlexKey = null
 
+    onSubmitStart?.()
     setPending(true)
     setErrors([])
     try {
       const result = await window.api.saveProfile(input)
+      // 입력칸은 여기서 비우지 않는다. onSaved가 다시 불러온 상태로 부모가 이 폼을 새로 만든다.
       if (result.ok) {
-        setKeyText('')
-        setDeleteKey(false)
-        onSaved()
+        await onSaved()
       } else {
         setErrors(result.errors)
       }
@@ -147,10 +150,10 @@ export function ProfileForm({
             발급 방법 (무료, 약 30초)
           </button>
         </div>
-        <div id="pf-key-hint" className="hint key-state">
+        <div className="hint key-state">
           {hasKey && !willDelete && (
             <>
-              <span>저장됨</span>
+              <span id="pf-key-hint">저장됨</span>
               <button
                 type="button"
                 className="btn"
@@ -163,8 +166,10 @@ export function ProfileForm({
               </button>
             </>
           )}
-          {willDelete && <span>저장하면 삭제됩니다</span>}
-          {!hasKey && !typedKey && <span>키가 없으면 논문은 arXiv에서만 가져옵니다.</span>}
+          {willDelete && <span id="pf-key-hint">저장하면 삭제됩니다</span>}
+          {!hasKey && !typedKey && (
+            <span id="pf-key-hint">키가 없으면 논문은 arXiv에서만 가져옵니다.</span>
+          )}
         </div>
       </div>
 
@@ -209,11 +214,13 @@ export function ProfileForm({
       )}
 
       {errors.length > 0 && (
-        <ul className="errors" role="alert">
-          {errors.map((message, i) => (
-            <li key={i}>{message}</li>
-          ))}
-        </ul>
+        <div role="alert">
+          <ul className="errors">
+            {errors.map((message, i) => (
+              <li key={i}>{message}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <button type="submit" className="btn btn-primary" disabled={pending}>

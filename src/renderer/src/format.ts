@@ -6,9 +6,9 @@ export function relativeDate(iso: string, now: Date): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   const days = dayNumber(now) - dayNumber(d)
-  if (days <= 0) return '오늘'
+  if (days === 0) return '오늘'
   if (days === 1) return '어제'
-  if (days <= 7) return `${days}일 전`
+  if (days >= 2 && days <= 7) return `${days}일 전`
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 

@@ -6,7 +6,7 @@ export function Onboarding({
   onSaved
 }: {
   state: PublicState
-  onSaved: () => void
+  onSaved: () => Promise<void>
 }): React.JSX.Element {
   return (
     <main className="content">

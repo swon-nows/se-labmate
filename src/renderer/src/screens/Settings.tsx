@@ -7,28 +7,30 @@ import { ProfileForm } from './ProfileForm'
 interface Props {
   state: PublicState
   status: CollectStatus
-  onSaved: () => void
+  onSaved: () => Promise<void> // 다시 불러온 상태가 도착하면 끝난다
 }
 
 export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
   const [saved, setSaved] = useState(false)
+  // 저장이 끝나 다시 불러오면 폼을 새 상태로 다시 만든다(주제어는 서버가 다듬은 값, 키는 새 저장 여부).
+  const [formKey, setFormKey] = useState(0)
   const { profile, settings, hasOpenAlexKey } = state
   const sources = profile ? activeSources(profile, settings, hasOpenAlexKey) : []
 
   return (
     <>
-      {/* 입력이 바뀌면 지난 저장 안내를 걷는다. change 이벤트는 위로 올라온다. */}
-      <div onChange={() => setSaved(false)}>
-        <ProfileForm
-          initial={state}
-          submitLabel="저장"
-          showCategories
-          onSaved={() => {
-            onSaved()
-            setSaved(true)
-          }}
-        />
-      </div>
+      <ProfileForm
+        key={formKey}
+        initial={state}
+        submitLabel="저장"
+        showCategories
+        onSubmitStart={() => setSaved(false)}
+        onSaved={async () => {
+          await onSaved()
+          setFormKey((k) => k + 1)
+          setSaved(true)
+        }}
+      />
       <p className="saved" role="status">
         {saved ? '저장했습니다.' : ''}
       </p>

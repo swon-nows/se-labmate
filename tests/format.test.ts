@@ -19,6 +19,10 @@ describe('relativeDate', () => {
     expect(relativeDate(at(2026, 10, 16, 12, 0), now)).toBe('2026-11-16')
     expect(relativeDate(at(2026, 9, 1, 12, 0), now)).toBe('2026-10-01')
   })
+  it('미래 날짜는 오늘이 아니라 날짜로 보인다', () => {
+    expect(relativeDate(at(2026, 10, 25, 9, 0), now)).toBe('2026-11-25')
+    expect(relativeDate(at(2027, 0, 5, 12, 0), now)).toBe('2027-01-05')
+  })
 })
 
 describe('formatStars', () => {
