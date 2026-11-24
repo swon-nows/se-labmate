@@ -1,4 +1,5 @@
 import type { RawItem } from '../../../shared/types'
+import { normalizeTitle } from '../text'
 import { finish, quoteAll, textOf, xml } from './common'
 
 export function buildGnewsUrl(keywords: string[], edition: 'ko' | 'en'): string {
@@ -21,10 +22,14 @@ export function parseGnews(body: string, limit = 30): RawItem[] {
     const url = textOf(e.link).trim()
     let title = textOf(e.title).trim()
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3))
+    const name = source || 'Google 뉴스'
+    // guid는 같은 기사도 몇 시간 뒤 바뀌므로 id는 제목과 언론사로 정한다.
+    const key = normalizeTitle(title)
+    if (key === '') continue
     const it = finish({
-      id: 'news:' + (textOf(e.guid).trim() || url),
+      id: `news:${key}:${normalizeTitle(name)}`,
       category: 'news',
-      source: source || 'Google 뉴스',
+      source: name,
       title,
       url,
       date: textOf(e.pubDate).trim(),

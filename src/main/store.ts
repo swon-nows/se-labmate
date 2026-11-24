@@ -41,7 +41,8 @@ function isState(v: unknown): v is AppState {
   )
 }
 
-export function loadState(file: string): AppState {
+// onCorrupt: 깨진 파일을 옮겨 둔 경로를 받는다(사용자에게 알리기 위해).
+export function loadState(file: string, onCorrupt?: (backupPath: string) => void): AppState {
   if (!existsSync(file)) return defaultState()
   const text = readFileSync(file, 'utf8') // 읽기 오류는 깨진 파일이 아니므로 그대로 던진다
   let value: unknown
@@ -52,7 +53,9 @@ export function loadState(file: string): AppState {
   }
   if (isState(value)) return value
   // 깨진 파일은 지우지 않고 옆에 남겨 둔다.
-  renameSync(file, join(dirname(file), `state.corrupt-${Date.now()}.json`))
+  const backup = join(dirname(file), `state.corrupt-${Date.now()}.json`)
+  renameSync(file, backup)
+  onCorrupt?.(backup)
   return defaultState()
 }
 
@@ -67,5 +70,23 @@ export function saveState(file: string, state: AppState): void {
   } finally {
     closeSync(fd)
   }
-  renameSync(tmp, file)
+  replace(tmp, file)
+}
+
+// Windows에서는 백신 등이 파일을 잠시 쥐고 있으면 이름 바꾸기가 실패한다. 50ms 간격으로 다섯 번까지 다시 해 본다.
+function replace(from: string, to: string): void {
+  for (let retry = 0; ; retry++) {
+    try {
+      return renameSync(from, to)
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code ?? ''
+      if (
+        process.platform !== 'win32' ||
+        retry === 5 ||
+        !['EPERM', 'EBUSY', 'EACCES'].includes(code)
+      )
+        throw e
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50)
+    }
+  }
 }

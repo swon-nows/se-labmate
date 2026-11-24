@@ -11,7 +11,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
 }
 
 export interface RawItem {
-  id: string // 'paper:<정규화 제목>' | 'repo:<owner/name 소문자>' | 'news:<guid>'
+  id: string // 'paper:<정규화 제목>' | 'repo:<owner/name 소문자>' | 'news:<정규화 제목>:<정규화 언론사>'
   category: Category
   source: string // 'arXiv' | 'OpenAlex' | 'GitHub' | 뉴스는 언론사 이름
   title: string

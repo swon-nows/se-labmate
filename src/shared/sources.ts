@@ -16,3 +16,7 @@ export function activeSources(
     news && 'Google 뉴스(영문)'
   ].filter((s): s is string => typeof s === 'string')
 }
+
+// 켜진 출처가 하나 이상이고, 그 모두에 마지막 수집의 오류가 남아 있는가.
+export const allFailed = (sources: string[], errors: Record<string, string>): boolean =>
+  sources.length > 0 && sources.every((s) => Object.hasOwn(errors, s))

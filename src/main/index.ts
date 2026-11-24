@@ -41,7 +41,8 @@ function decryptKey(enc: string | null): string | null {
   }
 }
 
-const fetchText = createFetchText(fetch)
+// 전역 fetch와 달리 시스템 프록시와 운영체제 인증서 저장소를 따른다. 호출은 앱이 준비된 뒤에만 일어난다.
+const fetchText = createFetchText((url, init) => net.fetch(url, init))
 const runner = createCollectRunner({
   getState,
   update,
@@ -115,7 +116,7 @@ function createWindow(hidden: boolean): BrowserWindow {
   return w
 }
 
-function start(): void {
+function start(corruptBackup: string | null): void {
   if (state.profile) setOpenAtLogin(state.settings.openAtLogin)
 
   createTray({ open: showWindow, refresh: () => void runner.collectNow(), quit: () => app.quit() })
@@ -136,6 +137,13 @@ function start(): void {
     testNotification: () => notify('알림 테스트입니다', showWindow)
   })
   win = createWindow(atLogin)
+  if (corruptBackup)
+    void dialog.showMessageBox({
+      type: 'warning',
+      title: '연구비서',
+      message: '저장 파일이 손상되어 처음 상태로 시작합니다.',
+      detail: `이전 파일은 다음 위치에 남겨 두었습니다:\n${corruptBackup}`
+    })
 
   void runner.collectNow()
   startScheduler(
@@ -164,8 +172,9 @@ if (!app.requestSingleInstanceLock()) {
     app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
     file = join(app.getPath('userData'), 'state.json')
+    let corruptBackup: string | null = null
     try {
-      state = loadState(file)
+      state = loadState(file, (path) => (corruptBackup = path))
     } catch {
       // 기본값으로 덮어쓰면 하나뿐인 사본을 잃는다. 아무것도 만들지 않고 끝낸다.
       dialog.showErrorBox('연구비서', '저장 파일을 읽을 수 없어 종료합니다.\n' + file)
@@ -173,7 +182,7 @@ if (!app.requestSingleInstanceLock()) {
       return
     }
     try {
-      start()
+      start(corruptBackup)
     } catch (e) {
       // 창 없는 프로세스가 단일 실행 잠금을 쥔 채 남지 않게 바로 끝낸다.
       dialog.showErrorBox(

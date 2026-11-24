@@ -141,10 +141,27 @@ test('Google 뉴스 출처 없음·제목 끝 불일치·limit', () => {
   expect(b.title).toBe('출처 없는 기사 - 어딘가')
   expect(a.source).toBe('연합뉴스')
   expect(a.title).toBe('제목 끝이 다른 기사 - 어딘가')
-  expect(a.id).toBe('news:2')
+  expect(a.id).toBe('news:제목끝이다른기사어딘가:연합뉴스')
   const ko = parseGnews(fx('gnews-ko.xml'), 3)
   expect(ko).toHaveLength(3)
   expect(ko[0].date >= ko[1].date && ko[1].date >= ko[2].date).toBe(true)
+})
+test('뉴스 id는 guid가 아니라 정규화한 제목과 언론사로 정한다', () => {
+  const item = (guid: string, source: string, title = 'GNN이 바꾼 설계'): string =>
+    `<item><title>${title} - ${source}</title><link>https://example.com/${guid}</link><guid>${guid}</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate><source url="https://example.com">${source}</source></item>`
+  const rss = (...items: string[]): string =>
+    `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title>${items.join('')}</channel></rss>`
+  const [a] = parseGnews(rss(item('g1', '한겨레')))
+  const [b] = parseGnews(rss(item('g2', '한겨레')))
+  expect(a.id).toBe('news:gnn이바꾼설계:한겨레')
+  expect(b.id).toBe(a.id)
+  const two = parseGnews(rss(item('g1', '한겨레'), item('g3', '연합뉴스')))
+  expect(new Set(two.map((i) => i.id)).size).toBe(2)
+  expect(parseGnews(rss(item('g4', 'X', '???')))).toEqual([])
+  for (const f of ['gnews-ko.xml', 'gnews-en.xml']) {
+    const all = parseGnews(fx(f), 1000)
+    expect(new Set(all.map((i) => i.id)).size).toBe(all.length)
+  }
 })
 test('URL', () => {
   const today = new Date('2026-11-24T03:00:00Z')
@@ -161,6 +178,11 @@ test('URL', () => {
   expect(new URL(buildGithubUrls(['k1'], today)[0]).searchParams.get('q')).toBe(
     '"k1" in:name,description,topics created:>=2026-08-26'
   )
+  const forty = Array.from({ length: 6 }, (_, i) => String(i).repeat(40))
+  const qs = buildGithubUrls(forty, today).map((u) => new URL(u).searchParams.get('q') ?? '')
+  expect(qs.length).toBeGreaterThan(1)
+  for (const q of qs) expect(q.length).toBeLessThanOrEqual(256)
+  expect(qs.join(' ').match(/"\d+"/g)).toHaveLength(6)
   const g = new URL(buildGnewsUrl(['인공지능', '구조공학'], 'ko'))
   expect(g.searchParams.get('q')).toBe('"인공지능" OR "구조공학" when:7d')
   expect(g.searchParams.get('ceid')).toBe('KR:ko')

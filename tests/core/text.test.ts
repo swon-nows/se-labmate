@@ -39,4 +39,9 @@ describe('cleanKeywords', () => {
   test('앞에서 8개까지만 남긴다', () => {
     expect(cleanKeywords(Array.from({ length: 12 }, (_, i) => `k${i}`))).toHaveLength(8)
   })
+  test('키워드 하나는 60자까지 자르고 뒤 공백을 뗀다', () => {
+    const long = 'a'.repeat(59) + ' ' + 'b'.repeat(40)
+    expect(cleanKeywords([long])).toEqual(['a'.repeat(59)])
+    expect(cleanKeywords(['x'.repeat(100)])[0]).toHaveLength(60)
+  })
 })

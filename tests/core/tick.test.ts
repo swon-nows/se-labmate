@@ -16,10 +16,12 @@ interface Harness {
   collect: Mock<() => Promise<void>>
   get(): AppState
   set(s: AppState): void
+  at(iso: string): void // 시계를 옮긴다
 }
 
 function setup(initial: AppState, collectNow: () => Promise<void>, online = true): Harness {
   let state = initial
+  let clock = NOW
   const notify = vi.fn<(body: string) => void>()
   const collect = vi.fn(collectNow)
   const tick = createTick({
@@ -27,7 +29,7 @@ function setup(initial: AppState, collectNow: () => Promise<void>, online = true
     update: (next) => {
       state = next
     },
-    now: () => new Date(NOW),
+    now: () => new Date(clock),
     isOnline: () => online,
     collectNow: collect,
     notify
@@ -39,9 +41,15 @@ function setup(initial: AppState, collectNow: () => Promise<void>, online = true
     get: () => state,
     set: (s: AppState) => {
       state = s
+    },
+    at: (iso: string) => {
+      clock = iso
     }
   }
 }
+
+const later = (minutes: number): string =>
+  new Date(Date.parse(NOW) + minutes * 60_000).toISOString()
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -103,5 +111,57 @@ describe('createTick', () => {
     t.set(due())
     await t.tick()
     expect(t.collect).toHaveBeenCalledTimes(2)
+  })
+
+  test('켜진 출처가 모두 실패하면 오늘 몫을 쓰지 않고 5분 뒤에 다시 돈다', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    let fail = true
+    const t = setup(due(), async () => {
+      const s = t.get()
+      if (fail)
+        t.set({
+          ...s,
+          sourceErrors: {
+            arXiv: 'HTTP 503',
+            GitHub: 'HTTP 503',
+            'Google 뉴스(영문)': '네트워크 오류'
+          }
+        })
+      else
+        t.set({
+          ...s,
+          sourceErrors: {},
+          items: { a: mk({ id: 'a', collectedAt: t.get().lastDailyRunAt ?? NOW }) }
+        })
+    })
+    await t.tick()
+    expect(t.collect).toHaveBeenCalledTimes(1)
+    expect(t.get().lastDailyRunAt).toBe(OLD_RUN)
+    expect(t.notify).not.toHaveBeenCalled()
+
+    t.at(later(1))
+    await t.tick()
+    expect(t.collect).toHaveBeenCalledTimes(1)
+
+    fail = false
+    t.at(later(5))
+    await t.tick()
+    expect(t.collect).toHaveBeenCalledTimes(2)
+    expect(t.get().lastDailyRunAt).toBe(later(5))
+    expect(t.notify).toHaveBeenCalledTimes(1)
+
+    t.at(later(10))
+    await t.tick()
+    expect(t.collect).toHaveBeenCalledTimes(2)
+    expect(t.notify).toHaveBeenCalledTimes(1)
+  })
+
+  test('일부 출처만 실패하면 평소대로 오늘 몫을 쓴다', async () => {
+    const t = setup(due(), async () => {
+      t.set({ ...t.get(), sourceErrors: { GitHub: 'HTTP 403' }, items: { a: mk({ id: 'a' }) } })
+    })
+    await t.tick()
+    expect(t.get().lastDailyRunAt).toBe(NOW)
+    expect(t.notify).toHaveBeenCalledTimes(1)
   })
 })
