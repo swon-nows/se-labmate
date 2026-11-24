@@ -8,6 +8,7 @@ import { createCollectRunner, markUnreadableKey } from './core/collect-runner'
 import { unseenCounts } from './core/feed'
 import { createFetchText } from './core/fetch-text'
 import { createTick } from './core/tick'
+import { isWindowOpen } from './core/visibility'
 import { registerIpc } from './ipc'
 import { notify } from './notify'
 import { startScheduler } from './scheduler'
@@ -16,6 +17,8 @@ import { createTray, setTrayUnseen } from './tray'
 
 let win: BrowserWindow | null = null
 let quitting = false
+let closedToTray = true // 트레이로 닫혀 있는가. 창을 처음 보이기 전(숨긴 채 시작 포함)에도 참이다
+let sentVisible: boolean | null = null // 렌더러에 마지막으로 보낸 window-visible 값
 let state: AppState
 let file = ''
 
@@ -27,11 +30,28 @@ function update(next: AppState): void {
 }
 
 const getState = (): AppState => state
+
+const windowOpen = (): boolean =>
+  !!win &&
+  !win.isDestroyed() &&
+  isWindowOpen(closedToTray, win.isMinimized(), process.platform === 'darwin' && app.isHidden())
+
+// 보임 여부는 사용자가 정한 상태(트레이로 닫음·내림·macOS의 앱 가리기)로만 정하고, 다른 창에 덮인 것은 보이는 것으로 친다.
+// 창 이벤트마다 다시 계산하지만 값이 바뀔 때만 보낸다: macOS는 덮이고 드러날 때도 hide·show를 보내므로 그때는 보내지 않는다.
+function syncVisible(): void {
+  const open = windowOpen()
+  if (!win || win.isDestroyed() || open === sentVisible) return
+  sentVisible = open
+  win.webContents.send('window-visible', open)
+}
+
 function showWindow(): void {
   if (!win) return
+  closedToTray = false
   if (win.isMinimized()) win.restore()
   win.show()
   win.focus()
+  syncVisible()
 }
 
 function sendStatus(status: CollectStatus): void {
@@ -91,24 +111,27 @@ function createWindow(hidden: boolean): BrowserWindow {
     }
   })
 
-  if (!hidden) w.once('ready-to-show', () => w.show())
-  // 보임 여부는 창 이벤트로만 알린다. macOS에서는 다른 창에 가려지기만 해도 페이지가 숨김으로 바뀐다.
-  // 처음 show를 포함해 show·restore마다 true를 보내므로, 숨긴 채 시작해도 열 때 새 소식을 받는다.
-  const sendVisible = (): void => {
-    if (!w.isDestroyed()) w.webContents.send('window-visible', w.isVisible() && !w.isMinimized())
-  }
-  w.on('show', sendVisible)
-  w.on('hide', sendVisible)
-  w.on('minimize', sendVisible)
-  w.on('restore', sendVisible)
-  w.on('focus', sendVisible) // macOS에서 Cmd+H로 가렸다 다시 보이면 show가 오지 않는다
+  if (!hidden)
+    w.once('ready-to-show', () => {
+      closedToTray = false
+      w.show()
+      syncVisible()
+    })
+  // 숨긴 채 시작했으면 showWindow(트레이·알림·두 번째 실행·activate)가 처음 열 때 true를 보낸다.
+  w.on('show', syncVisible)
+  w.on('hide', syncVisible)
+  w.on('minimize', syncVisible)
+  w.on('restore', syncVisible)
+  w.on('focus', syncVisible) // macOS에서 Cmd+H로 가렸다 다시 보이면 show가 오지 않는다
   nativeTheme.on('updated', () => {
     if (!w.isDestroyed()) w.setBackgroundColor(background())
   })
   w.on('close', (e) => {
     if (quitting) return
     e.preventDefault()
+    closedToTray = true
     w.hide()
+    syncVisible()
   })
   // Windows의 로그오프·종료에는 before-quit이 오지 않는다. 숨기기가 종료를 막지 않게 한다.
   w.on('session-end', () => {
@@ -197,7 +220,7 @@ function start(corruptBackup: string | null): void {
     status: runner.status,
     collectNow: runner.collectNow,
     collectFresh: runner.collectFresh,
-    windowVisible: () => !!win && win.isVisible() && !win.isMinimized(),
+    windowVisible: windowOpen,
     setOpenAtLogin,
     testNotification: () => notify('알림 테스트입니다', showWindow)
   })
