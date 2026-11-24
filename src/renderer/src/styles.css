@@ -552,6 +552,7 @@ select.input {
 
 .save-btn {
   width: 5.75em; /* 저장 → 저장 취소로 바뀌어도 옆 버튼이 움직이지 않는다 */
+  text-align: right; /* 짧은 "저장"도 옆 버튼에 붙어 보인다 */
 }
 
 .btn-small {

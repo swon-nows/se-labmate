@@ -85,7 +85,7 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
 
     const tick = (now: number): void => {
       raf = 0
-      if (!moving()) return
+      if (!moving()) return update() // 멈춰야 하면 (동작 줄이기라면 멈춘 한 장을 그리고) 고리를 끝낸다
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0
       last = now
       const i = input.current
@@ -100,6 +100,12 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
       raf = requestAnimationFrame(tick)
     }
 
+    // 멈춘 한 장: 튐과 시간은 0으로 둔다(튀던 중에 멈춰도 커진 채 남지 않게).
+    const drawStill = (): void => {
+      m.burst = 0
+      m.wasBusy = input.current.busy
+      draw(0)
+    }
     // 움직여도 되면 고리를 돌리고, 동작 줄이기면 멈춘 한 장을 그린다.
     const update = (): void => {
       if (moving()) {
@@ -111,14 +117,14 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
       }
       cancelAnimationFrame(raf)
       raf = 0
-      if (reduce.matches) draw(0)
+      if (reduce.matches) drawStill()
     }
     const onScheme = (): void => {
       color = getComputedStyle(canvas).color
       update()
     }
     redrawStill.current = () => {
-      if (reduce.matches) draw(0)
+      if (reduce.matches) drawStill()
     }
     const seen = new IntersectionObserver((entries) => {
       onScreen = entries.some((e) => e.isIntersecting)

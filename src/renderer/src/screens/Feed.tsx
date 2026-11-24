@@ -40,8 +40,8 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
   const take = useCallback(() => {
     const n = ++seq.current
     const settle = (result: 'done' | 'failed'): void => {
-      // 창이 보이지 않을 때 받은 빈 답은 이번 보기의 답이 아니다.
-      if (n === seq.current && windowVisible.current !== false) setLoad(result)
+      // 창이 보인다고 알기 전에 받은 답(숨긴 채 시작, 숨긴 동안의 수집)은 이번 보기의 답이 아니다.
+      if (n === seq.current && windowVisible.current === true) setLoad(result)
     }
     window.api.takeNew().then(
       (groups) => {
@@ -61,11 +61,7 @@ export function Feed({ status, enabled, onCount }: Props): React.JSX.Element {
     take()
     return window.api.onWindowVisible((visible) => {
       windowVisible.current = visible
-      if (visible) {
-        setLoad('pending')
-        take()
-        return
-      }
+      if (visible) return take()
       // 창을 숨기거나 내리면 비워서, 다음에 열 때는 아직 보지 않은 것만 뜬다.
       seq.current++
       setSession([])
