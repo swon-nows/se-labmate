@@ -24,6 +24,36 @@ test('takeNew는 보이는 미확인만 묶어 주고 확인 처리한다', () =
   expect(unseenCounts(state)).toEqual({ paper: 1, repo: 1 })
 })
 
+describe('takeNew 정렬', () => {
+  test('묶음 안은 score 높은 순, 같으면 날짜 최신순', () => {
+    const state = st({
+      items: {
+        lo: mk({ id: 'lo', title: 'other', matched: [], date: NOW }),
+        hi: mk({ id: 'hi', title: 'xai', matched: ['xai'], date: '2026-11-20T00:00:00.000Z' }),
+        // 30일을 넘긴 두 항목은 점수가 같으므로 날짜로 가른다
+        old: mk({ id: 'old', category: 'repo', date: '2026-08-01T00:00:00.000Z' }),
+        newer: mk({ id: 'newer', category: 'repo', date: '2026-09-01T00:00:00.000Z' })
+      }
+    })
+    const { groups } = takeNew(state, NOW)
+    expect(groups.map((g) => [g.category, g.items.map((i) => i.id)])).toEqual([
+      ['paper', ['hi', 'lo']],
+      ['repo', ['newer', 'old']]
+    ])
+  })
+
+  test('묶음은 items 순서와 상관없이 CATEGORIES 순서', () => {
+    const state = st({
+      items: {
+        n: mk({ id: 'n', category: 'news' }),
+        r: mk({ id: 'r', category: 'repo' }),
+        p: mk({ id: 'p', category: 'paper' })
+      }
+    })
+    expect(takeNew(state, NOW).groups.map((g) => g.category)).toEqual(['paper', 'repo', 'news'])
+  })
+})
+
 describe('pastItems', () => {
   const state = st({
     items: {

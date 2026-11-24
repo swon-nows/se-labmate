@@ -3,6 +3,8 @@ import { mergeIncoming, pruneOld } from '../../src/main/core/merge'
 import { score } from '../../src/main/core/relevance'
 import { NOW, mk, raw } from '../helpers'
 
+const daysBefore = (n: number): string => new Date(Date.parse(NOW) - n * 86_400_000).toISOString()
+
 describe('mergeIncoming', () => {
   test('이미 있는 항목은 다시 새 소식이 되지 않는다', () => {
     const seen = mk({ id: 'paper:a', seenAt: '2026-11-01T00:00:00.000Z', title: 'old' })
@@ -42,6 +44,19 @@ describe('mergeIncoming', () => {
     })
   })
 
+  test('90일보다 오래된 항목은 받지 않는다', () => {
+    const out = mergeIncoming(
+      {},
+      [
+        raw({ id: 'paper:old', date: daysBefore(91) }),
+        raw({ id: 'paper:recent', date: daysBefore(89) })
+      ],
+      [],
+      NOW
+    )
+    expect(Object.keys(out)).toEqual(['paper:recent'])
+  })
+
   test('입력 items를 바꾸지 않는다', () => {
     const items = { 'paper:a': mk({ id: 'paper:a' }) }
     mergeIncoming(items, [raw({ id: 'paper:b' })], [], NOW)
@@ -60,6 +75,17 @@ test('pruneOld', () => {
     NOW
   )
   expect(Object.keys(out).sort()).toEqual(['b', 'c'])
+})
+
+test('pruneOld는 179일 된 것은 두고 181일 된 것은 뺀다', () => {
+  const out = pruneOld(
+    {
+      keep: mk({ id: 'keep', collectedAt: daysBefore(179), seenAt: daysBefore(179) }),
+      drop: mk({ id: 'drop', collectedAt: daysBefore(181), seenAt: daysBefore(181) })
+    },
+    NOW
+  )
+  expect(Object.keys(out)).toEqual(['keep'])
 })
 
 test('score 순서', () => {
