@@ -1,8 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <mask id="cut">
-    <rect width="32" height="32" fill="#fff" />
-    <circle cx="25.5" cy="6.5" r="6.5" fill="#000" />
-  </mask>
-  <circle cx="16" cy="16" r="11.25" fill="none" stroke="currentColor" stroke-width="3.5" mask="url(#cut)" />
-  <circle cx="25.5" cy="6.5" r="4.5" fill="currentColor" />
+  <defs>
+    <ellipse id="orbit" cx="16" cy="16" rx="14.5" ry="5.8" fill="none" stroke="currentColor" stroke-width="2.2" />
+    <mask id="cut">
+      <rect width="32" height="32" fill="#fff" />
+      <circle cx="26.5" cy="5.5" r="6.5" fill="#000" />
+    </mask>
+  </defs>
+  <g mask="url(#cut)">
+    <use href="#orbit" />
+    <use href="#orbit" transform="rotate(60 16 16)" />
+    <use href="#orbit" transform="rotate(120 16 16)" />
+    <circle cx="16" cy="16" r="3.2" fill="currentColor" />
+  </g>
+  <circle cx="26.5" cy="5.5" r="4.5" fill="currentColor" />
 </svg>

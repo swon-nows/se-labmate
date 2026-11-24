@@ -6,7 +6,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
-const TRAY_COLOR = '#8f7bff' // readable on both light and dark Windows taskbars
+const AMBER = '#F2A93B' // Windows tray colour and the app icon's nucleus; readable on light and dark taskbars
+const hex = (r, g, b) =>
+  `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`.toUpperCase()
 // [svg, png, pixel size, kind]; tray SVGs draw in currentColor, so the kind picks the colour
 const jobs = [
   ['icon.svg', 'build/icon.png', 1024, 'icon'],
@@ -21,7 +23,7 @@ const jobs = [
 
 async function render(svgFile, size, kind) {
   const svg = readFileSync(resolve(root, 'build', svgFile), 'utf8')
-  const color = kind === 'color' ? TRAY_COLOR : '#000'
+  const color = kind === 'color' ? AMBER : '#000'
   const html = `<!doctype html><style>html,body{margin:0;background:transparent;color:${color}}svg{display:block;width:${size}px;height:${size}px}</style>${svg}`
   const win = new BrowserWindow({
     width: size,
@@ -56,7 +58,7 @@ function verify(file, size, kind) {
   if (bytes[25] !== 6) problems.push('has no alpha channel (PNG colour type is not RGBA)')
   const px = image.toBitmap() // BGRA, premultiplied
   const at = (x, y) => px.subarray((y * width + x) * 4, (y * width + x) * 4 + 4)
-  // the rounded square leaves a 100/1024 transparent margin, which also holds for the glow
+  // the rounded square leaves a transparent band 100/1024 of the size wide on every side
   const margin = (size * 100) / 1024
   let opaque = 0
   for (let y = 0; y < height; y++) {
@@ -65,14 +67,18 @@ function verify(file, size, kind) {
       if (a > 0) opaque++
       if (kind === 'template' && (b || g || r))
         problems.push(`template pixel ${x},${y} is not black`)
-      if (kind === 'color' && a === 255 && (r !== 0x8f || g !== 0x7b || b !== 0xff))
-        problems.push(`tray pixel ${x},${y} is not ${TRAY_COLOR}`)
+      if (kind === 'color' && a === 255 && hex(r, g, b) !== AMBER)
+        problems.push(`tray pixel ${x},${y} is not ${AMBER}`)
       const inMargin = x < margin || y < margin || x >= size - margin || y >= size - margin
       if (kind === 'icon' && inMargin && a)
         problems.push(`icon margin pixel ${x},${y} is not transparent`)
     }
   }
   if (opaque === 0) problems.push('is fully transparent')
+  if (kind === 'icon') {
+    const [b, g, r, a] = at(width / 2, height / 2) // the nucleus
+    if (a !== 255 || hex(r, g, b) !== AMBER) problems.push(`centre pixel is not opaque ${AMBER}`)
+  }
   return [...new Set(problems)].slice(0, 5)
 }
 
