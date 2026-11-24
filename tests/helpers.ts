@@ -1,3 +1,4 @@
+import { defaultState } from '../src/main/store'
 import type { AppState, Category, Item, RawItem } from '../src/shared/types'
 
 export const NOW = '2026-11-24T03:00:00.000Z'
@@ -31,29 +32,14 @@ export function st(
   p: Partial<AppState> & { enabled?: Partial<Record<Category, boolean>> } = {}
 ): AppState {
   const { enabled, ...rest } = p
+  const d = defaultState()
   return {
-    version: 1,
-    profile: null,
-    openAlexKeyEnc: null,
-    items: {},
-    lastDailyRunAt: null,
-    lastNotifiedAt: null,
-    sourceErrors: {},
+    ...d,
     ...rest,
     settings: {
-      notifyTime: '09:00',
-      openAtLogin: true,
+      ...d.settings,
       ...rest.settings,
-      enabled: {
-        paper: true,
-        repo: true,
-        news: true,
-        grant: true,
-        conference: true,
-        school: true,
-        ...rest.settings?.enabled,
-        ...enabled
-      }
+      enabled: { ...d.settings.enabled, ...rest.settings?.enabled, ...enabled }
     }
   }
 }
