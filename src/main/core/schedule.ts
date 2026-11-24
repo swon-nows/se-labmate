@@ -5,9 +5,11 @@ import { isVisible } from './feed'
 // 현지 시각 기준: 오늘 HH:MM이 아직 안 왔으면 어제 HH:MM (24시간이 아니라 달력 하루 전)
 export function lastDue(now: Date, notifyTime: string): Date {
   const [hh, mm] = notifyTime.split(':').map(Number)
-  const due = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm)
-  if (due.getTime() > now.getTime()) due.setDate(due.getDate() - 1)
-  return due
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm)
+  // 어제 시각도 생성자로 직접 만든다: setDate는 이미 보정된 날짜를 옮겨서 서머타임 전환일에 한 시간 어긋난다.
+  return today.getTime() > now.getTime()
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, hh, mm)
+    : today
 }
 
 export function shouldRunDaily(
