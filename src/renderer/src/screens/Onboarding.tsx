@@ -1,0 +1,20 @@
+import type { PublicState } from '../../../shared/types'
+import { ProfileForm } from './ProfileForm'
+
+export function Onboarding({
+  state,
+  onSaved
+}: {
+  state: PublicState
+  onSaved: () => void
+}): React.JSX.Element {
+  return (
+    <main className="content">
+      <h1 className="page-title">연구비서 시작하기</h1>
+      <p className="lead">
+        관심 주제를 입력하면 새 논문, 저장소, 뉴스를 모아 정해 둔 시각에 알려 드립니다.
+      </p>
+      <ProfileForm initial={state} onSaved={onSaved} submitLabel="시작하기" />
+    </main>
+  )
+}

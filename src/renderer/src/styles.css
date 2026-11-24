@@ -1,0 +1,362 @@
+/* 색은 변수로만 쓴다. 밝은 값이 기본이고, 어두운 값은 아래 미디어 쿼리에서 바꾼다. */
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f3f3f5; /* 마우스를 올렸을 때, 오류 상자 */
+  --pressed: #e6e6ea; /* 누르고 있을 때 */
+  --text: #1b1b1f;
+  --muted: #5b5b63;
+  --line: #dcdce0; /* 구분선 */
+  --control-line: #86868f; /* 입력칸·버튼 테두리 */
+  --accent: #6d4aff;
+  --accent-hover: #5a37e6;
+  --on-accent: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618;
+    --surface: #232327;
+    --pressed: #2e2e33;
+    --text: #ececf0;
+    --muted: #a4a4ad;
+    --line: #2e2e33;
+    --control-line: #7a7a84;
+    --accent: #a594ff;
+    --accent-hover: #bcb0ff;
+    --on-accent: #161618;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* 화면을 바꿔 세로 스크롤바가 생기거나 없어져도 위쪽 줄이 가로로 움직이지 않는다. */
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    15px/1.6 system-ui,
+    -apple-system,
+    'Segoe UI',
+    'Malgun Gothic',
+    sans-serif;
+  /* 한글은 낱말 단위로 줄을 바꾸고, 끊을 곳이 없는 긴 글자만 강제로 끊는다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+p,
+ul {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 위쪽 줄: 한 줄로 고정한다. 오른쪽 묶음은 너비가 정해져 있어 수집이 시작·종료돼도 움직이지 않는다. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  height: 52px;
+  margin: 0 auto;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.app-name {
+  flex: none;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.count {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+.topbar-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.collect-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 32px;
+}
+
+.collect-slot .btn {
+  width: 100%;
+}
+
+.nav-btn {
+  width: 80px;
+}
+
+.content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.lead {
+  margin: 8px 0 28px;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* 버튼 */
+.btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+  background: transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--pressed);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn-primary {
+  min-height: 36px;
+  padding: 0 20px;
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: var(--accent);
+}
+
+/* 입력 */
+.field {
+  margin: 0 0 20px;
+}
+
+.label,
+.group legend {
+  display: block;
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.input:hover {
+  border-color: var(--text);
+}
+
+.input-time {
+  width: auto;
+}
+
+select.input {
+  width: auto;
+  min-width: 8rem;
+  cursor: pointer;
+}
+
+.hint {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.key-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.key-row .input {
+  flex: 1 1 12rem;
+  width: auto;
+}
+
+.key-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  margin-top: 4px;
+}
+
+/* 체크칸: 줄 전체가 눌리는 자리이고 마우스를 올리면 칠해진다. 왼쪽 정렬이 어긋나지 않도록 안쪽 여백만큼 바깥으로 당긴다. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.check:hover {
+  background: var(--surface);
+}
+
+.check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.errors {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--text);
+  background: var(--surface);
+  list-style: none;
+}
+
+.saved {
+  min-height: 1.6em;
+  margin-top: 8px;
+}
+
+/* 출처 상태 */
+.sources {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.section-title {
+  margin-bottom: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.source-list {
+  margin-bottom: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.source-name {
+  flex: 0 0 11rem;
+}
+
+.source-state {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+}
+
+/* 수집 표시: 보이지 않을 때도 자리를 지키므로 둘레가 움직이지 않는다. */
+.status-orb {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.status-orb-label {
+  color: var(--muted);
+}
+
+.status-orb-mark {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+
+.status-orb.is-hidden {
+  visibility: hidden;
+}
