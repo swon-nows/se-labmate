@@ -88,6 +88,15 @@ test('pruneOld는 179일 된 것은 두고 181일 된 것은 뺀다', () => {
   expect(Object.keys(out)).toEqual(['keep'])
 })
 
+test('정리된 항목은 181일 뒤 같은 id·같은 날짜로 다시 와도 들어오지 않는다', () => {
+  const r = raw({ id: 'paper:a', date: NOW })
+  const seen = { 'paper:a': { ...mergeIncoming({}, [r], [], NOW)['paper:a'], seenAt: NOW } }
+  const later = new Date(Date.parse(NOW) + 181 * 86_400_000).toISOString()
+  const pruned = pruneOld(seen, later)
+  expect(pruned).toEqual({})
+  expect(mergeIncoming(pruned, [r], [], later)).toEqual({})
+})
+
 test('score 순서', () => {
   const now = new Date(NOW)
   expect(score(mk({ title: 'xai', matched: ['xai'] }), now)).toBeGreaterThan(

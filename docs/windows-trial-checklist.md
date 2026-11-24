@@ -4,7 +4,7 @@
 
 ## 설치
 
-받으신 `research-assistant-1.0.0-x64.exe`는 서명을 받지 않은 시험판입니다. 그래서 실행하면 Windows SmartScreen이 경고 창을 띄웁니다. 창의 `추가 정보`를 누른 다음 `실행`을 누르면 설치가 진행됩니다.
+받으신 `research-assistant-0.1.0-x64.exe`는 서명을 받지 않은 시험판입니다. 그래서 실행하면 Windows SmartScreen이 경고 창을 띄웁니다. 창의 `추가 정보`를 누른 다음 `실행`을 누르면 설치가 진행됩니다.
 
 ## 처음 실행
 

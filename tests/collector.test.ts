@@ -1,7 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import { collect, type CollectDeps } from '../src/main/collector'
-import { defaultState } from '../src/main/store'
+import { pastItems, takeNew } from '../src/main/core/feed'
+import { defaultState, loadState, saveState } from '../src/main/store'
 import type { Profile } from '../src/shared/types'
 import { NOW, mk, st } from './helpers'
 
@@ -175,4 +178,19 @@ test('한국어 뉴스는 국가가 KR이고 한글 키워드가 있을 때만 �
     expect(hls).not.toContain('ko')
     expect(hls).toContain('en-US')
   }
+})
+
+test('다시 실행하면 같은 결과가 와도 새 소식이 없고, 받았던 항목은 지난 소식에 있다', async () => {
+  const first = await collect(withProfile, deps({ openAlexKey: 'K' }))
+  const taken = takeNew(first, NOW)
+  const takenIds = taken.groups.flatMap((g) => g.items.map((i) => i.id))
+  expect(takenIds.length).toBeGreaterThan(0)
+
+  const file = join(mkdtempSync(join(tmpdir(), 'ra-')), 'state.json') // 임시 폴더는 운영체제에 맡긴다
+  saveState(file, taken.state)
+  const again = await collect(loadState(file), deps({ openAlexKey: 'K' }))
+
+  expect(takeNew(again, NOW).groups).toEqual([])
+  const past = new Set(pastItems(again, Infinity).map((i) => i.id))
+  for (const id of takenIds) expect(past.has(id)).toBe(true)
 })
