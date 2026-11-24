@@ -1,28 +1,31 @@
-/* 색은 변수로만 쓴다. 밝은 값이 기본이고, 어두운 값은 아래 미디어 쿼리에서 바꾼다. */
+/* 색은 변수로만 쓴다. 차콜·앰버 한 계열이다. 밝은 값이 기본이고, 어두운 값은 아래 미디어 쿼리에서 바꾼다.
+   강조색은 오브, 고른 탭의 밑줄, 켜진 칩의 테두리, 주 버튼, 포커스 테두리에만 쓴다. */
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
-  --surface: #f3f3f5; /* 마우스를 올렸을 때, 오류 상자 */
-  --pressed: #e6e6ea; /* 누르고 있을 때 */
-  --text: #1b1b1f;
-  --muted: #5b5b63;
-  --line: #dcdce0; /* 구분선 */
-  --control-line: #86868f; /* 입력칸·버튼 테두리 */
-  --accent: #6d4aff;
-  --on-accent: #ffffff;
+  --bg: #fbfaf7;
+  --surface: #f1efea; /* 마우스를 올렸을 때, 오류 상자 */
+  --pressed: #e5e2da; /* 누르고 있을 때 */
+  --text: #1d1d21;
+  --muted: #5f5b54;
+  --line: #ddd9d0; /* 구분선 */
+  --control-line: #8a867e; /* 입력칸·버튼 테두리 */
+  --accent: #8a5200; /* 글자·테두리·오브. 밝은 바탕에서 4.5:1을 넘는 짙은 앰버 */
+  --accent-fill: #f2a93b; /* 주 버튼 바탕 */
+  --on-accent: #1d1d21;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #161618;
-    --surface: #232327;
-    --pressed: #2e2e33;
-    --text: #ececf0;
-    --muted: #a4a4ad;
-    --line: #2e2e33;
-    --control-line: #7a7a84;
-    --accent: #a594ff;
-    --on-accent: #161618;
+    --bg: #1d1d21;
+    --surface: #27272c;
+    --pressed: #313137;
+    --text: #f1efea;
+    --muted: #a8a49c;
+    --line: #313137;
+    --control-line: #7b7872;
+    --accent: #f2a93b;
+    --accent-fill: #f2a93b;
+    --on-accent: #1d1d21;
   }
 }
 
@@ -172,18 +175,18 @@ select {
   min-height: 36px;
   padding: 0 20px;
   border-color: transparent;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled) {
   border-color: var(--text);
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 
 .btn-primary:active:not(:disabled) {
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 
 /* 입력 */
@@ -277,7 +280,7 @@ select.input {
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--text); /* 강조색은 정해진 곳에만 쓴다 */
   cursor: pointer;
 }
 
@@ -354,6 +357,7 @@ select.input {
 }
 
 .btn[aria-disabled='true'],
+.btn-quiet[aria-disabled='true'],
 .live-orb-button[aria-disabled='true'] {
   cursor: default;
 }
@@ -369,7 +373,7 @@ select.input {
   white-space: nowrap;
 }
 
-/* 피드: 탭은 밑줄로, 칩은 테두리와 칠로 켜짐을 보인다. */
+/* 피드: 탭은 강조색 밑줄로, 켜진 칩은 강조색 테두리로 보인다. */
 .tabs {
   display: flex;
   gap: 24px;
@@ -378,7 +382,7 @@ select.input {
 
 .tab {
   min-height: 40px;
-  margin-bottom: -1px; /* 선택 밑줄이 구분선과 겹친다 */
+  margin-bottom: -1px; /* 고른 탭의 밑줄이 구분선과 겹친다 */
   padding: 0;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -391,8 +395,8 @@ select.input {
   color: var(--text);
 }
 
-.tab[aria-pressed='true'] {
-  border-bottom-color: var(--text);
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
   color: var(--text);
 }
 
@@ -400,7 +404,7 @@ select.input {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .chip {
@@ -416,10 +420,11 @@ select.input {
 
 .chip:hover {
   background: var(--surface);
+  color: var(--text);
 }
 
 .chip[aria-pressed='true'] {
-  border-color: var(--text);
+  border-color: var(--accent);
   background: var(--surface);
   color: var(--text);
 }
@@ -428,12 +433,15 @@ select.input {
   background: var(--pressed);
 }
 
-.group {
-  margin-top: 32px;
+.feed-group {
+  margin-top: 20px;
 }
 
-.group .section-title {
-  margin-bottom: 0;
+.feed-group-title {
+  margin-bottom: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .item-list {
@@ -442,56 +450,108 @@ select.input {
 }
 
 .item-list.flat {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
+/* 줄: 마우스를 올리면 칠해지는 자리는 글자 칸보다 10px 넓고, 구분선은 글자 칸에 맞춘다. */
 .item {
-  padding: 16px 0;
+  position: relative;
+  margin: 0 -10px;
+  padding: 12px 10px;
+  border-radius: 6px;
+}
+
+.item::after {
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  left: 10px;
   border-bottom: 1px solid var(--line);
+  content: '';
+}
+
+.item:hover {
+  background: var(--surface);
 }
 
 .item-title {
+  display: block;
   max-width: 100%;
   padding: 0;
   border: 0;
   background: none;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
   text-align: left;
   overflow-wrap: anywhere;
   cursor: pointer;
 }
 
-.item-title:hover {
+.item-title:hover .item-title-text {
   text-decoration: underline;
 }
 
-.item-meta {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
+.item-title-text,
 .item-summary {
   display: -webkit-box;
-  margin-top: 6px;
   overflow: hidden;
-  font-size: 14px;
-  line-height: 1.6;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.item-summary + .item-meta {
+.item-summary {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.item-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 4px;
 }
 
+.item-meta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 누르는 자리는 28px이지만 줄 높이는 늘리지 않는다. 오른쪽 글자는 글자 칸 끝에 맞춘다. */
 .item-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  flex: none;
+  gap: 2px;
+  margin: -5px -8px -5px 0;
+}
+
+.btn-quiet {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-quiet:hover:not([aria-disabled='true']) {
+  background: var(--pressed);
+  color: var(--text);
+}
+
+.save-btn {
+  width: 5.75em; /* 저장 → 저장 취소로 바뀌어도 옆 버튼이 움직이지 않는다 */
 }
 
 .btn-small {
@@ -501,23 +561,53 @@ select.input {
 }
 
 .more {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .note {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
-/* 비어 있을 때만 큰 오브를 보인다. 목록 뒤에는 깔지 않는다. */
 .empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding-top: 48px;
+  gap: 12px;
+  padding-top: 40px;
 }
 
-.big-orb {
-  width: 200px;
-  height: 200px;
+/* 움직임: 동작 줄이기를 켜면 모두 멈춘다. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn,
+  .btn-quiet,
+  .chip,
+  .tab,
+  .item {
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      color 150ms ease-out;
+  }
+
+  .item {
+    animation: row-in 180ms ease-out backwards;
+    animation-delay: calc(var(--i, 0) * 20ms);
+  }
+
+  .item.is-leaving {
+    animation: row-out 160ms ease-in forwards;
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes row-out {
+  to {
+    opacity: 0;
+  }
 }

@@ -65,7 +65,7 @@ function setOpenAtLogin(openAtLogin: boolean): void {
 }
 
 // 렌더러 styles.css의 --bg와 같은 값: 어두운 모드에서 흰 화면이 번쩍이지 않게 한다.
-const background = (): string => (nativeTheme.shouldUseDarkColors ? '#161618' : '#ffffff')
+const background = (): string => (nativeTheme.shouldUseDarkColors ? '#1D1D21' : '#FBFAF7')
 
 function createWindow(hidden: boolean): BrowserWindow {
   const w = new BrowserWindow({

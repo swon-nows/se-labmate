@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, CollectStatus, Item } from '../../../shared/types'
@@ -21,6 +21,7 @@ const TABS: [Tab, string][] = [
 const FIRST_ROWS = 5
 
 export function Feed({ status, onCount }: Props): React.JSX.Element {
+  const ids = useId()
   const [tab, setTab] = useState<Tab>('new')
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
   const [expanded, setExpanded] = useState<Category[]>([])
@@ -74,11 +75,11 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
   }
 
   const isSaved = (i: Item): boolean => savedNow.get(i.id) ?? i.saved
-  const toggleSave = (i: Item): void => {
+  const toggleSave = (i: Item): Promise<void> => {
     const next = !isSaved(i)
     const mark = (v: boolean): void => setSavedNow((m) => new Map(m).set(i.id, v))
     mark(next)
-    window.api.setSaved(i.id, next).catch(() => mark(!next))
+    return window.api.setSaved(i.id, next).catch(() => mark(!next))
   }
   const hide = (id: string): void => {
     setHidden((h) => new Set(h).add(id))
@@ -90,12 +91,14 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
       })
     )
   }
-  const row = (i: Item, withCategory: boolean): React.JSX.Element => (
+  // order: 들어오는 줄의 지연 순서. 앞 다섯 줄만 20ms씩 늦춘다.
+  const row = (i: Item, withCategory: boolean, order: number): React.JSX.Element => (
     <ItemRow
       key={i.id}
       item={i}
       saved={isSaved(i)}
       withCategory={withCategory}
+      order={Math.min(4, order)}
       onToggleSave={() => toggleSave(i)}
       onHide={() => hide(i.id)}
     />
@@ -130,12 +133,14 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
       if (items.length === 0) return null
       const all = expanded.includes(c)
       return (
-        <section key={c} className="group">
-          <h2 className="section-title">
+        <section key={c} className="feed-group">
+          <h2 className="feed-group-title">
             {CATEGORY_LABEL[c]} <span className="muted">{items.length}</span>
           </h2>
           <ul className="item-list">
-            {(all ? items : items.slice(0, FIRST_ROWS)).map((i) => row(i, false))}
+            {(all ? items : items.slice(0, FIRST_ROWS)).map((i, k) =>
+              row(i, false, k < FIRST_ROWS ? k : k - FIRST_ROWS)
+            )}
           </ul>
           {!all && items.length > FIRST_ROWS && (
             <button
@@ -163,20 +168,22 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
     if (shown.length === 0) return noCategory
     return (
       <ul className="item-list flat">
-        {items.filter((i) => shown.includes(i.category)).map((i) => row(i, true))}
+        {items.filter((i) => shown.includes(i.category)).map((i, k) => row(i, true, k))}
       </ul>
     )
   }
 
   return (
     <>
-      <div className="tabs" role="group" aria-label="목록">
+      <div className="tabs" role="tablist" aria-label="보기">
         {TABS.map(([t, label]) => (
           <button
             key={t}
+            id={`${ids}-${t}`}
             type="button"
+            role="tab"
             className="tab"
-            aria-pressed={tab === t}
+            aria-selected={tab === t}
             onClick={() => openTab(t)}
           >
             {label}
@@ -187,9 +194,11 @@ export function Feed({ status, onCount }: Props): React.JSX.Element {
         shown={shown}
         onToggle={(c) => setShown((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]))}
       />
-      {tab === 'new' && newItems()}
-      {tab === 'past' && flatItems(past, '지난 소식이 없습니다.')}
-      {tab === 'saved' && flatItems(saved, '저장한 항목이 없습니다.')}
+      <div role="tabpanel" aria-labelledby={`${ids}-${tab}`}>
+        {tab === 'new' && newItems()}
+        {tab === 'past' && flatItems(past, '지난 소식이 없습니다.')}
+        {tab === 'saved' && flatItems(saved, '저장한 항목이 없습니다.')}
+      </div>
     </>
   )
 }
