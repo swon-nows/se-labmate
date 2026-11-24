@@ -164,4 +164,37 @@ describe('createTick', () => {
     expect(t.get().lastDailyRunAt).toBe(NOW)
     expect(t.notify).toHaveBeenCalledTimes(1)
   })
+
+  test('모두 실패해 되돌리는 쓰기가 던져도 5분 동안은 다시 돌지 않고, 5분 뒤에는 돈다', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const errors = { arXiv: 'HTTP 503', GitHub: 'HTTP 503', 'Google 뉴스(영문)': '네트워크 오류' }
+    let state = due()
+    let clock = NOW
+    let fail = true
+    const collect = vi.fn(async () => {
+      state = { ...state, sourceErrors: fail ? errors : {} }
+    })
+    const tick = createTick({
+      getState: () => state,
+      // 메모리에 반영한 뒤 던지는 쓰기(index.ts의 update에서 저장 뒤 트레이 갱신이 던지는 경우)
+      update: (next) => {
+        state = next
+        if (fail && next.lastDailyRunAt === OLD_RUN) throw new Error('write failed')
+      },
+      now: () => new Date(clock),
+      isOnline: () => true,
+      collectNow: collect,
+      notify: vi.fn()
+    })
+    await tick()
+    expect(state.lastDailyRunAt).toBe(OLD_RUN)
+    clock = later(1)
+    await tick()
+    expect(collect).toHaveBeenCalledTimes(1)
+    fail = false
+    clock = later(5)
+    await tick()
+    expect(collect).toHaveBeenCalledTimes(2)
+    expect(state.lastDailyRunAt).toBe(later(5))
+  })
 })

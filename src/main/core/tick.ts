@@ -34,8 +34,8 @@ export function createTick(d: TickDeps): () => Promise<void> {
         ? activeSources(after.profile, after.settings, after.openAlexKeyEnc !== null)
         : []
       if (allFailed(sources, after.sourceErrors)) {
+        notBefore = d.now().getTime() + 5 * 60_000 // 쓰기가 던져도 5분 간격은 지킨다
         d.update({ ...after, lastDailyRunAt: s.lastDailyRunAt })
-        notBefore = d.now().getTime() + 5 * 60_000
         return
       }
       if (shouldNotify(after)) {

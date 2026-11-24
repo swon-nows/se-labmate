@@ -39,18 +39,24 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
   const [firstRun, setFirstRun] = useState<boolean | null>(null) // 아직 아무것도 모은 적이 없는가
   const seq = useRef(0) // 가장 최근 takeNew만 load를 정한다
   const windowVisible = useRef<boolean | null>(null)
+  const sessionEmpty = useRef(true) // 이번 새 소식 목록이 비었는가(take 시작 때 읽는다)
   const [visible, setVisible] = useState(false)
   const [visit, setVisit] = useState(0) // 창이 보인다는 알림을 받을 때마다 는다
 
   const take = useCallback(() => {
     const n = ++seq.current
+    // 목록이 빈 채로 다시 받으러 가면 답이 올 때까지 "모두 확인했습니다"를 띄우지 않는다.
+    if (sessionEmpty.current) setLoad('pending')
     const settle = (result: 'done' | 'failed'): void => {
       // 창이 보인다고 알기 전에 받은 답(숨긴 채 시작, 숨긴 동안의 수집)은 이번 보기의 답이 아니다.
       if (n === seq.current && windowVisible.current === true) setLoad(result)
     }
     window.api.takeNew().then(
       (groups) => {
-        if (groups.length > 0) setFirstRun(false)
+        if (groups.length > 0) {
+          setFirstRun(false)
+          sessionEmpty.current = false
+        }
         // 창을 숨긴 뒤 온 답도 (비운) 목록에 넣는다: 이미 확인함이 된 항목이라 버리면 보이지 않은 채 지난 소식으로 간다.
         setSession((s) => mergeBatch(s, groups))
         settle('done')
@@ -70,6 +76,7 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
       if (v) return setVisit((n) => n + 1)
       // 창을 숨기거나 내리면 비우고 새 소식 탭·칩 모두 켬으로 돌린다. 다음에 열 때는 아직 보지 않은 것만 뜬다.
       seq.current++
+      sessionEmpty.current = true
       setSession([])
       setExpanded([])
       setLoad('pending')
@@ -91,12 +98,14 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
     wasRunning.current = status.running
   }, [status.running, showingNew, take])
 
-  // 열린 탭의 목록은 탭을 열 때와 창이 다시 보일 때 불러온다.
+  const loadList = useCallback((t: Tab): void => {
+    if (t === 'past') window.api.getPast().then(setPast, () => setPast('failed'))
+    if (t === 'saved') window.api.getSaved().then(setSaved, () => setSaved('failed'))
+  }, [])
+  // 열린 탭의 목록은 탭을 열 때, 창이 다시 보일 때, 열린 탭을 다시 누를 때(아래) 불러온다.
   useEffect(() => {
-    if (!visible) return
-    if (tab === 'past') window.api.getPast().then(setPast, () => setPast('failed'))
-    if (tab === 'saved') window.api.getSaved().then(setSaved, () => setSaved('failed'))
-  }, [visible, visit, tab])
+    if (visible) loadList(tab)
+  }, [visible, visit, tab, loadList])
 
   const fresh = session.filter((i) => !hidden.has(i.id) && enabled[i.category])
   useEffect(() => {
@@ -249,7 +258,7 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
             role="tab"
             className="tab"
             aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            onClick={() => (t === tab ? loadList(t) : setTab(t))}
           >
             {label}
           </button>

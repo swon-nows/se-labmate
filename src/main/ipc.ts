@@ -62,7 +62,7 @@ export function registerIpc(d: IpcDeps): void {
   ipcMain.handle('takeNew', () => {
     if (!d.windowVisible()) return []
     const { state, groups } = takeNew(d.getState(), new Date().toISOString())
-    d.update(state)
+    if (groups.length > 0) d.update(state) // 받은 것이 없으면 파일을 다시 쓰지 않는다
     return groups
   })
 

@@ -53,6 +53,25 @@ test('깨진 파일은 남겨 두고 기본 상태로 시작', () => {
   expect(onCorrupt).toHaveBeenCalledWith(join(dir, corruptFiles(dir)[0]))
 })
 
+test('읽히지만 모양이 틀린 파일도 깨진 것으로 본다', () => {
+  const dir = tmp()
+  const f = join(dir, 'state.json')
+  writeFileSync(f, '{"version":2}')
+  const onCorrupt = vi.fn<(backupPath: string) => void>()
+  expect(loadState(f, onCorrupt)).toEqual(defaultState())
+  expect(corruptFiles(dir)).toHaveLength(1)
+  expect(existsSync(f)).toBe(false)
+  expect(onCorrupt).toHaveBeenCalledTimes(1)
+  expect(onCorrupt).toHaveBeenCalledWith(join(dir, corruptFiles(dir)[0]))
+})
+
+test('없는 폴더에도 저장한다', () => {
+  const f = join(tmp(), 'new', 'dir', 'state.json')
+  const s = st({ items: { 'paper:x': mk({ id: 'paper:x' }) } })
+  saveState(f, s)
+  expect(loadState(f)).toEqual(s)
+})
+
 test('멀쩡하거나 없는 파일이면 onCorrupt를 부르지 않는다', () => {
   const f = join(tmp(), 'state.json')
   const onCorrupt = vi.fn()
