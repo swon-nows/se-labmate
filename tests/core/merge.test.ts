@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { mergeIncoming, pruneOld } from '../../src/main/core/merge'
+import { applyCollected, mergeIncoming, pruneOld } from '../../src/main/core/merge'
 import { score } from '../../src/main/core/relevance'
-import { NOW, mk, raw } from '../helpers'
+import { NOW, mk, raw, st } from '../helpers'
 
 const daysBefore = (n: number): string => new Date(Date.parse(NOW) - n * 86_400_000).toISOString()
 
@@ -97,4 +97,36 @@ test('score 순서', () => {
     score(mk({ date: '2026-10-01T00:00:00.000Z' }), now)
   )
   expect(score(mk({ stars: 1200 }), now)).toBeGreaterThan(score(mk({ stars: 3 }), now))
+})
+
+describe('applyCollected', () => {
+  test('수집 중에 확인한 항목은 확인된 채로 남고, 새 id만 더해지고, sourceErrors는 바뀐다', () => {
+    const live = st({
+      items: { 'paper:a': mk({ id: 'paper:a', seenAt: NOW, saved: true }) },
+      sourceErrors: { arXiv: 'old' }
+    })
+    const collected = st({
+      items: { 'paper:a': mk({ id: 'paper:a' }), 'paper:b': mk({ id: 'paper:b' }) },
+      sourceErrors: { GitHub: 'HTTP 403' }
+    })
+    const liveCopy = structuredClone(live)
+    const collectedCopy = structuredClone(collected)
+    const out = applyCollected(live, collected, NOW)
+    expect(out.items['paper:a']).toEqual(live.items['paper:a'])
+    expect(out.items['paper:b']).toEqual(collected.items['paper:b'])
+    expect(out.sourceErrors).toEqual({ GitHub: 'HTTP 403' })
+    expect(live).toEqual(liveCopy)
+    expect(collected).toEqual(collectedCopy)
+  })
+
+  test('live의 다른 필드는 그대로 두고 오래된 항목은 정리한다', () => {
+    const old = daysBefore(181)
+    const live = st({
+      lastNotifiedAt: NOW,
+      items: { 'paper:old': mk({ id: 'paper:old', collectedAt: old, seenAt: old }) }
+    })
+    const out = applyCollected(live, st(), NOW)
+    expect(out.lastNotifiedAt).toBe(NOW)
+    expect(out.items).toEqual({})
+  })
 })

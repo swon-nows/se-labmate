@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { validateProfile } from '../../src/main/core/profile'
+import { isSaveInput, validateProfile } from '../../src/main/core/profile'
 import type { Profile, Settings } from '../../src/shared/types'
 
 const profile: Profile = { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' }
@@ -24,5 +24,29 @@ describe('validateProfile', () => {
   })
   test('유효한 값은 통과한다', () => {
     expect(validateProfile(base)).toMatchObject({ ok: true })
+  })
+})
+
+describe('isSaveInput', () => {
+  test('올바른 입력은 통과한다', () => {
+    expect(isSaveInput(base)).toBe(true)
+    expect(isSaveInput({ ...base, openAlexKey: null })).toBe(true)
+    expect(isSaveInput({ ...base, openAlexKey: 'k' })).toBe(true)
+  })
+  const missingPaper: Partial<Settings['enabled']> = { ...settings.enabled }
+  delete missingPaper.paper
+  test.each([
+    ['null', null],
+    ['문자열', 'x'],
+    ['profile 없음', { settings }],
+    ['키워드가 배열이 아님', { ...base, profile: { ...profile, keywordsEn: 'xai' } }],
+    ['문자열이 아닌 키워드', { ...base, profile: { ...profile, keywordsKo: [1] } }],
+    ['잘못된 국가', { ...base, profile: { ...profile, country: 'JP' } }],
+    ['notifyTime이 문자열이 아님', { ...base, settings: { ...settings, notifyTime: 900 } }],
+    ['openAtLogin이 boolean이 아님', { ...base, settings: { ...settings, openAtLogin: 'yes' } }],
+    ['enabled 키 빠짐', { ...base, settings: { ...settings, enabled: missingPaper } }],
+    ['숫자 openAlexKey', { ...base, openAlexKey: 1 }]
+  ])('%s → 거부', (_name, input) => {
+    expect(isSaveInput(input)).toBe(false)
   })
 })

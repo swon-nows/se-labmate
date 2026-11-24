@@ -1,4 +1,4 @@
-import type { Item, RawItem } from '../../shared/types'
+import type { AppState, Item, RawItem } from '../../shared/types'
 import { matchKeywords } from './text'
 
 const MAX_AGE_DAYS = 90
@@ -33,4 +33,12 @@ export function pruneOld(items: Record<string, Item>, now: string): Record<strin
       ([, i]) => !(i.seenAt !== null && !i.saved && Date.parse(i.collectedAt) < cutoff)
     )
   )
+}
+
+// 수집은 몇 초 걸린다. 그동안 확인·저장·숨김으로 바뀐 live 항목을 덮지 않도록 새 id만 더한다.
+export function applyCollected(live: AppState, collected: AppState, now: string): AppState {
+  const items = { ...live.items }
+  for (const [id, item] of Object.entries(collected.items))
+    if (!Object.hasOwn(items, id)) items[id] = item
+  return { ...live, items: pruneOld(items, now), sourceErrors: collected.sourceErrors }
 }

@@ -1,4 +1,5 @@
-import type { Profile, Settings } from '../../shared/types'
+import { CATEGORIES } from '../../shared/types'
+import type { Profile, SaveInput, Settings } from '../../shared/types'
 import { cleanKeywords } from './text'
 
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -19,4 +20,25 @@ export function validateProfile(input: {
     profile: { ...input.profile, keywordsEn, keywordsKo },
     settings: input.settings
   }
+}
+
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v)
+const isStrings = (v: unknown): boolean => Array.isArray(v) && v.every((s) => typeof s === 'string')
+
+// IPC로 들어온 값의 모양만 본다. 내용 검사는 validateProfile이 한다.
+export function isSaveInput(x: unknown): x is SaveInput {
+  if (!isObject(x) || !isObject(x.profile) || !isObject(x.settings)) return false
+  const { profile: p, settings: s, openAlexKey: k } = x
+  const enabled = s.enabled
+  return (
+    isStrings(p.keywordsEn) &&
+    isStrings(p.keywordsKo) &&
+    (p.country === 'KR' || p.country === 'OTHER') &&
+    typeof s.notifyTime === 'string' &&
+    typeof s.openAtLogin === 'boolean' &&
+    isObject(enabled) &&
+    CATEGORIES.every((c) => typeof enabled[c] === 'boolean') &&
+    (k === undefined || k === null || typeof k === 'string')
+  )
 }
