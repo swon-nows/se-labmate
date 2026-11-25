@@ -123,12 +123,22 @@ test('깨진 HTML도 선형 시간에 읽는다', () => {
     { length: 50_000 },
     (_, i) => `<a href="/v?id=${i}">게시글 제목 번호 ${i}</a> 2026.11.01 `
   ).join('')
+  // 묶음마다 쿼리 키 이름이 달라 모양이 다르고, 링크는 묶음끼리 번갈아 나온다.
+  const interleaved = (groups: number): string => {
+    const out: string[] = []
+    for (let j = 0; j < 5; j++)
+      for (let g = 0; g < groups; g++)
+        out.push(`<a href="/v?k${g}=${j}">게시글 제목 묶음 ${g} 번호 ${j}</a> `)
+    return out.join('')
+  }
   const cases: [string, number][] = [
     ['<!--'.repeat(500_000), 0], // 약 2MB
     ['<a title-name '.repeat(150_000), 0], // 닫는 > 가 없다
     ['<a class="title-name">x '.repeat(100_000), 0], // </a>가 없다
     ['<a href="/v?id=1">abcdefghijkl '.repeat(100_000), 0],
-    [valid, 50_000] // 정상 목록이 커도 느려지지 않는다
+    [valid, 50_000], // 정상 목록이 커도 느려지지 않는다
+    [interleaved(2000), 5], // 묶음이 많아도 날짜는 일부 묶음에서만 읽는다
+    [interleaved(20_000), 5]
   ]
   for (const [input, count] of cases) {
     expect(timed(() => parseNrf(nrf(input)))).toEqual([])

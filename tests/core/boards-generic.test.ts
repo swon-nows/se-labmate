@@ -82,21 +82,55 @@ test('목록이 없으면 빈 배열', () => {
   expect(parseBoardPage('', 'https://a.b/')).toEqual([])
 })
 
-test('위험한 링크와 다른 사이트 링크는 글로 치지 않는다', () => {
+test('링크 주소의 엔티티와 제목 속 태그를 풀어 읽는다', () => {
   const link = (n: number, title = `연구개발 지원사업 공고 ${n}번`): string =>
     `<a href="/view?id=${n}&amp;type=1">${title}</a>`
   const html = `<html><body>
-    ${link(1, '<b>R&amp;D</b> 연구개발 지원사업 공고')}
-    <a href="javascript:alert(1)">클릭하면 위험한 링크 제목입니다</a>
-    ${link(2)}${link(3)}
-    <a href="https://evil.example/view?id=9&amp;type=1">다른 사이트로 가는 링크 제목입니다</a>
-    ${link(4)}${link(5)}${link(6)}
+    ${link(1, '<b>R&amp;D</b> 연구개발 지원사업 공고')}${link(2)}${link(3)}${link(4)}${link(5)}${link(6)}
   </body></html>`
   const posts = parseHtmlList(html, 'https://a.b/list')
   expect(posts.map((p) => p.url)).toEqual(
     [1, 2, 3, 4, 5, 6].map((n) => `https://a.b/view?id=${n}&type=1`)
   )
   expect(posts[0].title).toBe('R&D 연구개발 지원사업 공고')
+})
+
+// 위험한 링크 묶음을 정상 묶음보다 크게 만들어, 걸러 내는 검사가 없으면 결과가 바뀌게 한다.
+const legit = (): string =>
+  [1, 2, 3, 4, 5, 6]
+    .map((n) => `<a href="/view?id=${n}">연구개발 지원사업 공고 ${n}번</a>`)
+    .join('')
+const hostile = (href: (n: number) => string): string =>
+  [1, 2, 3, 4, 5, 6, 7, 8]
+    .map((n) => `<a href="${href(n)}">악성 링크가 들어 있는 아주 긴 제목 ${n}번</a>`)
+    .join('')
+const legitUrls = [1, 2, 3, 4, 5, 6].map((n) => `https://a.b/view?id=${n}`)
+
+test('다른 사이트 링크가 더 많아도 글로 치지 않는다', () => {
+  const html = hostile((n) => `https://evil.example/view?id=${n}`) + legit()
+  expect(parseHtmlList(html, 'https://a.b/list').map((p) => p.url)).toEqual(legitUrls)
+})
+
+test('javascript: 링크가 더 많아도 글로 치지 않는다', () => {
+  const html = hostile((n) => `javascript:go(${n})`) + legit()
+  expect(parseHtmlList(html, 'https://a.b/list').map((p) => p.url)).toEqual(legitUrls)
+})
+
+test('http(s)가 아닌 주소는 호스트가 같아도 글로 치지 않는다', () => {
+  const html = hostile((n) => `ftp://a.b/files?id=${n}`) + legit()
+  expect(parseHtmlList(html, 'https://a.b/list').map((p) => p.url)).toEqual(legitUrls)
+})
+
+test('한글 경로는 풀어서 모양을 비교한다', () => {
+  const list = [1, 2, 3, 4, 5, 6]
+    .map((n) => `<a href="/공지/글-${n}">한글 경로의 게시글 제목 ${n}번</a>`)
+    .join('')
+  expect(parseHtmlList(list, 'https://a.b/').map((p) => p.url)).toHaveLength(6)
+  // 가·각·간·갈·감·갑은 %EA%B0%80~%91로 끝 숫자만 달라, 풀지 않으면 한 묶음(가짜 목록)이 된다.
+  const menu = ['가', '각', '간', '갈', '감', '갑']
+    .map((c) => `<a href="/${c}">${c} 메뉴로 이동하는 링크 이름</a>`)
+    .join('')
+  expect(parseHtmlList(menu, 'https://a.b/')).toEqual([])
 })
 
 test('스크립트와 주석 안의 링크는 읽지 않고, 날짜는 링크 뒤 글에서 찾는다', () => {
@@ -126,6 +160,40 @@ test('링크 뒤에 날짜가 없으면 앞의 마지막 날짜를 쓰고, 날�
   expect(posts).toHaveLength(5)
   expect(posts[0].date).toBeNull()
   expect(posts[0].key).toBe(normalizeTitle('날짜 없는 글 제목 1번'))
+})
+
+test('날짜는 dateOf가 받아 주는 것만 쓴다', () => {
+  const after = [1, 2, 3, 4, 5]
+    .map((n) => `<li><a href="/a/${n}">공지사항 제목 번호 ${n}</a> 2026.13.45 2026.11.0${n}</li>`)
+    .join('')
+  expect(parseHtmlList(after, 'https://a.b/').map((p) => p.date)).toEqual(
+    [1, 2, 3, 4, 5].map((n) => `2026-11-0${n}T00:00:00.000Z`)
+  )
+  const rows = [1, 2, 3, 4].map(
+    (n) => `<li><a href="/b/${n}">공지사항 제목 번호 ${n}</a> 2026.11.1${n}</li>`
+  )
+  rows.push('<li>2026.11.19 2026.99.99 <a href="/b/5">공지사항 제목 번호 5</a></li>')
+  expect(parseHtmlList(rows.join(''), 'https://a.b/')[4].date).toBe('2026-11-19T00:00:00.000Z')
+})
+
+test('점수가 같으면 문서에서 먼저 나온 묶음이 이긴다', () => {
+  // A는 짧은 제목 5개에 날짜가 있어 5×12×3, B는 긴 제목 5개에 날짜가 없어 5×36×1: 점수가 같다.
+  const a = [1, 2, 3, 4, 5]
+    .map((n) => `<a href="/a/${n}">${('A공지' + n).padEnd(12, '가')}</a> 2026.11.0${n} `)
+    .join('')
+  const b = [1, 2, 3, 4, 5]
+    .map((n) => `<a href="/b/${n}">${('B공지' + n).padEnd(36, '나')}</a> `)
+    .join('')
+  const first = (html: string): string => parseHtmlList(html, 'https://a.b/')[0].url
+  expect(first(a + b)).toBe('https://a.b/a/1')
+  expect(first(b + a)).toBe('https://a.b/b/1')
+  // 상한도 점수도 같은 두 묶음(날짜 없음, 제목 길이 같음)은 먼저 나온 쪽이 남는다.
+  const plain = (name: string): string =>
+    [1, 2, 3, 4, 5]
+      .map((n) => `<a href="/${name}/${n}">${(name + '공지' + n).padEnd(12, '가')}</a> `)
+      .join('')
+  expect(first(plain('a') + plain('b'))).toBe('https://a.b/a/1')
+  expect(first(plain('b') + plain('a'))).toBe('https://a.b/b/1')
 })
 
 test('큰 문서도 오래 걸리지 않는다', () => {
