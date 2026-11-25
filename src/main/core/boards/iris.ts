@@ -1,18 +1,12 @@
 import type { FetchText } from '../fetch-text'
-import { dateOf, finishPosts, type Post } from './post'
+import { dateOf, finishPosts, parseJson, type Post } from './post'
 
 type Prg = 'ancmIng' | 'ancmPre'
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
 export function parseIris(json: string, prg: Prg): Post[] {
-  let data: unknown = null
-  try {
-    data = JSON.parse(json)
-  } catch {
-    // 오류 문구에 응답 조각이 섞이지 않게 아래의 고정 문구로 처리한다
-  }
-  const list = (data as { listBsnsAncmBtinSitu?: unknown } | null)?.listBsnsAncmBtinSitu
+  const list = (parseJson(json) as { listBsnsAncmBtinSitu?: unknown } | null)?.listBsnsAncmBtinSitu
   if (!Array.isArray(list)) throw new Error('IRIS 응답에 목록이 없습니다')
   return finishPosts(
     list.map((row: unknown) => {

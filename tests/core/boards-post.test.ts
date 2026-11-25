@@ -1,5 +1,15 @@
 import { expect, test } from 'vitest'
-import { dateOf, finishPosts, htmlText, type Post } from '../../src/main/core/boards/post'
+import { parseHtmlList } from '../../src/main/core/boards/generic'
+import { parseNrf } from '../../src/main/core/boards/nrf'
+import {
+  anchors,
+  dateOf,
+  finishPosts,
+  htmlText,
+  parseJson,
+  stripBlocks,
+  type Post
+} from '../../src/main/core/boards/post'
 
 const p = (o: Partial<Post>): Post => ({
   key: 'k',
@@ -51,4 +61,77 @@ test('finishPosts는 제목을 정리하고 잘못된 글과 중복 key를 버�
     p({ key: '4', title: '<script>alert(1)</script>', date: '2026-11-25T00:00:00.000Z' }),
     p({ key: '5', date: null })
   ])
+})
+
+test('stripBlocks는 주석·script·style을 공백으로 바꾼다', () => {
+  expect(
+    stripBlocks('a<!-- x -->b<script>var a = "<a>"</script>c<STYLE type="text/css">p{}</STYLE>d')
+  ).toBe('a b c d')
+  expect(stripBlocks('<script><!-- x --></script>y')).toBe(' y') // script 안의 주석 표시
+  expect(stripBlocks('<!-- <script> -->z')).toBe(' z') // 주석 안의 script 표시
+  expect(stripBlocks('<scripts>x</scripts>')).toBe('<scripts>x</scripts>')
+})
+
+test('stripBlocks는 닫히지 않은 블록을 끝까지 지운다', () => {
+  expect(stripBlocks('a<!-- x')).toBe('a ')
+  expect(stripBlocks('a<!-- 1 -->b<!-- 2')).toBe('a b ')
+  expect(stripBlocks('a<script>alert(1)')).toBe('a ')
+  expect(stripBlocks('a<style>p{}<a href="/1">x</a>')).toBe('a ')
+})
+
+test('anchors는 <a>…</a>를 문서 순서대로 돌려준다', () => {
+  const html = 'x<a href="/1" class="c">첫째</a> y <A HREF="/2">둘째</A >z'
+  expect(anchors(html)).toEqual([
+    { attrs: ' href="/1" class="c"', inner: '첫째', start: 1, end: html.indexOf('</a>') + 4 },
+    {
+      attrs: ' HREF="/2"',
+      inner: '둘째',
+      start: html.indexOf('<A'),
+      end: html.indexOf('</A >') + 5
+    }
+  ])
+  expect(anchors('<abbr>x</abbr><article>y</article>')).toEqual([])
+  expect(anchors('<a>x</a>')).toEqual([{ attrs: '', inner: 'x', start: 0, end: 8 }])
+})
+
+test('anchors: 닫는 태그가 없으면 거기서 멈추고, 겹친 <a>는 첫 </a>까지 한 요소로 본다', () => {
+  expect(anchors('<a href="/1">x <a href="/2">y')).toEqual([])
+  const one = '<a href="/1">x</a><a href="/2">y'
+  expect(anchors(one).map((a) => a.inner)).toEqual(['x'])
+  const nested = '<a href="/1">x<a href="/2">y</a>z</a>'
+  expect(anchors(nested)).toEqual([
+    { attrs: ' href="/1"', inner: 'x<a href="/2">y', start: 0, end: nested.indexOf('z') }
+  ])
+})
+
+test('parseJson은 JSON이 아니면 null', () => {
+  expect(parseJson('{"a":1}')).toEqual({ a: 1 })
+  expect(parseJson('<html>점검 중</html>')).toBeNull()
+  expect(parseJson('')).toBeNull()
+})
+
+test('깨진 HTML도 선형 시간에 읽는다', () => {
+  const nrf = (body: string): string =>
+    `<div class="public-notice-list"><div class="public-notice-block">${body}`
+  const timed = <T>(f: () => T): T => {
+    const t = performance.now()
+    const r = f()
+    expect(performance.now() - t).toBeLessThan(1000)
+    return r
+  }
+  const valid = Array.from(
+    { length: 50_000 },
+    (_, i) => `<a href="/v?id=${i}">게시글 제목 번호 ${i}</a> 2026.11.01 `
+  ).join('')
+  const cases: [string, number][] = [
+    ['<!--'.repeat(500_000), 0], // 약 2MB
+    ['<a title-name '.repeat(150_000), 0], // 닫는 > 가 없다
+    ['<a class="title-name">x '.repeat(100_000), 0], // </a>가 없다
+    ['<a href="/v?id=1">abcdefghijkl '.repeat(100_000), 0],
+    [valid, 50_000] // 정상 목록이 커도 느려지지 않는다
+  ]
+  for (const [input, count] of cases) {
+    expect(timed(() => parseNrf(nrf(input)))).toEqual([])
+    expect(timed(() => parseHtmlList(input, 'https://a.b/'))).toHaveLength(count)
+  }
 })

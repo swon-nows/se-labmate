@@ -21,6 +21,26 @@ test('IRIS', () => {
   expect(parseIris('{"listBsnsAncmBtinSitu":[]}', 'ancmPre')).toEqual([])
 })
 
+test('IRIS 요약은 있는 항목만 이어 붙인다', () => {
+  const summary = (extra: Record<string, string>): string | undefined =>
+    parseIris(
+      JSON.stringify({
+        listBsnsAncmBtinSitu: [{ ancmId: '1', ancmTl: '제목 하나', ancmDe: '2026-11-01', ...extra }]
+      }),
+      'ancmIng'
+    )[0]?.summary
+  expect(summary({})).toBe('')
+  expect(summary({ sorgnNm: '한국연구재단' })).toBe('한국연구재단')
+  expect(summary({ rcveStrDe: '2026.11.13' })).toBe('접수 2026.11.13')
+  expect(summary({ rcveEndDe: '2026.11.26' })).toBe('접수 2026.11.26')
+  expect(summary({ sorgnNm: '한국연구재단', rcveEndDe: '2026.11.26' })).toBe(
+    '한국연구재단 · 접수 2026.11.26'
+  )
+  expect(summary({ rcveStrDe: '2026.11.13', rcveEndDe: '2026.11.26' })).toBe(
+    '접수 2026.11.13 ~ 2026.11.26'
+  )
+})
+
 test('readIris는 접수 중과 접수 예정을 POST로 읽는다', async () => {
   const calls: [string, Record<string, string> | undefined, string | undefined][] = []
   const posts = await readIris(async (u, h, b) => {
@@ -54,6 +74,51 @@ test('한국연구재단', () => {
   expect(parseNrf('<div class="public-notice-list"></div>')).toEqual([])
 })
 
+const nrfLink = (no: string, biz: string | null, title = `공고 ${no}`): string =>
+  `<a href="javascript:;" class="title-name view_btn" data-post_no="${no}"${
+    biz === null ? '' : ` data-biz_no="${biz}"`
+  }>${title}</a>`
+const nrfList = (...blocks: string[]): string =>
+  `<div class="public-notice-list">${blocks.map((b) => `<div class="public-notice-block">${b}</div>`).join('')}</div>`
+
+test('한국연구재단: 주석 안의 링크는 글이 아니다', () => {
+  const fake = '<a class="title-name view_btn" data-post_no="999" data-biz_no="1">가짜</a>'
+  const posts = parseNrf(nrfList(`<!-- ${fake} -->${nrfLink('100', '5')}`))
+  expect(posts.map((p) => p.key)).toEqual(['100'])
+  expect(posts[0].title).toBe('공고 100')
+  expect(parseNrf(nrfList(`<!-- ${fake}`))).toEqual([]) // 닫히지 않은 주석은 끝까지 가려진다
+})
+
+test('한국연구재단: 접수일자 줄이 없거나 종료일이 없는 경우', () => {
+  const [both, startOnly, none] = parseNrf(
+    nrfList(
+      `${nrfLink('1', '5')}<span>접수일자 : 2026-11-09 ~ 2026-12-11</span>`,
+      `${nrfLink('2', '5')}<span>접수일자 : 2026-11-09</span>`,
+      nrfLink('3', '5')
+    )
+  )
+  expect(both.summary).toBe('접수 2026-11-09 ~ 2026-12-11')
+  expect(startOnly).toMatchObject({ date: '2026-11-09T00:00:00.000Z', summary: '접수 2026-11-09' })
+  expect(none).toMatchObject({ date: null, summary: '' })
+})
+
+test('한국연구재단: 주소에는 숫자만 넣는다', () => {
+  const posts = parseNrf(
+    nrfList(
+      nrfLink('12a', '3'), // 글 번호가 숫자가 아니면 건너뛴다
+      nrfLink('77&x=1', '3'),
+      nrfLink('78', 'x1'),
+      nrfLink('79', null),
+      nrfLink('80', '')
+    )
+  )
+  expect(posts.map((p) => p.url)).toEqual([
+    'https://www.nrf.re.kr/biz/notice/view?menu_no=362&post_no=78',
+    'https://www.nrf.re.kr/biz/notice/view?menu_no=362&post_no=79',
+    'https://www.nrf.re.kr/biz/notice/view?menu_no=362&post_no=80'
+  ])
+})
+
 test('서울대 건축학과', () => {
   const posts = parseSnuDaae(fx('snu-daae.json'))
   expect(posts).toHaveLength(27)
@@ -63,6 +128,7 @@ test('서울대 건축학과', () => {
     date: '2026-11-18T00:00:00.000Z',
     summary: ''
   })
+  expect(parseSnuDaae('{"err":0,"list":[]}')).toEqual([])
   expect(() => parseSnuDaae('{"err":1}')).toThrow('서울대 건축학과 응답에 목록이 없습니다')
   expect(() => parseSnuDaae('{"err":1,"list":[]}')).toThrow(
     '서울대 건축학과 응답에 목록이 없습니다'

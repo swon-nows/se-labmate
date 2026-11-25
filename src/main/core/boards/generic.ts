@@ -1,9 +1,7 @@
 import { xml, textOf } from '../sources/common'
 import { normalizeTitle } from '../text'
-import { dateOf, finishPosts, htmlText, type Post } from './post'
+import { anchors, dateOf, finishPosts, htmlText, stripBlocks, type Post } from './post'
 
-// shortcut: 닫히지 않은 <a>·<script>·<!-- 가 수만 개인 문서는 느리다(정상 페이지는 선형), 필요하면 indexOf로 닫는 곳을 찾는다.
-const ANCHOR = /<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi
 const HREF = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
 const DATE = /(?<!\d)(20\d{2})\s?[.\-/]\s?(\d{1,2})\s?[.\-/]\s?(\d{1,2})(?!\d)/g
 
@@ -86,13 +84,11 @@ export function parseHtmlList(html: string, baseUrl: string): Post[] {
   } catch {
     return []
   }
-  const page = html
-    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ')
+  const page = stripBlocks(html)
 
   const groups = new Map<string, Link[]>()
-  for (const m of page.matchAll(ANCHOR)) {
-    const h = HREF.exec(m[1])
+  for (const a of anchors(page)) {
+    const h = HREF.exec(a.attrs)
     const href = htmlText(h ? (h[1] ?? h[2] ?? h[3]) : '')
     if (href === '' || /^(#|javascript:|mailto:|tel:)/.test(href)) continue
     let u: URL
@@ -103,11 +99,13 @@ export function parseHtmlList(html: string, baseUrl: string): Post[] {
     }
     if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.host !== host) continue
     u.hash = ''
-    const title = htmlText(m[2])
+    const title = htmlText(a.inner)
     if (title.length < 4) continue
     const key = shape(u)
-    const link = { start: m.index, end: m.index + m[0].length, url: u.href, title }
-    groups.set(key, [...(groups.get(key) ?? []), link])
+    const link = { start: a.start, end: a.end, url: u.href, title }
+    const group = groups.get(key)
+    if (group) group.push(link)
+    else groups.set(key, [link])
   }
 
   let best: { score: number; posts: Post[] } | null = null

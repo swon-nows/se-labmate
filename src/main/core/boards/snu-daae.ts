@@ -1,5 +1,5 @@
 import type { FetchText } from '../fetch-text'
-import { dateOf, finishPosts, type Post } from './post'
+import { dateOf, finishPosts, parseJson, type Post } from './post'
 
 const HOST = 'architecture.snu.ac.kr'
 
@@ -23,13 +23,7 @@ export async function readSnuDaae(category: string, fetchText: FetchText): Promi
 }
 
 export function parseSnuDaae(json: string): Post[] {
-  let data: unknown = null
-  try {
-    data = JSON.parse(json)
-  } catch {
-    // 오류 문구에 응답 조각이 섞이지 않게 아래의 고정 문구로 처리한다
-  }
-  const { err, list } = (data ?? {}) as { err?: unknown; list?: unknown }
+  const { err, list } = (parseJson(json) ?? {}) as { err?: unknown; list?: unknown }
   if (err !== 0 || !Array.isArray(list)) throw new Error('서울대 건축학과 응답에 목록이 없습니다')
   return finishPosts(
     list.map((row: unknown) => {
