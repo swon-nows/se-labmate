@@ -34,7 +34,8 @@ export function registerIpc(d: IpcDeps): void {
       profile: s.profile,
       settings: s.settings,
       hasOpenAlexKey: s.openAlexKeyEnc !== null,
-      status: d.status()
+      status: d.status(),
+      boards: s.boards
     }
   })
 

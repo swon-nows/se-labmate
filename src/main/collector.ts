@@ -1,4 +1,5 @@
 import type { AppState, RawItem } from '../shared/types'
+import type { FetchText } from './core/fetch-text'
 import { mergeIncoming, pruneOld } from './core/merge'
 import { buildArxivUrl, parseArxiv } from './core/sources/arxiv'
 import { buildGithubUrls, parseGithub } from './core/sources/github'
@@ -6,7 +7,7 @@ import { buildGnewsUrl, parseGnews } from './core/sources/gnews'
 import { buildOpenAlexUrl, parseOpenAlex } from './core/sources/openalex'
 
 export interface CollectDeps {
-  fetchText(url: string, headers?: Record<string, string>): Promise<string>
+  fetchText: FetchText
   now(): Date
   openAlexKey: string | null
 }

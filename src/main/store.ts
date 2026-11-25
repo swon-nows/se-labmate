@@ -1,5 +1,6 @@
 import {
   closeSync,
+  copyFileSync,
   existsSync,
   fsyncSync,
   mkdirSync,
@@ -13,7 +14,7 @@ import type { AppState } from '../shared/types'
 
 export function defaultState(): AppState {
   return {
-    version: 1,
+    version: 2,
     profile: null,
     settings: {
       notifyTime: '09:00',
@@ -24,7 +25,9 @@ export function defaultState(): AppState {
     items: {},
     lastDailyRunAt: null,
     lastNotifiedAt: null,
-    sourceErrors: {}
+    sourceErrors: {},
+    boards: [],
+    boardKnown: {}
   }
 }
 
@@ -34,11 +37,29 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
 function isState(v: unknown): v is AppState {
   return (
     isObject(v) &&
-    v.version === 1 &&
+    v.version === 2 &&
+    Array.isArray(v.boards) &&
+    isObject(v.boardKnown) &&
     isObject(v.items) &&
     isObject(v.settings) &&
     isObject(v.settings.enabled)
   )
+}
+
+// v1 → v2: 원본은 state.v1.json으로 남기고(있으면 덮어쓰지 않는다), OpenAlex의 저널 이름을 summary에서 venue로 옮긴다.
+function migrateV1(file: string, v: Record<string, unknown>): unknown {
+  const backup = join(dirname(file), 'state.v1.json')
+  if (!existsSync(backup)) copyFileSync(file, backup)
+  if (!isObject(v.items)) return { ...v, version: 2, boards: [], boardKnown: {} }
+  const items = Object.fromEntries(
+    Object.entries(v.items).map(([id, it]) => [
+      id,
+      isObject(it) && it.source === 'OpenAlex' && it.summary && !it.venue
+        ? { ...it, venue: it.summary, summary: '' }
+        : it
+    ])
+  )
+  return { ...v, version: 2, boards: [], boardKnown: {}, items }
 }
 
 // onCorrupt: 깨진 파일을 옮겨 둔 경로를 받는다(사용자에게 알리기 위해).
@@ -51,6 +72,7 @@ export function loadState(file: string, onCorrupt?: (backupPath: string) => void
   } catch {
     value = null
   }
+  if (isObject(value) && value.version === 1) value = migrateV1(file, value)
   if (isState(value)) return value
   // 깨진 파일은 지우지 않고 옆에 남겨 둔다.
   const backup = join(dirname(file), `state.corrupt-${Date.now()}.json`)

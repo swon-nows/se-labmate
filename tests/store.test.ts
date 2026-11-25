@@ -1,10 +1,10 @@
 import * as fs from 'node:fs'
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, test, vi } from 'vitest'
 import { defaultState, loadState, saveState } from '../src/main/store'
-import { mk, st } from './helpers'
+import { mk, NOW, st } from './helpers'
 
 // renameSync만 바꿔 끼울 수 있게 한다. 기본은 진짜 함수를 그대로 부른다.
 vi.mock('node:fs', async (importOriginal) => {
@@ -108,4 +108,69 @@ test('바꿔 끼운 renameSync는 다음 시험에서 진짜로 돌아온다', (
   const f = join(tmp(), 'state.json')
   saveState(f, st())
   expect(existsSync(f)).toBe(true)
+})
+
+const v1State = (): Record<string, unknown> => {
+  const v1: Record<string, unknown> = {
+    ...defaultState(),
+    version: 1,
+    profile: { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' },
+    openAlexKeyEnc: 'ZW5j',
+    lastDailyRunAt: NOW,
+    items: {
+      'paper:a': mk({
+        id: 'paper:a',
+        source: 'OpenAlex',
+        summary: 'Automation in Construction',
+        seenAt: NOW,
+        saved: true
+      }),
+      'paper:b': mk({ id: 'paper:b', source: 'arXiv', summary: 'abstract…' })
+    }
+  }
+  delete v1.boards
+  delete v1.boardKnown
+  return v1
+}
+
+test('v1 파일은 v2로 옮기고 원본을 state.v1.json으로 남긴다', () => {
+  const dir = tmp()
+  const f = join(dir, 'state.json')
+  writeFileSync(f, JSON.stringify(v1State()))
+  const s = loadState(f)
+  expect(s).toMatchObject({
+    version: 2,
+    boards: [],
+    boardKnown: {},
+    openAlexKeyEnc: 'ZW5j',
+    lastDailyRunAt: NOW,
+    profile: { keywordsEn: ['xai'] }
+  })
+  expect(s.items['paper:a']).toMatchObject({
+    venue: 'Automation in Construction',
+    summary: '',
+    seenAt: NOW,
+    saved: true
+  })
+  expect(s.items['paper:b']).toMatchObject({ summary: 'abstract…' })
+  expect(s.items['paper:b'].venue).toBeUndefined()
+  expect(JSON.parse(readFileSync(join(dir, 'state.v1.json'), 'utf8')).version).toBe(1)
+  expect(corruptFiles(dir)).toHaveLength(0)
+})
+
+test('state.v1.json이 이미 있으면 덮어쓰지 않는다', () => {
+  const dir = tmp()
+  const f = join(dir, 'state.json')
+  writeFileSync(f, JSON.stringify(v1State()))
+  writeFileSync(join(dir, 'state.v1.json'), 'keep')
+  expect(loadState(f).version).toBe(2)
+  expect(readFileSync(join(dir, 'state.v1.json'), 'utf8')).toBe('keep')
+})
+
+test('모르는 version은 깨진 파일로 다룬다', () => {
+  const dir = tmp()
+  const f = join(dir, 'state.json')
+  writeFileSync(f, JSON.stringify({ ...v1State(), version: 3, boards: [], boardKnown: {} }))
+  expect(loadState(f)).toEqual(defaultState())
+  expect(corruptFiles(dir)).toHaveLength(1)
 })
