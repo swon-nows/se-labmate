@@ -62,7 +62,8 @@ export function createCollectRunner(d: CollectRunnerDeps): CollectRunner {
   return { collectNow, collectFresh, status }
 }
 
-export const KEY_UNREADABLE = '저장된 키를 읽을 수 없습니다. 설정에서 키를 다시 입력해 주십시오.'
+export const KEY_UNREADABLE =
+  '저장된 키를 읽을 수 없습니다. Settings에서 키를 다시 입력해 주십시오.'
 
 // 저장된 키를 풀지 못하면 키 없이 수집한다. 수집기는 건너뛴 출처의 오류를 지우므로 수집 뒤에 남긴다.
 export function markUnreadableKey(collected: AppState, decryptedKey: string | null): AppState {

@@ -32,7 +32,9 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
   // 저장이 끝나 다시 불러오면 폼을 새 상태로 다시 만든다(주제어는 서버가 다듬은 값, 키는 새 저장 여부).
   const [formKey, setFormKey] = useState(0)
   const { profile, settings, hasOpenAlexKey } = state
-  const sources = profile ? activeSources(profile, settings, hasOpenAlexKey) : []
+  const sources = profile
+    ? activeSources(profile, settings, hasOpenAlexKey, state.boards).map((s) => s.name)
+    : []
 
   return (
     <>

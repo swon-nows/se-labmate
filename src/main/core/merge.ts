@@ -11,8 +11,22 @@ export function mergeIncoming(
 ): Record<string, Item> {
   const out = { ...items }
   const oldest = Date.parse(now) - MAX_AGE_DAYS * 86_400_000
+  const added = new Set<string>()
   for (const r of incoming) {
+    if (added.has(r.id)) {
+      // 같은 수집의 중복: OpenAlex에는 초록이 없고 arXiv에는 있는 논문처럼, 먼저 온 것의 빈 값만 채운다.
+      const a = out[r.id]
+      const f = {
+        ...a,
+        summary: a.summary || r.summary,
+        venue: a.venue ?? r.venue,
+        keywords: a.keywords ?? r.keywords
+      }
+      out[r.id] = { ...f, matched: matchKeywords(`${f.title} ${f.summary}`, keywords) }
+      continue
+    }
     if (Object.hasOwn(out, r.id) || Date.parse(r.date) < oldest) continue
+    added.add(r.id)
     out[r.id] = {
       ...r,
       matched: matchKeywords(`${r.title} ${r.summary}`, keywords),
@@ -40,5 +54,10 @@ export function applyCollected(live: AppState, collected: AppState, now: string)
   const items = { ...live.items }
   for (const [id, item] of Object.entries(collected.items))
     if (!Object.hasOwn(items, id)) items[id] = item
-  return { ...live, items: pruneOld(items, now), sourceErrors: collected.sourceErrors }
+  return {
+    ...live,
+    items: pruneOld(items, now),
+    sourceErrors: collected.sourceErrors,
+    boardKnown: collected.boardKnown
+  }
 }

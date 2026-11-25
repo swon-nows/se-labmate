@@ -153,7 +153,9 @@ describe('markUnreadableKey', () => {
       GitHub: 'HTTP 403',
       OpenAlex: KEY_UNREADABLE
     })
-    expect(KEY_UNREADABLE).toBe('저장된 키를 읽을 수 없습니다. 설정에서 키를 다시 입력해 주십시오.')
+    expect(KEY_UNREADABLE).toBe(
+      '저장된 키를 읽을 수 없습니다. Settings에서 키를 다시 입력해 주십시오.'
+    )
   })
   test('키를 풀었거나, 저장된 키가 없거나, 논문이 꺼져 있으면 그대로', () => {
     expect(markUnreadableKey(withKey, 'k')).toBe(withKey)

@@ -99,7 +99,12 @@ function App(): React.JSX.Element | null {
           <Feed
             status={status}
             enabled={state.settings.enabled}
-            sources={activeSources(state.profile, state.settings, state.hasOpenAlexKey)}
+            sources={activeSources(
+              state.profile,
+              state.settings,
+              state.hasOpenAlexKey,
+              state.boards
+            ).map((s) => s.name)}
             active={screen === 'feed'}
             onCount={setCount}
             onOpenSettings={() => setScreen('settings')}

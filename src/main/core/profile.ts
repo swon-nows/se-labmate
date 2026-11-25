@@ -1,6 +1,15 @@
-import { CATEGORIES } from '../../shared/types'
-import type { AppState, Profile, SaveInput, Settings } from '../../shared/types'
-import { cleanKeywords } from './text'
+import { BUILTIN_BOARDS } from '../../shared/sources'
+import { BOARD_CATEGORIES, CATEGORIES } from '../../shared/types'
+import type {
+  AppState,
+  Board,
+  BoardCategory,
+  Profile,
+  SaveInput,
+  Settings
+} from '../../shared/types'
+import { boardId } from './boards/index'
+import { cleanKeywords, isHttpUrl } from './text'
 
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/
 
@@ -11,9 +20,9 @@ export function validateProfile(input: {
   const keywordsEn = cleanKeywords(input.profile.keywordsEn)
   const keywordsKo = cleanKeywords(input.profile.keywordsKo)
   const errors: string[] = []
-  if (keywordsEn.length === 0) errors.push('영문 주제 키워드를 1개 이상 입력해 주십시오.')
+  if (keywordsEn.length === 0) errors.push('Keywords (English)를 1개 이상 입력해 주십시오.')
   if (!TIME_FORMAT.test(input.settings.notifyTime))
-    errors.push('알림 시각은 00:00~23:59 형식이어야 합니다.')
+    errors.push('Notify at은 00:00~23:59 형식이어야 합니다.')
   if (errors.length > 0) return { ok: false, errors }
   return {
     ok: true,
@@ -65,5 +74,45 @@ export function applyProfile(
     },
     openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
     lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt
+  }
+}
+
+const RESERVED_NAMES = [
+  'OpenAlex',
+  'arXiv',
+  'GitHub',
+  'Google News (KO)',
+  'Google News (EN)',
+  'IRIS',
+  '한국연구재단'
+]
+
+// 출처 이름은 오류 표시의 키라서 겹치면 안 된다.
+export function validateBoard(
+  input: unknown,
+  boards: Board[]
+): { ok: true; board: Board } | { ok: false; error: string } {
+  if (
+    !isObject(input) ||
+    typeof input.name !== 'string' ||
+    typeof input.url !== 'string' ||
+    !BOARD_CATEGORIES.includes(input.category as BoardCategory)
+  )
+    return { ok: false, error: '입력 형식이 올바르지 않습니다.' }
+  const name = input.name.replace(/\s+/g, ' ').trim()
+  if (name === '' || [...name].length > 30)
+    return { ok: false, error: '이름을 1~30자로 입력해 주십시오.' }
+  const url = input.url.trim()
+  if (!isHttpUrl(url) || url.length > 500)
+    return { ok: false, error: '주소는 http:// 또는 https://로 시작해야 합니다.' }
+  if (boards.length >= 10) return { ok: false, error: '게시판은 10개까지 등록할 수 있습니다.' }
+  if (RESERVED_NAMES.includes(name) || boards.some((b) => b.name === name))
+    return { ok: false, error: '이미 쓰고 있는 이름입니다.' }
+  const href = new URL(url).href
+  if ([...boards, ...BUILTIN_BOARDS].some((b) => b.url === href))
+    return { ok: false, error: '이미 등록된 주소입니다.' }
+  return {
+    ok: true,
+    board: { id: boardId(href), name, url: href, category: input.category as BoardCategory }
   }
 }

@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { applyProfile, isSaveInput, validateProfile } from '../../src/main/core/profile'
+import { boardId } from '../../src/main/core/boards/index'
+import {
+  applyProfile,
+  isSaveInput,
+  validateBoard,
+  validateProfile
+} from '../../src/main/core/profile'
 import { CATEGORIES } from '../../src/shared/types'
-import type { Profile, Settings } from '../../src/shared/types'
+import type { Board, Profile, Settings } from '../../src/shared/types'
 import { NOW, st } from '../helpers'
 
 const profile: Profile = { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' }
@@ -16,13 +22,13 @@ describe('validateProfile', () => {
   test('영문 키워드가 비어 있으면 거부한다', () => {
     expect(validateProfile({ ...base, profile: { ...base.profile, keywordsEn: ['  '] } })).toEqual({
       ok: false,
-      errors: ['영문 주제 키워드를 1개 이상 입력해 주십시오.']
+      errors: ['Keywords (English)를 1개 이상 입력해 주십시오.']
     })
   })
   test('알림 시각 형식이 틀리면 거부한다', () => {
     expect(
       validateProfile({ ...base, settings: { ...base.settings, notifyTime: '25:00' } })
-    ).toEqual({ ok: false, errors: ['알림 시각은 00:00~23:59 형식이어야 합니다.'] })
+    ).toEqual({ ok: false, errors: ['Notify at은 00:00~23:59 형식이어야 합니다.'] })
   })
   test('유효한 값은 통과한다', () => {
     expect(validateProfile(base)).toMatchObject({ ok: true })
@@ -95,5 +101,77 @@ describe('applyProfile', () => {
       throw new Error('no keychain')
     }
     expect(() => applyProfile(st(), { ...base, openAlexKey: 'k' }, fail, NOW)).toThrow()
+  })
+})
+
+describe('validateBoard', () => {
+  const board = (i: number): Board => ({
+    id: `b${i}`,
+    name: `게시판${i}`,
+    url: `https://a.b/${i}`,
+    category: 'school'
+  })
+  const input = {
+    name: '  건축   학과 ',
+    url: ' https://Architecture.snu.ac.kr/posts/notice ',
+    category: 'school'
+  }
+  const err = (v: unknown, boards: Board[] = []): string | null => {
+    const r = validateBoard(v, boards)
+    return r.ok ? null : r.error
+  }
+
+  test('통과하면 이름·주소를 다듬고 주소로 id를 만든다', () => {
+    const href = 'https://architecture.snu.ac.kr/posts/notice'
+    expect(validateBoard(input, [board(1)])).toEqual({
+      ok: true,
+      board: { id: boardId(href), name: '건축 학과', url: href, category: 'school' }
+    })
+  })
+  test.each([
+    ['null', null],
+    ['이름이 문자열이 아님', { ...input, name: 1 }],
+    ['주소 없음', { name: 'a', category: 'school' }],
+    ['모르는 분류', { ...input, category: 'paper' }]
+  ])('모양이 틀리면 거부: %s', (_name, v) => {
+    expect(err(v)).toBe('입력 형식이 올바르지 않습니다.')
+  })
+  test('이름은 공백 정리 뒤 1~30자', () => {
+    const E = '이름을 1~30자로 입력해 주십시오.'
+    expect(err({ ...input, name: '   ' })).toBe(E)
+    expect(err({ ...input, name: '가'.repeat(31) })).toBe(E)
+    expect(err({ ...input, name: '가'.repeat(30) })).toBeNull()
+  })
+  test('주소는 http(s)이고 500자 이하', () => {
+    const E = '주소는 http:// 또는 https://로 시작해야 합니다.'
+    expect(err({ ...input, url: 'javascript:alert(1)' })).toBe(E)
+    expect(err({ ...input, url: 'a.b/notice' })).toBe(E)
+    expect(err({ ...input, url: 'https://a.b/' + 'x'.repeat(490) })).toBe(E)
+  })
+  test('10개까지', () => {
+    const ten = Array.from({ length: 10 }, (_, i) => board(i))
+    expect(err(input, ten)).toBe('게시판은 10개까지 등록할 수 있습니다.')
+    expect(err(input, ten.slice(1))).toBeNull()
+  })
+  test('등록된 게시판이나 기본 출처와 같은 이름은 거부', () => {
+    const E = '이미 쓰고 있는 이름입니다.'
+    expect(err({ ...input, name: ' 게시판1 ' }, [board(1)])).toBe(E)
+    for (const name of [
+      'OpenAlex',
+      'arXiv',
+      'GitHub',
+      'Google News (KO)',
+      'Google News (EN)',
+      'IRIS',
+      '한국연구재단'
+    ])
+      expect(err({ ...input, name })).toBe(E)
+  })
+  test('등록된 게시판이나 기본 과제 공고와 같은 주소는 거부', () => {
+    const E = '이미 등록된 주소입니다.'
+    expect(err({ ...input, url: 'HTTPS://A.B/1' }, [board(1)])).toBe(E)
+    expect(
+      err({ ...input, url: 'https://www.nrf.re.kr/biz/notice/list?menu_no=362&bizNotGubn=guide' })
+    ).toBe(E)
   })
 })

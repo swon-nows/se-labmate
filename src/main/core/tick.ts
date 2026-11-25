@@ -31,7 +31,12 @@ export function createTick(d: TickDeps): () => Promise<void> {
       const after = d.getState()
       // 깨어난 직후 온라인 표시만 남은 경우처럼 모두 실패했으면 오늘 몫을 되돌리고 5분 뒤에 다시 본다.
       const sources = after.profile
-        ? activeSources(after.profile, after.settings, after.openAlexKeyEnc !== null)
+        ? activeSources(
+            after.profile,
+            after.settings,
+            after.openAlexKeyEnc !== null,
+            after.boards
+          ).map((x) => x.name)
         : []
       if (allFailed(sources, after.sourceErrors)) {
         notBefore = d.now().getTime() + 5 * 60_000 // 쓰기가 던져도 5분 간격은 지킨다

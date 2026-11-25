@@ -124,7 +124,9 @@ describe('createTick', () => {
           sourceErrors: {
             arXiv: 'HTTP 503',
             GitHub: 'HTTP 503',
-            'Google 뉴스(영문)': '네트워크 오류'
+            'Google News (EN)': '네트워크 오류',
+            IRIS: '네트워크 오류',
+            한국연구재단: '네트워크 오류'
           }
         })
       else
@@ -167,7 +169,13 @@ describe('createTick', () => {
 
   test('모두 실패해 되돌리는 쓰기가 던져도 5분 동안은 다시 돌지 않고, 5분 뒤에는 돈다', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    const errors = { arXiv: 'HTTP 503', GitHub: 'HTTP 503', 'Google 뉴스(영문)': '네트워크 오류' }
+    const errors = {
+      arXiv: 'HTTP 503',
+      GitHub: 'HTTP 503',
+      'Google News (EN)': '네트워크 오류',
+      IRIS: '네트워크 오류',
+      한국연구재단: '네트워크 오류'
+    }
     let state = due()
     let clock = NOW
     let fail = true

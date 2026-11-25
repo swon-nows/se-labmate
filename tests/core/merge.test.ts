@@ -28,6 +28,51 @@ describe('mergeIncoming', () => {
     expect(out['paper:a'].source).toBe('OpenAlex')
   })
 
+  test('같은 수집의 중복은 먼저 온 것의 빈 값만 나중 것으로 채우고, 채운 뒤에 matched를 계산한다', () => {
+    const out = mergeIncoming(
+      {},
+      [
+        raw({ id: 'paper:a', source: 'OpenAlex', venue: 'J', keywords: ['k'], summary: '' }),
+        raw({ id: 'paper:a', source: 'arXiv', summary: 'We propose xai.', keywords: ['cs.LG'] })
+      ],
+      ['xai'],
+      NOW
+    )
+    expect(out['paper:a']).toMatchObject({
+      source: 'OpenAlex',
+      venue: 'J',
+      keywords: ['k'],
+      summary: 'We propose xai.',
+      matched: ['xai']
+    })
+    const later = mergeIncoming(
+      {},
+      [
+        raw({ id: 'paper:b', source: 'OpenAlex', summary: '' }),
+        raw({ id: 'paper:b', source: 'arXiv', venue: 'V', keywords: ['cs.LG'], summary: 's' })
+      ],
+      [],
+      NOW
+    )['paper:b']
+    expect(later).toMatchObject({
+      source: 'OpenAlex',
+      venue: 'V',
+      keywords: ['cs.LG'],
+      summary: 's'
+    })
+  })
+
+  test('이전 수집에서 저장된 항목은 같은 id가 와도 채우지 않는다', () => {
+    const saved = mk({ id: 'paper:a', summary: '' })
+    const out = mergeIncoming(
+      { 'paper:a': saved },
+      [raw({ id: 'paper:a', summary: 'We propose xai.', venue: 'J' })],
+      ['xai'],
+      NOW
+    )
+    expect(out['paper:a']).toEqual(saved)
+  })
+
   test('새 항목의 초기값', () => {
     const it = mergeIncoming(
       {},
@@ -137,5 +182,11 @@ describe('applyCollected', () => {
     const out = applyCollected(live, st(), NOW)
     expect(out.lastNotifiedAt).toBe(NOW)
     expect(out.items).toEqual({})
+  })
+
+  test('boardKnown은 수집한 쪽의 것을 쓴다', () => {
+    const live = st({ boardKnown: { iris: ['old'] } })
+    const collected = st({ boardKnown: { iris: ['a', 'https://a.b/a'], nrf: ['b'] } })
+    expect(applyCollected(live, collected, NOW).boardKnown).toEqual(collected.boardKnown)
   })
 })

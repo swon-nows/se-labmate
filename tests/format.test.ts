@@ -11,8 +11,8 @@ import {
   toggleKeyword
 } from '../src/renderer/src/format'
 import { KEYWORD_SUGGESTIONS } from '../src/shared/keyword-suggestions'
-import { activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
-import type { Profile, Settings } from '../src/shared/types'
+import { BUILTIN_BOARDS, activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
+import type { Board, Category, Profile, Settings } from '../src/shared/types'
 
 describe('relativeDate', () => {
   const now = new Date(2026, 10, 24, 15, 0)
@@ -51,39 +51,83 @@ describe('activeSources', () => {
     openAtLogin: true,
     enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true }
   }
-  const off = (c: 'paper' | 'repo' | 'news'): Settings => ({
+  const off = (c: Category): Settings => ({
     ...settings,
     enabled: { ...settings.enabled, [c]: false }
   })
+  const names = (p: Profile, s: Settings, key: boolean, boards: Board[] = []): string[] =>
+    activeSources(p, s, key, boards).map((x) => x.name)
+  const school: Board = { id: 's1', name: '학과', url: 'https://a.b/s', category: 'school' }
+  const conf: Board = { id: 'c1', name: '학회', url: 'https://a.b/c', category: 'conference' }
 
-  it('모두 켜면 다섯 출처가 순서대로', () => {
-    expect(activeSources(profile, settings, true)).toEqual([
+  it('모두 켜면 다섯 출처, 한국이면 IRIS·한국연구재단이 순서대로', () => {
+    expect(names(profile, settings, true)).toEqual([
       'OpenAlex',
       'arXiv',
       'GitHub',
-      'Google 뉴스(한국어)',
-      'Google 뉴스(영문)'
+      'Google News (KO)',
+      'Google News (EN)',
+      'IRIS',
+      '한국연구재단'
     ])
+    const grants = activeSources(profile, settings, true, []).filter((s) => s.board)
+    expect(grants.map((s) => [s.board, s.category])).toEqual(
+      BUILTIN_BOARDS.map((b) => [b, 'grant'])
+    )
   })
   it('키가 없으면 OpenAlex가 빠진다', () => {
-    expect(activeSources(profile, settings, false)).not.toContain('OpenAlex')
+    expect(names(profile, settings, false)).not.toContain('OpenAlex')
   })
-  it('국가가 그 외이거나 한글 키워드가 없으면 한국어판이 빠진다', () => {
-    expect(activeSources({ ...profile, country: 'OTHER' }, settings, true)).not.toContain(
-      'Google 뉴스(한국어)'
-    )
-    expect(activeSources({ ...profile, keywordsKo: [] }, settings, true)).not.toContain(
-      'Google 뉴스(한국어)'
-    )
-  })
-  it('뉴스를 끄면 두 판이 모두 빠지고, 논문·저장소를 끄면 해당 출처가 빠진다', () => {
-    expect(activeSources(profile, off('news'), true)).toEqual(['OpenAlex', 'arXiv', 'GitHub'])
-    expect(activeSources(profile, off('paper'), true)).toEqual([
+  it('국가가 그 외이면 한국어판과 IRIS·한국연구재단이 빠지고, 한글 키워드가 없으면 한국어판이 빠진다', () => {
+    expect(names({ ...profile, country: 'OTHER' }, settings, true)).toEqual([
+      'OpenAlex',
+      'arXiv',
       'GitHub',
-      'Google 뉴스(한국어)',
-      'Google 뉴스(영문)'
+      'Google News (EN)'
     ])
-    expect(activeSources(profile, off('repo'), true)).not.toContain('GitHub')
+    expect(names({ ...profile, keywordsKo: [] }, settings, true)).not.toContain('Google News (KO)')
+  })
+  it('사용자 게시판은 등록 순으로 끝에', () => {
+    expect(names(profile, settings, true, [school, conf]).slice(-3)).toEqual([
+      '한국연구재단',
+      '학과',
+      '학회'
+    ])
+    expect(names({ ...profile, country: 'OTHER' }, off('news'), true, [conf, school])).toEqual([
+      'OpenAlex',
+      'arXiv',
+      'GitHub',
+      '학회',
+      '학과'
+    ])
+  })
+  it('카테고리를 끄면 그 출처가 빠진다', () => {
+    expect(names(profile, off('news'), true)).toEqual([
+      'OpenAlex',
+      'arXiv',
+      'GitHub',
+      'IRIS',
+      '한국연구재단'
+    ])
+    expect(names(profile, off('paper'), true)).toEqual([
+      'GitHub',
+      'Google News (KO)',
+      'Google News (EN)',
+      'IRIS',
+      '한국연구재단'
+    ])
+    expect(names(profile, off('repo'), true)).not.toContain('GitHub')
+    expect(names(profile, off('grant'), true, [school, conf])).toEqual([
+      'OpenAlex',
+      'arXiv',
+      'GitHub',
+      'Google News (KO)',
+      'Google News (EN)',
+      '학과',
+      '학회'
+    ])
+    expect(names(profile, off('school'), true, [school, conf]).slice(-1)).toEqual(['학회'])
+    expect(names(profile, off('conference'), true, [school, conf]).slice(-1)).toEqual(['학과'])
   })
 })
 
@@ -97,7 +141,7 @@ describe('allFailed', () => {
 })
 
 describe('sourceErrorText', () => {
-  const KEY = '키가 올바르지 않습니다. 설정에서 키를 확인해 주십시오.'
+  const KEY = '키가 올바르지 않습니다. Settings에서 키를 확인해 주십시오.'
   const LIMIT = '요청 한도를 넘었습니다. 다음 수집 때 다시 시도합니다.'
   it('OpenAlex 401·403은 키 안내, GitHub 403·429는 한도 안내', () => {
     expect(sourceErrorText('OpenAlex', 'HTTP 401')).toBe(KEY)
@@ -109,7 +153,7 @@ describe('sourceErrorText', () => {
     expect(sourceErrorText('OpenAlex', 'HTTP 429')).toBe('HTTP 429')
     expect(sourceErrorText('GitHub', 'HTTP 401')).toBe('HTTP 401')
     expect(sourceErrorText('arXiv', 'HTTP 403')).toBe('HTTP 403')
-    expect(sourceErrorText('Google 뉴스(영문)', '네트워크 오류')).toBe('네트워크 오류')
+    expect(sourceErrorText('Google News (EN)', '네트워크 오류')).toBe('네트워크 오류')
   })
 })
 

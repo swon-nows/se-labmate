@@ -222,7 +222,8 @@ function start(corruptBackup: string | null): void {
     collectFresh: runner.collectFresh,
     windowVisible: windowOpen,
     setOpenAtLogin,
-    testNotification: () => notify('알림 테스트입니다', showWindow)
+    testNotification: () => notify('알림 테스트입니다', showWindow),
+    fetchText
   })
   win = createWindow(atLogin)
   if (corruptBackup)

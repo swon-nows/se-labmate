@@ -16,6 +16,9 @@ const api: Api = {
   openItem: (id) => ipcRenderer.invoke('openItem', id),
   openHelp: (which) => ipcRenderer.invoke('openHelp', which),
   testNotification: () => ipcRenderer.invoke('testNotification'),
+  previewBoard: (url) => ipcRenderer.invoke('previewBoard', url),
+  addBoard: (input) => ipcRenderer.invoke('addBoard', input),
+  removeBoard: (id) => ipcRenderer.invoke('removeBoard', id),
   onStatus: (cb) => {
     const listener = (_e: IpcRendererEvent, s: CollectStatus): void => cb(s)
     ipcRenderer.on('status', listener)

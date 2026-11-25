@@ -1,7 +1,18 @@
 import { ipcMain, safeStorage, shell } from 'electron'
-import type { AppState, CollectStatus, Item, PublicState, SaveResult } from '../shared/types'
+import type {
+  AppState,
+  BoardResult,
+  CollectStatus,
+  Item,
+  PreviewResult,
+  PublicState,
+  SaveResult
+} from '../shared/types'
+import { readPosts } from './core/boards/index'
+import type { Post } from './core/boards/post'
+import type { FetchText } from './core/fetch-text'
 import { hideItem, pastItems, savedItems, takeNew } from './core/feed'
-import { applyProfile, isSaveInput, validateProfile } from './core/profile'
+import { applyProfile, isSaveInput, validateBoard, validateProfile } from './core/profile'
 import { isHttpUrl } from './core/text'
 
 export interface IpcDeps {
@@ -13,6 +24,7 @@ export interface IpcDeps {
   windowVisible(): boolean
   setOpenAtLogin(open: boolean): void
   testNotification(): void
+  fetchText: FetchText
 }
 
 const encrypt = (key: string): string => {
@@ -93,4 +105,42 @@ export function registerIpc(d: IpcDeps): void {
   })
 
   ipcMain.handle('testNotification', () => d.testNotification())
+
+  ipcMain.handle('previewBoard', async (_e, url: unknown): Promise<PreviewResult> => {
+    if (typeof url !== 'string' || !isHttpUrl(url))
+      return { ok: false, error: '주소는 http:// 또는 https://로 시작해야 합니다.' }
+    let posts: Post[]
+    try {
+      posts = await readPosts(url, d.fetchText)
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    }
+    if (posts.length === 0) return { ok: false, error: '글 목록을 찾지 못했습니다' }
+    const ms = (p: Post): number => Date.parse(p.date ?? '')
+    const dated = posts.every((p) => p.date !== null)
+    const shown = dated ? [...posts].sort((a, b) => ms(b) - ms(a)) : posts
+    return { ok: true, posts: shown.slice(0, 5).map(({ title, date }) => ({ title, date })) }
+  })
+
+  ipcMain.handle('addBoard', (_e, input: unknown): BoardResult => {
+    const s = d.getState()
+    const v = validateBoard(input, s.boards)
+    if (!v.ok) return v
+    try {
+      d.update({ ...s, boards: [...s.boards, v.board] })
+    } catch {
+      return { ok: false, error: '설정을 저장하지 못했습니다.' }
+    }
+    void d.collectFresh() // 수집 중이면 끝난 뒤 새 게시판까지 한 번 더 돈다
+    return { ok: true }
+  })
+
+  // 이미 모은 항목은 남긴다.
+  ipcMain.handle('removeBoard', (_e, id: unknown) => {
+    const s = d.getState()
+    if (typeof id !== 'string' || !s.boards.some((b) => b.id === id)) return
+    const boardKnown = { ...s.boardKnown }
+    delete boardKnown[id]
+    d.update({ ...s, boards: s.boards.filter((b) => b.id !== id), boardKnown })
+  })
 }
