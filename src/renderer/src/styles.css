@@ -582,6 +582,11 @@ select.input {
   padding-top: 40px;
 }
 
+.empty .hint {
+  margin-top: 0;
+  text-align: center;
+}
+
 /* 움직임: 동작 줄이기를 켜면 모두 멈춘다. */
 @media (prefers-reduced-motion: no-preference) {
   .btn,

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, Profile, PublicState, SaveInput } from '../../../shared/types'
+import { longKeywords } from '../format'
 
 interface Props {
   initial: PublicState
@@ -36,6 +37,7 @@ export function ProfileForm({
   const [errors, setErrors] = useState<string[]>([])
   const [pending, setPending] = useState(false)
 
+  const tooLong = longKeywords(keywordsEn).length > 0
   const hasKey = initial.hasOpenAlexKey
   const typedKey = keyText.trim() !== ''
   const willDelete = hasKey && deleteKey && !typedKey
@@ -89,13 +91,18 @@ export function ProfileForm({
           value={keywordsEn}
           onChange={(e) => setKeywordsEn(e.target.value)}
           aria-required="true"
-          aria-describedby="pf-en-hint"
+          aria-describedby={tooLong ? 'pf-en-hint pf-en-long' : 'pf-en-hint'}
           autoComplete="off"
           spellCheck={false}
         />
         <p id="pf-en-hint" className="hint">
-          쉼표로 구분합니다. 예: graph neural network, structural analysis
+          짧은 키워드 여러 개를 쉼표로 구분합니다. 예: graph neural network, structural analysis
         </p>
+        {tooLong && (
+          <p id="pf-en-long" className="hint" role="status">
+            키워드가 깁니다. 그대로 일치하는 글만 찾으므로 짧게 나누어 주십시오.
+          </p>
+        )}
       </div>
 
       <div className="field">

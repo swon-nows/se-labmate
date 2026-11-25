@@ -102,6 +102,7 @@ function App(): React.JSX.Element | null {
             sources={activeSources(state.profile, state.settings, state.hasOpenAlexKey)}
             active={screen === 'feed'}
             onCount={setCount}
+            onOpenSettings={() => setScreen('settings')}
           />
         </div>
         {screen === 'settings' && <Settings state={state} status={status} onSaved={load} />}

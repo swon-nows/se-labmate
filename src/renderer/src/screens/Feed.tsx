@@ -14,6 +14,7 @@ interface Props {
   sources: string[] // 켜진 출처(activeSources). 모두 실패했는지 보는 데 쓴다
   active: boolean // 피드 화면인가(설정을 연 동안 false)
   onCount: (n: number) => void
+  onOpenSettings: () => void // 첫 수집에서 아무것도 못 찾았을 때 키워드를 고치러 간다
 }
 
 type Tab = 'new' | 'past' | 'saved'
@@ -24,7 +25,14 @@ const TABS: [Tab, string][] = [
 ]
 const FIRST_ROWS = 5
 
-export function Feed({ status, enabled, sources, active, onCount }: Props): React.JSX.Element {
+export function Feed({
+  status,
+  enabled,
+  sources,
+  active,
+  onCount,
+  onOpenSettings
+}: Props): React.JSX.Element {
   const ids = useId()
   const [tab, setTab] = useState<Tab>('new')
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
@@ -36,7 +44,8 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
   const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
   const [savedNow, setSavedNow] = useState<ReadonlyMap<string, boolean>>(new Map())
-  const [firstRun, setFirstRun] = useState<boolean | null>(null) // 아직 아무것도 모은 적이 없는가
+  // 아직 아무것도 모은 적이 없는가: 이번 새 소식 목록이 비었고 지난 소식도 없다.
+  const [firstRun, setFirstRun] = useState<boolean | null>(null)
   const seq = useRef(0) // 가장 최근 takeNew만 load를 정한다
   const windowVisible = useRef<boolean | null>(null)
   const sessionEmpty = useRef(true) // 이번 새 소식 목록이 비었는가(take 시작 때 읽는다)
@@ -65,11 +74,15 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
     )
   }, [])
 
+  // 지난 소식은 수집이 시작·끝날 때와 창이 보일 때 다시 본다. 늦게 온 빈 답이 이미 받은 새 소식을 덮지 않게 sessionEmpty도 함께 본다.
   useEffect(() => {
     window.api.getPast().then(
-      (p) => setFirstRun((f) => f ?? p.length === 0),
+      (p) => setFirstRun(p.length === 0 && sessionEmpty.current),
       () => setFirstRun(false)
     )
+  }, [status.running, visit])
+
+  useEffect(() => {
     return window.api.onWindowVisible((v) => {
       windowVisible.current = v
       setVisible(v)
@@ -170,6 +183,9 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
             </button>
           </div>
         )
+      const failed = !status.running && allFailed(sources, status.errors)
+      // 한 번도 아무것도 모으지 못한 채 수집이 끝났다: 키워드가 문제일 가능성이 크다.
+      const noneFound = !status.running && !failed && firstRun === true && session.length === 0
       return (
         <div className="empty">
           <LiveOrb
@@ -180,13 +196,26 @@ export function Feed({ status, enabled, sources, active, onCount }: Props): Reac
           />
           <p className="muted" role="status">
             {!status.running
-              ? allFailed(sources, status.errors)
+              ? failed
                 ? '소식을 가져오지 못했습니다. 설정의 출처 상태를 확인해 주십시오.'
-                : '새 소식을 모두 확인했습니다'
+                : noneFound
+                  ? '이 키워드로 찾은 소식이 아직 없습니다.'
+                  : '새 소식을 모두 확인했습니다'
               : firstRun
                 ? '첫 소식을 모으는 중입니다'
                 : '새 소식을 확인하는 중입니다'}
           </p>
+          {noneFound && (
+            <>
+              <p className="hint">
+                키워드를 짧게 나누어 쉼표로 구분하면 더 많이 찾습니다. 예: explainable AI,
+                structural analysis
+              </p>
+              <button type="button" className="btn btn-small" onClick={onOpenSettings}>
+                키워드 고치기
+              </button>
+            </>
+          )}
         </div>
       )
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatStars, relativeDate } from '../src/renderer/src/format'
+import { formatStars, longKeywords, relativeDate } from '../src/renderer/src/format'
 import { activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
 import type { Profile, Settings } from '../src/shared/types'
 
@@ -99,5 +99,18 @@ describe('sourceErrorText', () => {
     expect(sourceErrorText('GitHub', 'HTTP 401')).toBe('HTTP 401')
     expect(sourceErrorText('arXiv', 'HTTP 403')).toBe('HTTP 403')
     expect(sourceErrorText('Google 뉴스(영문)', '네트워크 오류')).toBe('네트워크 오류')
+  })
+})
+
+describe('longKeywords', () => {
+  it('다섯 낱말 이상인 키워드만 돌려준다', () => {
+    expect(longKeywords('explainable ai with structural analysis')).toEqual([
+      'explainable ai with structural analysis'
+    ])
+    expect(longKeywords('a b c d e, short')).toEqual(['a b c d e'])
+  })
+  it('짧은 키워드와 빈 입력은 빈 목록', () => {
+    expect(longKeywords('graph neural network, xai')).toEqual([])
+    expect(longKeywords('')).toEqual([])
   })
 })

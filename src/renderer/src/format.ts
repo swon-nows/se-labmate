@@ -15,3 +15,11 @@ export function relativeDate(iso: string, now: Date): string {
 export function formatStars(n: number): string {
   return n < 1000 ? String(n) : `${(n / 1000).toFixed(1)}k`
 }
+
+// 키워드는 따옴표로 묶은 구절 그대로 찾으므로, 낱말이 다섯 이상이면 거의 아무것도 맞지 않는다.
+export function longKeywords(input: string): string[] {
+  return input
+    .split(',')
+    .map((k) => k.trim())
+    .filter((k) => k.split(/\s+/).length >= 5)
+}
