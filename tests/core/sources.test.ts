@@ -4,6 +4,7 @@ import type { Category, RawItem } from '../../src/shared/types'
 import { isHttpUrl } from '../../src/main/core/text'
 import { buildArxivUrl, parseArxiv } from '../../src/main/core/sources/arxiv'
 import { buildOpenAlexUrl, parseOpenAlex } from '../../src/main/core/sources/openalex'
+import { abstractText, keySentence } from '../../src/main/core/sources/summary'
 import { buildGithubUrls, parseGithub } from '../../src/main/core/sources/github'
 import { buildGnewsUrl, parseGnews } from '../../src/main/core/sources/gnews'
 
@@ -68,6 +69,18 @@ const OPENALEX_ONE = JSON.stringify({
     }
   ]
 })
+const arxivFeed = (summary: string, extra = ''): string => `<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom"><title>arXiv Query</title>
+  <entry><id>http://arxiv.org/abs/2611.00002v1</id><title>T</title><summary>${summary}</summary><published>2026-11-21T07:57:27Z</published>${extra}</entry>
+</feed>`
+const ARXIV_JREF = arxivFeed(
+  'We study X.',
+  '<category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/><arxiv:journal_ref>Nature 600 (2026)</arxiv:journal_ref>'
+)
+const ARXIV_DUP_CATS = arxivFeed(
+  'We study X.',
+  '<category term="cs.LG"/><category term="stat.ML"/><category term="cs.LG"/>'
+)
 const GNEWS_ONE = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>t</title>
 <item><title>AI 소식 - 한겨레</title><link>https://news.google.com/rss/articles/A?oc=5</link><guid isPermaLink="false">A</guid><pubDate>Thu, 19 Nov 2026 04:41:40 GMT</pubDate><source url="https://www.hani.co.kr">한겨레</source></item>
 </channel></rss>`
@@ -186,4 +199,99 @@ test('URL', () => {
   const g = new URL(buildGnewsUrl(['인공지능', '구조공학'], 'ko'))
   expect(g.searchParams.get('q')).toBe('"인공지능" OR "구조공학" when:7d')
   expect(g.searchParams.get('ceid')).toBe('KR:ko')
+})
+
+test('OpenAlex: 저널명과 핵심 키워드', () => {
+  const items = parseOpenAlex(fx('openalex-keywords.json'))
+  expect(items[0]).toMatchObject({
+    venue: 'Lirias',
+    keywords: [
+      'public employment services',
+      'model interpretability',
+      'job matching',
+      'decision support system',
+      'counterfactual explanations'
+    ]
+  })
+  expect(items[0].summary.startsWith('This dissertation examines how interpretable ML')).toBe(true)
+  expect([...items[0].summary]).toHaveLength(241) // 341자 문장 → 240자 + …
+  const noKw = items.find((i) => i.title.startsWith('Hyperbolic Multi-view'))!
+  expect(noKw).toMatchObject({
+    keywords: ['Misinformation and Its Impacts'],
+    venue: 'Communications in computer and information science',
+    summary: ''
+  })
+  expect(
+    new URL(buildOpenAlexUrl(['a'], new Date('2026-11-24T03:00:00Z'), 'K')).searchParams.get(
+      'select'
+    )
+  ).toBe(
+    'id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic,abstract_inverted_index'
+  )
+})
+test('keySentence', () => {
+  expect(
+    keySentence(
+      'Graph neural networks are popular. In this paper, we propose X for bridges. Results show Y.'
+    )
+  ).toBe('In this paper, we propose X for bridges.')
+  expect(keySentence('Abstract: Bridges age. Cracks grow. Monitoring is costly.')).toBe(
+    'Bridges age.'
+  )
+  expect(keySentence('Abstract concepts are hard. They resist models.')).toBe(
+    'Abstract concepts are hard.'
+  )
+  expect(keySentence('The value is 3.5 mm e.g. small. We measure it.')).toBe('We measure it.')
+  expect(keySentence('구조물 손상을 탐지한다. 그래프 신경망을 쓴다.')).toBe(
+    '구조물 손상을 탐지한다.'
+  )
+  expect(keySentence('   ')).toBe('')
+  const long = 'We ' + 'x'.repeat(300) + '.'
+  expect([...keySentence(long)]).toHaveLength(241)
+  expect(keySentence(long).endsWith('…')).toBe(true)
+})
+test('abstractText', () => {
+  expect(abstractText({ We: [0], propose: [1], a: [2, 4], and: [3], b: [5] })).toBe(
+    'We propose a and a b'
+  )
+  expect(abstractText(null)).toBe('')
+  expect(abstractText('x')).toBe('')
+})
+test('arXiv: 요약은 초록에서 고른 한 문장', () => {
+  for (const it of parseArxiv(fx('arxiv.xml'))) {
+    expect(it.summary).not.toBe('')
+    expect([...it.summary].length).toBeLessThanOrEqual(241)
+  }
+  expect(parseArxiv(arxivFeed('Bridges age.\n  We propose X.'))[0].summary).toBe('We propose X.')
+})
+test('OpenAlex: 키워드도 주제도 없으면 필드가 없다', () => {
+  const body = JSON.stringify({
+    results: [
+      {
+        id: 'https://openalex.org/W3',
+        doi: 'https://doi.org/10.1/z',
+        title: 'No extras',
+        publication_date: '2026-11-23',
+        keywords: [],
+        primary_location: { source: { display_name: '   ' } }
+      }
+    ]
+  })
+  const [item] = parseOpenAlex(body)
+  expect('keywords' in item).toBe(false)
+  expect('venue' in item).toBe(false)
+  expect(item.summary).toBe('')
+})
+test('arXiv: 분류와 journal_ref', () => {
+  for (const it of parseArxiv(fx('arxiv.xml'))) {
+    expect(it.keywords!.length).toBeGreaterThan(0)
+    for (const k of it.keywords!) expect(k).toMatch(/^[a-z-]+(\.[A-Za-z-]+)?$/)
+  }
+  expect(parseArxiv(ARXIV_JREF)[0]).toMatchObject({
+    venue: 'Nature 600 (2026)',
+    keywords: ['cs.LG']
+  })
+  const dup = parseArxiv(ARXIV_DUP_CATS)[0]
+  expect(dup.keywords).toEqual(['cs.LG', 'stat.ML'])
+  expect('venue' in dup).toBe(false)
 })

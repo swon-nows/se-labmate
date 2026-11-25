@@ -1,6 +1,7 @@
 import type { RawItem } from '../../../shared/types'
 import { normalizeTitle } from '../text'
 import { finish, quoteAll, ymd } from './common'
+import { abstractText, keySentence } from './summary'
 
 interface Work {
   id?: string
@@ -11,6 +12,9 @@ interface Work {
     landing_page_url?: string | null
     source?: { display_name?: string | null } | null
   } | null
+  keywords?: { display_name?: string | null; score?: number }[] | null
+  primary_topic?: { display_name?: string | null } | null
+  abstract_inverted_index?: unknown
 }
 
 export function buildOpenAlexUrl(keywords: string[], today: Date, apiKey: string): string {
@@ -21,7 +25,10 @@ export function buildOpenAlexUrl(keywords: string[], today: Date, apiKey: string
   )
   u.searchParams.set('sort', 'publication_date:desc')
   u.searchParams.set('per-page', '25')
-  u.searchParams.set('select', 'id,doi,title,publication_date,primary_location,type,cited_by_count')
+  u.searchParams.set(
+    'select',
+    'id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic,abstract_inverted_index'
+  )
   u.searchParams.set('api_key', apiKey)
   return u.toString()
 }
@@ -32,6 +39,14 @@ export function parseOpenAlex(body: string): RawItem[] {
   const out: RawItem[] = []
   for (const w of results) {
     const title = w.title ?? ''
+    const venue = w.primary_location?.source?.display_name?.trim()
+    const keywords = (Array.isArray(w.keywords) ? [...w.keywords] : [])
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .map((k) => k.display_name?.trim())
+      .filter((k): k is string => !!k)
+      .slice(0, 5)
+    const topic = w.primary_topic?.display_name?.trim()
+    if (keywords.length === 0 && topic) keywords.push(topic)
     const it = finish({
       id: 'paper:' + normalizeTitle(title),
       category: 'paper',
@@ -39,7 +54,9 @@ export function parseOpenAlex(body: string): RawItem[] {
       title,
       url: w.doi ?? w.primary_location?.landing_page_url ?? w.id ?? '',
       date: w.publication_date ?? '',
-      summary: w.primary_location?.source?.display_name ?? ''
+      summary: keySentence(abstractText(w.abstract_inverted_index)),
+      ...(venue ? { venue } : {}),
+      ...(keywords.length ? { keywords } : {})
     })
     if (it) out.push(it)
   }

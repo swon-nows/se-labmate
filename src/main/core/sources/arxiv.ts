@@ -1,6 +1,7 @@
 import type { RawItem } from '../../../shared/types'
 import { normalizeTitle } from '../text'
 import { finish, squash, textOf, xml } from './common'
+import { keySentence } from './summary'
 
 export function buildArxivUrl(keywords: string[]): string {
   const u = new URL('https://export.arxiv.org/api/query')
@@ -20,6 +21,12 @@ export function parseArxiv(body: string): RawItem[] {
     if (/^https?:\/\/arxiv\.org\/api\/errors/.test(textOf(e.id).trim()))
       throw new Error(squash(textOf(e.summary)) || 'arXiv 오류 응답')
     const title = squash(textOf(e.title))
+    const venue = squash(textOf(e['arxiv:journal_ref']))
+    // <category>는 하나면 객체, 여럿이면 배열로 온다.
+    const terms = ([] as unknown[])
+      .concat(e.category ?? [])
+      .map((c) => textOf((c as Record<string, unknown>)?.['@_term']).trim())
+    const keywords = [...new Set(terms.filter(Boolean))].slice(0, 5)
     const it = finish({
       id: 'paper:' + normalizeTitle(title),
       category: 'paper',
@@ -27,7 +34,9 @@ export function parseArxiv(body: string): RawItem[] {
       title,
       url: textOf(e.id).trim(),
       date: textOf(e.published).trim(),
-      summary: [...squash(textOf(e.summary))].slice(0, 200).join('')
+      summary: keySentence(textOf(e.summary)),
+      ...(venue ? { venue } : {}),
+      ...(keywords.length ? { keywords } : {})
     })
     if (it) out.push(it)
   }
