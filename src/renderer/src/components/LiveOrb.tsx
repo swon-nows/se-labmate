@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  ALPHA_STEPS,
   BURST_DECAY,
+  alphaStep,
   approach,
+  canvasScale,
   dotRadius,
+  frameGap,
   pointCount,
-  project,
+  projectAll,
   speedTarget,
-  spherePoints
+  spherePoints,
+  stepAlpha
 } from '../orb-math'
 import { OrbBoundary } from './OrbBoundary'
 
@@ -47,6 +52,8 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
     const points = spherePoints(pointCount(size))
+    const projected = new Float64Array(points.length * 3)
+    const steps = new Uint8Array(points.length)
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
     const dark = window.matchMedia('(prefers-color-scheme: dark)')
     const m = { rot: 0, speed: 0.35, tx: 0, ty: 0, burst: 0, wasBusy: input.current.busy }
@@ -56,25 +63,31 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     let onScreen = true
 
     const draw = (time: number): void => {
-      const dpr = window.devicePixelRatio || 1
-      const px = Math.round(size * dpr)
+      const scale = canvasScale(window.devicePixelRatio)
+      const px = Math.round(size * scale)
       if (canvas.width !== px) canvas.width = canvas.height = px
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.setTransform(scale, 0, 0, scale, 0, 0)
       ctx.clearRect(0, 0, size, size)
       ctx.fillStyle = color
-      const frame = {
-        rot: m.rot,
-        tiltX: m.tx,
-        tiltY: m.ty,
-        time,
-        busy: input.current.busy,
-        burst: m.burst
-      }
-      for (const p of points) {
-        const q = project(p, frame, 0.36 * size)
-        ctx.globalAlpha = 0.22 + 0.78 * q.d
+      projectAll(
+        points,
+        { rot: m.rot, tiltX: m.tx, tiltY: m.ty, time, busy: input.current.busy, burst: m.burst },
+        0.36 * size,
+        projected
+      )
+      for (let i = 0; i < points.length; i++) steps[i] = alphaStep(projected[3 * i + 2])
+      const c = size / 2
+      for (let step = 0; step < ALPHA_STEPS; step++) {
+        ctx.globalAlpha = stepAlpha(step)
         ctx.beginPath()
-        ctx.arc(size / 2 + q.x, size / 2 + q.y, dotRadius(size, q.d), 0, 2 * Math.PI)
+        for (let i = 0; i < points.length; i++) {
+          if (steps[i] !== step) continue
+          const x = c + projected[3 * i]
+          const y = c + projected[3 * i + 1]
+          const r = dotRadius(size, projected[3 * i + 2])
+          ctx.moveTo(x + r, y)
+          ctx.arc(x, y, r, 0, 2 * Math.PI)
+        }
         ctx.fill()
       }
     }
@@ -85,9 +98,15 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     const tick = (now: number): void => {
       raf = 0
       if (!moving()) return update() // 멈춰야 하면 (동작 줄이기라면 멈춘 한 장을 그리고) 고리를 끝낸다
+      const i = input.current
+      // 화면 주사율만큼 다 그리지 않는다. 간격이 안 됐으면 이번 프레임은 건너뛴다.
+      const lively = i.busy || i.hover || i.pointer || m.wasBusy || m.burst > 0.01
+      if (last && now - last < frameGap(lively)) {
+        raf = requestAnimationFrame(tick)
+        return
+      }
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0
       last = now
-      const i = input.current
       if (m.wasBusy && !i.busy) m.burst = 1 // 수집이 끝나면 한 번 튄다
       m.wasBusy = i.busy
       m.speed = approach(m.speed, speedTarget(i.busy, i.hover || i.pointer), 5, dt)
