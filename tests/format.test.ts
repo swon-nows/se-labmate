@@ -4,8 +4,10 @@ import {
   currentToken,
   formatStars,
   hasKeyword,
+  isoDate,
   keywordList,
   longKeywords,
+  paperChips,
   relativeDate,
   replaceToken,
   toggleKeyword
@@ -219,5 +221,32 @@ describe('KEYWORD_SUGGESTIONS', () => {
   )('%s %s: 중복이 없고 cleanKeywords를 거쳐도 그대로다', (_label, _lang, list) => {
     expect(new Set(list.map((k) => k.toLowerCase())).size).toBe(list.length)
     for (const k of list) expect(cleanKeywords([k])).toEqual([k])
+  })
+})
+
+describe('isoDate', () => {
+  it('현지 날짜를 YYYY-MM-DD로 쓴다', () => {
+    expect(isoDate(new Date(2026, 10, 5, 23, 0).toISOString())).toBe('2026-11-05')
+  })
+  it('읽을 수 없는 날짜는 빈 글자', () => {
+    expect(isoDate('not a date')).toBe('')
+  })
+})
+
+describe('paperChips', () => {
+  it('일치한 내 키워드를 먼저, 이어서 겹치지 않는 논문 키워드(대소문자 무시)', () => {
+    expect(
+      paperChips({ matched: ['XAI'], keywords: ['xai', 'SHAP', 'graph neural networks'] })
+    ).toEqual([
+      { text: 'XAI', match: true },
+      { text: 'SHAP', match: false },
+      { text: 'graph neural networks', match: false }
+    ])
+  })
+  it('키워드가 없으면 빈 목록', () => {
+    expect(paperChips({ matched: [], keywords: undefined })).toEqual([])
+  })
+  it('합쳐서 6개까지', () => {
+    expect(paperChips({ matched: ['a', 'b'], keywords: ['c', 'd', 'e', 'f', 'g'] })).toHaveLength(6)
   })
 })

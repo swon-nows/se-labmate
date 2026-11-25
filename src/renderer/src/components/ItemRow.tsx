@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { CATEGORY_LABEL } from '../../../shared/types'
 import type { Item } from '../../../shared/types'
-import { formatStars, relativeDate } from '../format'
+import { formatStars, isoDate, paperChips, relativeDate } from '../format'
 
 interface Props {
   item: Item
@@ -20,15 +20,19 @@ export function ItemRow(p: Props): React.JSX.Element {
   const [leaving, setLeaving] = useState(false)
   const busy = pending || leaving
 
-  const parts = [
-    p.withCategory ? CATEGORY_LABEL[item.category] : '',
-    item.source,
-    relativeDate(item.date, new Date())
-  ]
-  if (item.category === 'repo' && item.stars !== undefined)
-    parts.push(`★${formatStars(item.stars)}`)
-  if (item.matched.length > 0) parts.push(`Match: ${item.matched.join(', ')}`)
+  const isPaper = item.category === 'paper'
+  // 논문 줄은 출처·날짜·일치한 키워드를 아래 정보 줄과 칩으로 보이므로 여기엔 카테고리 이름만 남긴다.
+  const parts = [p.withCategory ? CATEGORY_LABEL[item.category] : '']
+  if (!isPaper) {
+    parts.push(item.source, relativeDate(item.date, new Date()))
+    if (item.category === 'repo' && item.stars !== undefined)
+      parts.push(`★${formatStars(item.stars)}`)
+    if (item.matched.length > 0) parts.push(`Match: ${item.matched.join(', ')}`)
+  }
   const meta = parts.filter(Boolean).join(' · ')
+  const venue = item.venue || (item.source === 'arXiv' ? 'Preprint' : '')
+  const published = isoDate(item.date)
+  const chips = isPaper ? paperChips(item) : []
 
   const toggleSave = (): void => {
     if (busy) return
@@ -64,7 +68,31 @@ export function ItemRow(p: Props): React.JSX.Element {
       >
         <span className="item-title-text">{item.title}</span>
       </button>
-      {item.summary && <p className="item-summary">{item.summary}</p>}
+      {item.summary && (
+        <p className="item-summary" title={isPaper ? item.summary : undefined}>
+          {item.summary}
+        </p>
+      )}
+      {isPaper && (
+        <div className="item-paper-meta">
+          <span className="src-badge">{item.source}</span>
+          {venue && (
+            <span className="venue" title={venue}>
+              {venue}
+            </span>
+          )}
+          {published && <span className="pub-date">{published}</span>}
+        </div>
+      )}
+      {chips.length > 0 && (
+        <ul className="kw-list" aria-label="Keywords">
+          {chips.map((c) => (
+            <li key={c.text} className={c.match ? 'kw is-match' : 'kw'}>
+              {c.text}
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="item-foot">
         <p className="item-meta" title={meta}>
           {meta}

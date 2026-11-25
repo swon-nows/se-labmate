@@ -114,17 +114,19 @@ select {
 }
 
 /* 새로 고침: 오브와 글자. 너비가 정해져 있어 글자가 바뀌어도 줄이 움직이지 않는다.
+   가장 긴 Collecting(15px에서 약 68px)이 담기는 너비다.
    .btn이 뒤에 오므로 두 클래스로 써야 안쪽 여백이 이긴다. */
 .btn.refresh-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  width: 112px;
+  width: 128px;
   padding: 0 10px 0 7px;
 }
 
+/* Settings(15px에서 약 57px)가 안쪽 여백까지 담기는 너비 */
 .nav-btn {
-  width: 80px;
+  width: 92px;
 }
 
 .content {
@@ -298,8 +300,9 @@ select.input {
   margin-top: 8px;
 }
 
-/* 출처 상태 */
-.sources {
+/* 출처 상태, 게시판 */
+.sources,
+.boards {
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid var(--line);
@@ -598,8 +601,8 @@ select.input {
 }
 
 .save-btn {
-  width: 5.75em; /* 저장 → 저장 취소로 바뀌어도 옆 버튼이 움직이지 않는다 */
-  text-align: right; /* 짧은 "저장"도 옆 버튼에 붙어 보인다 */
+  width: 5.25em; /* Save → Unsave로 바뀌어도 옆 버튼이 움직이지 않는다 */
+  text-align: right; /* 짧은 Save도 옆 버튼에 붙어 보인다 */
 }
 
 .btn-small {
@@ -633,12 +636,186 @@ select.input {
   text-align: center;
 }
 
+/* 논문 줄: 출처 배지·저널명·게재일자 한 줄, 그 아래 키워드 칩. 좁은 창에서도 가로로 넘치지 않는다. */
+.item-paper-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.src-badge {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.venue {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pub-date {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.kw-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.kw {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 일치한 칩은 바탕 없이 안쪽 테두리로 보인다. */
+.kw.is-match {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+}
+
+/* 줄에 마우스를 올리면 줄 바탕이 칩 바탕과 같아지므로 칩 바탕을 한 단계 진하게 한다. */
+.item:hover .kw:not(.is-match) {
+  background: var(--pressed);
+}
+
+/* 설정의 게시판 */
+.section-desc {
+  margin: 0 0 16px;
+}
+
+.board-list {
+  margin-bottom: 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.board-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.board-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.board-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.board-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-category {
+  flex: none;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.board-url {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.board-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.board-preview > p {
+  margin-bottom: 8px;
+}
+
+.post-list {
+  margin-bottom: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.post-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.post-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-date {
+  flex: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 첫 실행 화면: 폼 아래 안내 */
+.after-form {
+  margin-top: 12px;
+}
+
 /* 움직임: 동작 줄이기를 켜면 모두 멈춘다. */
 @media (prefers-reduced-motion: no-preference) {
   .btn,
   .btn-quiet,
   .chip,
   .tab,
+  .kw,
   .item {
     transition:
       background-color 150ms ease-out,

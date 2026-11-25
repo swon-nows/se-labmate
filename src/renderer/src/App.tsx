@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { activeSources } from '../../shared/sources'
+import { CATEGORIES } from '../../shared/types'
 import type { PublicState } from '../../shared/types'
 import { LiveOrb } from './components/LiveOrb'
 import { Feed } from './screens/Feed'
@@ -75,6 +76,7 @@ function App(): React.JSX.Element | null {
   if (!state.profile) return <Onboarding state={state} onSaved={load} />
 
   const { status } = state
+  const sources = activeSources(state.profile, state.settings, state.hasOpenAlexKey, state.boards)
   return (
     <>
       <header className="topbar">
@@ -99,12 +101,8 @@ function App(): React.JSX.Element | null {
           <Feed
             status={status}
             enabled={state.settings.enabled}
-            sources={activeSources(
-              state.profile,
-              state.settings,
-              state.hasOpenAlexKey,
-              state.boards
-            ).map((s) => s.name)}
+            categories={CATEGORIES.filter((c) => sources.some((s) => s.category === c))}
+            sources={sources.map((s) => s.name)}
             active={screen === 'feed'}
             onCount={setCount}
             onOpenSettings={() => setScreen('settings')}

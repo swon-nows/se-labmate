@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { allFailed } from '../../../shared/sources'
-import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
+import { CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, CollectStatus, Item } from '../../../shared/types'
 import { CategoryChips } from '../components/CategoryChips'
 import { ItemRow } from '../components/ItemRow'
@@ -11,6 +11,7 @@ import { mergeBatch } from '../session'
 interface Props {
   status: CollectStatus
   enabled: Record<Category, boolean> // 설정에서 끈 카테고리는 바로 사라진다
+  categories: Category[] // 켜진 출처가 있는 카테고리(칩에 보인다)
   sources: string[] // 켜진 출처(activeSources). 모두 실패했는지 보는 데 쓴다
   active: boolean // 피드 화면인가(설정을 연 동안 false)
   onCount: (n: number) => void
@@ -28,6 +29,7 @@ const FIRST_ROWS = 5
 export function Feed({
   status,
   enabled,
+  categories,
   sources,
   active,
   onCount,
@@ -39,7 +41,7 @@ export function Feed({
   // 이번 보기에서 takeNew가 답했는가. 답하기 전에는 "모두 확인했습니다"라고 말하지 않는다.
   const [load, setLoad] = useState<'pending' | 'done' | 'failed'>('pending')
   const [expanded, setExpanded] = useState<Category[]>([])
-  const [shown, setShown] = useState<Category[]>(ACTIVE_CATEGORIES)
+  const [shown, setShown] = useState<Category[]>(CATEGORIES)
   const [past, setPast] = useState<Item[] | null | 'failed'>(null)
   const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
@@ -94,7 +96,7 @@ export function Feed({
       setExpanded([])
       setLoad('pending')
       setTab('new')
-      setShown(ACTIVE_CATEGORIES)
+      setShown(CATEGORIES)
     })
   }, [])
 
@@ -125,7 +127,6 @@ export function Feed({
     onCount(fresh.length)
   }, [fresh.length, onCount])
 
-  const categories = ACTIVE_CATEGORIES.filter((c) => enabled[c])
   const visibleCats = categories.filter((c) => shown.includes(c))
 
   const isSaved = (i: Item): boolean => savedNow.get(i.id) ?? i.saved
@@ -197,7 +198,7 @@ export function Feed({
           <p className="muted" role="status">
             {!status.running
               ? failed
-                ? '소식을 가져오지 못했습니다. 설정의 출처 상태를 확인해 주십시오.'
+                ? '소식을 가져오지 못했습니다. Settings의 Sources를 확인해 주십시오.'
                 : noneFound
                   ? '이 키워드로 찾은 소식이 아직 없습니다.'
                   : '새 소식을 모두 확인했습니다'

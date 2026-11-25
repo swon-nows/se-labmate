@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CollectStatus, PublicState } from '../../../shared/types'
 import { activeSources, sourceErrorText } from '../../../shared/sources'
+import { BoardsEditor } from '../components/BoardsEditor'
 import { LiveOrb } from '../components/LiveOrb'
 import { useLasting } from '../use-lasting'
 import { ProfileForm } from './ProfileForm'
@@ -53,6 +54,8 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
       <p className="saved" role="status">
         {saved ? '저장했습니다.' : ''}
       </p>
+
+      <BoardsEditor boards={state.boards} onChanged={onSaved} />
 
       <section className="sources" aria-labelledby="sources-title">
         <h2 id="sources-title" className="section-title">

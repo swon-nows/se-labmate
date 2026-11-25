@@ -1,5 +1,14 @@
+import type { Item } from '../../shared/types'
+
 const pad = (n: number): string => String(n).padStart(2, '0')
 const dayNumber = (d: Date): number => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5
+
+// 현지 날짜 YYYY-MM-DD. 읽을 수 없으면 빈 글자.
+export function isoDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
 // 날짜는 현지 날짜 기준으로 센다.
 export function relativeDate(iso: string, now: Date): string {
@@ -9,7 +18,7 @@ export function relativeDate(iso: string, now: Date): string {
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
   if (days >= 2 && days <= 7) return `${days}d ago`
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  return isoDate(iso)
 }
 
 export function formatStars(n: number): string {
@@ -71,4 +80,21 @@ export function currentToken(text: string): string {
 // 키워드는 따옴표로 묶은 구절 그대로 찾으므로, 낱말이 다섯 이상이면 거의 아무것도 맞지 않는다.
 export function longKeywords(input: string): string[] {
   return keywordList(input).filter((k) => k.split(/\s+/).length >= 5)
+}
+
+// 논문 줄의 칩: 일치한 내 키워드를 먼저, 이어서 겹치지 않는 논문 키워드. 6개까지.
+export function paperChips(
+  item: Pick<Item, 'matched' | 'keywords'>
+): { text: string; match: boolean }[] {
+  const seen = new Set<string>()
+  const chips: { text: string; match: boolean }[] = []
+  const add = (text: string, match: boolean): void => {
+    const key = text.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    chips.push({ text, match })
+  }
+  item.matched.forEach((k) => add(k, true))
+  item.keywords?.forEach((k) => add(k, false))
+  return chips.slice(0, 6)
 }

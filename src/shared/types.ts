@@ -1,6 +1,5 @@
 export type Category = 'paper' | 'repo' | 'news' | 'grant' | 'conference' | 'school'
 export const CATEGORIES: Category[] = ['paper', 'repo', 'news', 'grant', 'conference', 'school']
-export const ACTIVE_CATEGORIES: Category[] = ['paper', 'repo', 'news'] // 1단계
 export const CATEGORY_LABEL: Record<Category, string> = {
   paper: 'Papers',
   repo: 'Repos',

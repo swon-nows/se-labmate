@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
+import { CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, Profile, PublicState, SaveInput } from '../../../shared/types'
 import { KeywordField } from '../components/KeywordField'
 import { keywordList, longKeywords } from '../format'
@@ -194,7 +194,7 @@ export function ProfileForm({
       {showCategories && (
         <fieldset className="field group">
           <legend>Categories</legend>
-          {ACTIVE_CATEGORIES.map((c) => (
+          {CATEGORIES.map((c) => (
             <label key={c} className="check">
               <input
                 type="checkbox"
@@ -204,6 +204,10 @@ export function ProfileForm({
               <span>{CATEGORY_LABEL[c]}</span>
             </label>
           ))}
+          <p className="hint">
+            Grants는 Region이 Korea일 때 IRIS와 한국연구재단의 신규 공고를 가져옵니다. Conferences와
+            School은 아래 Boards에 등록한 주소에서 가져옵니다.
+          </p>
         </fieldset>
       )}
 
