@@ -33,5 +33,5 @@ export function notificationBody(counts: Partial<Record<Category, number>>): str
     (c) => `${CATEGORY_LABEL[c]} ${counts[c]}`
   )
   const total = CATEGORIES.reduce((sum, c) => sum + (counts[c] ?? 0), 0)
-  return parts.length === 0 ? '새 소식 0건' : `새 소식 ${total}건 (${parts.join(' · ')})`
+  return parts.length === 0 ? '0 new' : `${total} new (${parts.join(' · ')})`
 }

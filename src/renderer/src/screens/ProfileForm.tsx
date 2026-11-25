@@ -82,7 +82,7 @@ export function ProfileForm({
     <form className="form" onSubmit={(e) => void submit(e)} noValidate>
       <div className="field">
         <label className="label" htmlFor="pf-en">
-          영문 주제 키워드
+          Keywords (English)
         </label>
         <input
           id="pf-en"
@@ -107,7 +107,7 @@ export function ProfileForm({
 
       <div className="field">
         <label className="label" htmlFor="pf-ko">
-          한글 주제 키워드 (선택)
+          Keywords (Korean, optional)
         </label>
         <input
           id="pf-ko"
@@ -122,22 +122,27 @@ export function ProfileForm({
 
       <div className="field">
         <label className="label" htmlFor="pf-country">
-          국가
+          Region
         </label>
         <select
           id="pf-country"
           className="input"
           value={country}
           onChange={(e) => setCountry(e.target.value === 'KR' ? 'KR' : 'OTHER')}
+          aria-describedby="pf-country-hint"
         >
-          <option value="KR">한국</option>
-          <option value="OTHER">그 외</option>
+          <option value="KR">Korea</option>
+          <option value="OTHER">Other</option>
         </select>
+        <p id="pf-country-hint" className="hint">
+          Korea를 고르면 한국어 뉴스와 국내 과제 공고(IRIS, 한국연구재단)를 함께 가져옵니다. Other는
+          영문 소식만 가져옵니다.
+        </p>
       </div>
 
       <div className="field">
         <label className="label" htmlFor="pf-key">
-          OpenAlex API 키 (선택)
+          OpenAlex API key (optional)
         </label>
         <div className="key-row">
           <input
@@ -154,13 +159,13 @@ export function ProfileForm({
             className="btn"
             onClick={() => void window.api.openHelp('openalex-key')}
           >
-            발급 방법 (무료, 약 30초)
+            Get a key (free)
           </button>
         </div>
         <div className="hint key-state">
           {hasKey && !willDelete && (
             <>
-              <span id="pf-key-hint">저장됨</span>
+              <span id="pf-key-hint">Saved</span>
               <button
                 type="button"
                 className="btn"
@@ -169,7 +174,7 @@ export function ProfileForm({
                   setDeleteKey(true)
                 }}
               >
-                삭제
+                Remove
               </button>
             </>
           )}
@@ -182,7 +187,7 @@ export function ProfileForm({
 
       <div className="field">
         <label className="label" htmlFor="pf-time">
-          알림 시각
+          Notify at
         </label>
         <input
           id="pf-time"
@@ -200,13 +205,13 @@ export function ProfileForm({
             checked={openAtLogin}
             onChange={(e) => setOpenAtLogin(e.target.checked)}
           />
-          <span>로그인 시 자동 실행</span>
+          <span>Open at login</span>
         </label>
       </div>
 
       {showCategories && (
         <fieldset className="field group">
-          <legend>카테고리</legend>
+          <legend>Categories</legend>
           {ACTIVE_CATEGORIES.map((c) => (
             <label key={c} className="check">
               <input

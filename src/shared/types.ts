@@ -2,12 +2,12 @@ export type Category = 'paper' | 'repo' | 'news' | 'grant' | 'conference' | 'sch
 export const CATEGORIES: Category[] = ['paper', 'repo', 'news', 'grant', 'conference', 'school']
 export const ACTIVE_CATEGORIES: Category[] = ['paper', 'repo', 'news'] // 1단계
 export const CATEGORY_LABEL: Record<Category, string> = {
-  paper: '논문',
-  repo: '저장소',
-  news: '뉴스',
-  grant: '과제 공고',
-  conference: '학회',
-  school: '학교 공지'
+  paper: 'Papers',
+  repo: 'Repos',
+  news: 'News',
+  grant: 'Grants',
+  conference: 'Conferences',
+  school: 'School'
 }
 
 export interface RawItem {

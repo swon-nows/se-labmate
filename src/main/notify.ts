@@ -4,7 +4,7 @@ let shown: Notification | null = null // 참조를 잡아 두지 않으면 GC되
 
 export function notify(body: string, onClick: () => void): void {
   if (!Notification.isSupported()) return
-  shown = new Notification({ title: '연구비서', body })
+  shown = new Notification({ title: 'SE LabMate', body })
   shown.on('click', onClick)
   shown.show()
 }

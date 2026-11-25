@@ -1,5 +1,5 @@
 appId: com.researchassistant.app
-productName: 연구비서
+productName: SE LabMate
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ win:
     - target: nsis
       arch: [x64]
 nsis:
-  artifactName: research-assistant-${version}-${arch}.${ext}
+  artifactName: se-labmate-${version}-${arch}.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -25,8 +25,8 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
   notarize: false
   extendInfo:
-    # 연구비서 in NFD: Electron finds helper apps by CFBundleName, and electron-builder names them in NFD; NFC crashes at launch
-    CFBundleName: "\u110B\u1167\u11AB\u1100\u116E\u1107\u1175\u1109\u1165"
+    # Electron finds helper apps by CFBundleName, so it must equal the productName electron-builder names them after
+    CFBundleName: SE LabMate
 dmg:
-  artifactName: research-assistant-${version}-${arch}.${ext}
+  artifactName: se-labmate-${version}-${arch}.${ext}
 npmRebuild: false

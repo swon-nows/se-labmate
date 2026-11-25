@@ -27,7 +27,7 @@ export function ItemRow(p: Props): React.JSX.Element {
   ]
   if (item.category === 'repo' && item.stars !== undefined)
     parts.push(`★${formatStars(item.stars)}`)
-  if (item.matched.length > 0) parts.push(`일치: ${item.matched.join(', ')}`)
+  if (item.matched.length > 0) parts.push(`Match: ${item.matched.join(', ')}`)
   const meta = parts.filter(Boolean).join(' · ')
 
   const toggleSave = (): void => {
@@ -77,7 +77,7 @@ export function ItemRow(p: Props): React.JSX.Element {
             aria-disabled={busy || undefined}
             onClick={toggleSave}
           >
-            {p.saved ? '저장 취소' : '저장'}
+            {p.saved ? 'Unsave' : 'Save'}
           </button>
           <button
             type="button"
@@ -86,7 +86,7 @@ export function ItemRow(p: Props): React.JSX.Element {
             aria-disabled={busy || undefined}
             onClick={dismiss}
           >
-            관심 없음
+            Hide
           </button>
         </div>
       </div>

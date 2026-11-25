@@ -19,7 +19,7 @@ function Checking({ active }: { active: boolean }): React.JSX.Element {
       {visible && (
         <>
           <LiveOrb size={16} busy />
-          확인 중
+          Checking
         </>
       )}
     </span>
@@ -39,7 +39,7 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
       <ProfileForm
         key={formKey}
         initial={state}
-        submitLabel="저장"
+        submitLabel="Save"
         showCategories
         onSubmitStart={() => setSaved(false)}
         onSaved={async () => {
@@ -54,7 +54,7 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
 
       <section className="sources" aria-labelledby="sources-title">
         <h2 id="sources-title" className="section-title">
-          출처 상태
+          Sources
         </h2>
         <ul className="source-list">
           {sources.map((name) => {
@@ -63,7 +63,7 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
               <li key={name} className="source-row">
                 <span className="source-name">{name}</span>
                 <span className="source-state">
-                  {error === undefined ? '정상' : `실패: ${sourceErrorText(name, error)}`}
+                  {error === undefined ? 'OK' : `Failed: ${sourceErrorText(name, error)}`}
                 </span>
                 {error !== undefined && <Checking active={status.running} />}
               </li>
@@ -80,7 +80,7 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
             )
           }
         >
-          알림 테스트
+          Test notification
         </button>
         <p className="saved" role="status">
           {notified ? '알림을 보냈습니다. 보이지 않으면 시스템의 알림 설정을 확인해 주십시오.' : ''}

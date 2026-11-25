@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "연구 소식을 모아 정해 둔 시각에 알려 주는 데스크탑 앱",
   "main": "./out/main/index.js",
-  "author": "연구비서",
+  "author": "SE LabMate",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

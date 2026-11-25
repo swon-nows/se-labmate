@@ -8,14 +8,14 @@ describe('relativeDate', () => {
   const at = (...a: [number, number, number, number, number]): string =>
     new Date(...a).toISOString()
 
-  it('같은 날은 오늘, 하루 전은 어제', () => {
-    expect(relativeDate(at(2026, 10, 24, 1, 0), now)).toBe('오늘')
-    expect(relativeDate(at(2026, 10, 23, 23, 0), now)).toBe('어제')
+  it('같은 날은 Today, 하루 전은 Yesterday', () => {
+    expect(relativeDate(at(2026, 10, 24, 1, 0), now)).toBe('Today')
+    expect(relativeDate(at(2026, 10, 23, 23, 0), now)).toBe('Yesterday')
   })
-  it('2~7일은 N일 전, 그 밖은 날짜', () => {
-    expect(relativeDate(at(2026, 10, 22, 12, 0), now)).toBe('2일 전')
-    expect(relativeDate(at(2026, 10, 19, 12, 0), now)).toBe('5일 전')
-    expect(relativeDate(at(2026, 10, 17, 12, 0), now)).toBe('7일 전')
+  it('2~7일은 Nd ago, 그 밖은 날짜', () => {
+    expect(relativeDate(at(2026, 10, 22, 12, 0), now)).toBe('2d ago')
+    expect(relativeDate(at(2026, 10, 19, 12, 0), now)).toBe('5d ago')
+    expect(relativeDate(at(2026, 10, 17, 12, 0), now)).toBe('7d ago')
     expect(relativeDate(at(2026, 10, 16, 12, 0), now)).toBe('2026-11-16')
     expect(relativeDate(at(2026, 9, 1, 12, 0), now)).toBe('2026-10-01')
   })

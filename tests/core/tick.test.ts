@@ -74,7 +74,7 @@ describe('createTick', () => {
     expect(t.collect).toHaveBeenCalledTimes(1)
     expect(t.notify).toHaveBeenCalledTimes(1)
     expect(t.notify).toHaveBeenCalledWith(notificationBody(unseenCounts(t.get())))
-    expect(t.notify).toHaveBeenCalledWith('새 소식 1건 (논문 1)')
+    expect(t.notify).toHaveBeenCalledWith('1 new (Papers 1)')
     expect(t.get().lastNotifiedAt).toBe(NOW)
   })
 

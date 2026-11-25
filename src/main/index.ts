@@ -148,17 +148,17 @@ function createWindow(hidden: boolean): BrowserWindow {
   return w
 }
 
-// macOS에는 한국어로 된 최소 메뉴(편집 메뉴가 없으면 입력칸의 복사·붙여넣기가 안 된다), 그 밖에는 메뉴 없음.
+// macOS에는 영어로 된 최소 메뉴(편집 메뉴가 없으면 입력칸의 복사·붙여넣기가 안 된다), 그 밖에는 메뉴 없음.
 // 개발 실행에서만 개발 메뉴를 더한다.
 function setMenu(): void {
   const dev: MenuItemConstructorOptions[] = app.isPackaged
     ? []
     : [
         {
-          label: '개발',
+          label: 'Develop',
           submenu: [
-            { label: '개발자 도구', role: 'toggleDevTools' },
-            { label: '새로 고침', role: 'reload' }
+            { label: 'Developer Tools', role: 'toggleDevTools' },
+            { label: 'Reload', role: 'reload' }
           ]
         }
       ]
@@ -168,34 +168,34 @@ function setMenu(): void {
   }
   const template: MenuItemConstructorOptions[] = [
     {
-      label: '연구비서',
+      label: 'SE LabMate',
       submenu: [
-        { label: '연구비서 정보', role: 'about' },
+        { label: 'About SE LabMate', role: 'about' },
         { type: 'separator' },
-        { label: '연구비서 가리기', role: 'hide' },
-        { label: '기타 가리기', role: 'hideOthers' },
-        { label: '모두 보기', role: 'unhide' },
+        { label: 'Hide SE LabMate', role: 'hide' },
+        { label: 'Hide Others', role: 'hideOthers' },
+        { label: 'Show All', role: 'unhide' },
         { type: 'separator' },
-        { label: '연구비서 종료', role: 'quit' }
+        { label: 'Quit SE LabMate', role: 'quit' }
       ]
     },
     {
-      label: '편집',
+      label: 'Edit',
       submenu: [
-        { label: '실행 취소', role: 'undo' },
-        { label: '다시 실행', role: 'redo' },
+        { label: 'Undo', role: 'undo' },
+        { label: 'Redo', role: 'redo' },
         { type: 'separator' },
-        { label: '잘라내기', role: 'cut' },
-        { label: '복사', role: 'copy' },
-        { label: '붙여넣기', role: 'paste' },
-        { label: '전체 선택', role: 'selectAll' }
+        { label: 'Cut', role: 'cut' },
+        { label: 'Copy', role: 'copy' },
+        { label: 'Paste', role: 'paste' },
+        { label: 'Select All', role: 'selectAll' }
       ]
     },
     {
-      label: '창',
+      label: 'Window',
       submenu: [
-        { label: '최소화', role: 'minimize' },
-        { label: '닫기', role: 'close' }
+        { label: 'Minimize', role: 'minimize' },
+        { label: 'Close', role: 'close' }
       ]
     },
     ...dev
@@ -228,7 +228,7 @@ function start(corruptBackup: string | null): void {
   if (corruptBackup)
     void dialog.showMessageBox({
       type: 'warning',
-      title: '연구비서',
+      title: 'SE LabMate',
       message: '저장 파일이 손상되어 처음 상태로 시작합니다.',
       detail: `이전 파일은 다음 위치에 남겨 두었습니다:\n${corruptBackup}`
     })
@@ -265,7 +265,7 @@ if (!app.requestSingleInstanceLock()) {
       state = loadState(file, (path) => (corruptBackup = path))
     } catch {
       // 기본값으로 덮어쓰면 하나뿐인 사본을 잃는다. 아무것도 만들지 않고 끝낸다.
-      dialog.showErrorBox('연구비서', '저장 파일을 읽을 수 없어 종료합니다.\n' + file)
+      dialog.showErrorBox('SE LabMate', '저장 파일을 읽을 수 없어 종료합니다.\n' + file)
       app.quit()
       return
     }
@@ -274,7 +274,7 @@ if (!app.requestSingleInstanceLock()) {
     } catch (e) {
       // 창 없는 프로세스가 단일 실행 잠금을 쥔 채 남지 않게 바로 끝낸다.
       dialog.showErrorBox(
-        '연구비서',
+        'SE LabMate',
         '시작하지 못했습니다.\n' + (e instanceof Error ? e.message : String(e))
       )
       app.exit(1)

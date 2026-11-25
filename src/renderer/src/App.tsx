@@ -23,7 +23,7 @@ function RefreshButton({ running }: { running: boolean }): React.JSX.Element {
       onPointerLeave={() => setHover(false)}
     >
       <LiveOrb size={22} busy={running} hover={hover} />
-      <span>{collecting ? '수집 중' : '새로 고침'}</span>
+      <span>{collecting ? 'Collecting' : 'Refresh'}</span>
     </button>
   )
 }
@@ -67,7 +67,7 @@ function App(): React.JSX.Element | null {
           설정을 불러오지 못했습니다.
         </p>
         <button type="button" className="btn" onClick={() => void load()}>
-          다시 시도
+          Retry
         </button>
       </main>
     )
@@ -79,8 +79,8 @@ function App(): React.JSX.Element | null {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <h1 className="app-name">연구비서</h1>
-          {count > 0 && <span className="count">{`새 소식 ${count}건`}</span>}
+          <h1 className="app-name">SE LabMate</h1>
+          {count > 0 && <span className="count">{`${count} new`}</span>}
           <div className="topbar-actions">
             <RefreshButton running={status.running} />
             <button
@@ -88,7 +88,7 @@ function App(): React.JSX.Element | null {
               className="btn nav-btn"
               onClick={() => setScreen((s) => (s === 'feed' ? 'settings' : 'feed'))}
             >
-              {screen === 'feed' ? '설정' : '피드로'}
+              {screen === 'feed' ? 'Settings' : 'Back'}
             </button>
           </div>
         </div>

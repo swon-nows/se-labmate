@@ -19,9 +19,9 @@ interface Props {
 
 type Tab = 'new' | 'past' | 'saved'
 const TABS: [Tab, string][] = [
-  ['new', '새 소식'],
-  ['past', '지난 소식'],
-  ['saved', '저장함']
+  ['new', 'New'],
+  ['past', 'Past'],
+  ['saved', 'Saved']
 ]
 const FIRST_ROWS = 5
 
@@ -179,7 +179,7 @@ export function Feed({
                 take()
               }}
             >
-              다시 시도
+              Retry
             </button>
           </div>
         )
@@ -192,7 +192,7 @@ export function Feed({
             size={200}
             busy={status.running}
             onActivate={() => void window.api.refresh()}
-            label="새로 고침"
+            label="Refresh"
           />
           <p className="muted" role="status">
             {!status.running
@@ -212,7 +212,7 @@ export function Feed({
                 structural analysis
               </p>
               <button type="button" className="btn btn-small" onClick={onOpenSettings}>
-                키워드 고치기
+                Edit keywords
               </button>
             </>
           )}
@@ -247,7 +247,7 @@ export function Feed({
                 section?.querySelectorAll<HTMLElement>('.item-title')[FIRST_ROWS]?.focus()
               }}
             >
-              {`더 보기 (${items.length - FIRST_ROWS})`}
+              {`More (${items.length - FIRST_ROWS})`}
             </button>
           )}
         </section>
@@ -278,7 +278,7 @@ export function Feed({
 
   return (
     <>
-      <div className="tabs" role="tablist" aria-label="보기">
+      <div className="tabs" role="tablist" aria-label="Views">
         {TABS.map(([t, label]) => (
           <button
             key={t}

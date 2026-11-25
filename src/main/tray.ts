@@ -19,12 +19,12 @@ function trayImage(hasUnseen: boolean): NativeImage {
 
 export function createTray(actions: { open(): void; refresh(): void; quit(): void }): void {
   tray = new Tray(trayImage(false))
-  tray.setToolTip('연구비서')
+  tray.setToolTip('SE LabMate')
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: '열기', click: () => actions.open() },
-      { label: '새로 고침', click: () => actions.refresh() },
-      { label: '종료', click: () => actions.quit() }
+      { label: 'Open', click: () => actions.open() },
+      { label: 'Refresh', click: () => actions.refresh() },
+      { label: 'Quit', click: () => actions.quit() }
     ])
   )
   if (process.platform === 'win32') tray.on('click', () => actions.open())
@@ -32,5 +32,5 @@ export function createTray(actions: { open(): void; refresh(): void; quit(): voi
 
 export function setTrayUnseen(hasUnseen: boolean): void {
   tray?.setImage(trayImage(hasUnseen))
-  tray?.setToolTip(hasUnseen ? '연구비서 — 새 소식 있음' : '연구비서')
+  tray?.setToolTip(hasUnseen ? 'SE LabMate — new items' : 'SE LabMate')
 }

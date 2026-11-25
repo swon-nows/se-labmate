@@ -80,9 +80,9 @@ test('shouldNotify 경계', () => {
 
 test('알림 문구', () => {
   expect(notificationBody({ paper: 3, repo: 2, news: 1, conference: 1 })).toBe(
-    '새 소식 7건 (논문 3 · 저장소 2 · 뉴스 1 · 학회 1)'
+    '7 new (Papers 3 · Repos 2 · News 1 · Conferences 1)'
   )
-  expect(notificationBody({ news: 2 })).toBe('새 소식 2건 (뉴스 2)')
-  expect(notificationBody({})).toBe('새 소식 0건')
-  expect(notificationBody({ paper: 0, news: 2 })).toBe('새 소식 2건 (뉴스 2)')
+  expect(notificationBody({ news: 2 })).toBe('2 new (News 2)')
+  expect(notificationBody({})).toBe('0 new')
+  expect(notificationBody({ paper: 0, news: 2 })).toBe('2 new (News 2)')
 })
