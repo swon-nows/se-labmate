@@ -419,7 +419,7 @@ select.input {
   cursor: pointer;
 }
 
-.chip:hover {
+.chip:hover:not([aria-disabled='true']) {
   background: var(--surface);
   color: var(--text);
 }
@@ -432,6 +432,47 @@ select.input {
 
 .chip[aria-pressed='true']:hover {
   background: var(--pressed);
+}
+
+/* 더 고를 수 없는 칩: 흐리게 보이고 눌러도 움직이지 않는다. */
+.chip[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* 키워드 추천: 입력칸 아래 문서 흐름 안에서 펼쳐진다. 칩은 줄을 바꿔 가로 스크롤이 생기지 않는다. */
+.suggest {
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.suggest-group + .suggest-group {
+  margin-top: 10px;
+}
+
+.suggest-title {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.suggest .chips {
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.suggest .hint {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.chip-sm {
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 
 .feed-group {
@@ -608,12 +649,23 @@ select.input {
   .item.is-leaving {
     animation: row-out 160ms ease-in forwards;
   }
+
+  .suggest {
+    animation: suggest-in 150ms ease-out;
+  }
 }
 
 @keyframes row-in {
   from {
     opacity: 0;
     transform: translateY(4px);
+  }
+}
+
+@keyframes suggest-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
 }
 

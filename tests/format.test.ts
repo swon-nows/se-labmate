@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { formatStars, longKeywords, relativeDate } from '../src/renderer/src/format'
+import { cleanKeywords } from '../src/main/core/text'
+import {
+  currentToken,
+  formatStars,
+  hasKeyword,
+  keywordList,
+  longKeywords,
+  relativeDate,
+  replaceToken,
+  toggleKeyword
+} from '../src/renderer/src/format'
+import { KEYWORD_SUGGESTIONS } from '../src/shared/keyword-suggestions'
 import { activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
 import type { Profile, Settings } from '../src/shared/types'
 
@@ -112,5 +123,57 @@ describe('longKeywords', () => {
   it('짧은 키워드와 빈 입력은 빈 목록', () => {
     expect(longKeywords('graph neural network, xai')).toEqual([])
     expect(longKeywords('')).toEqual([])
+  })
+})
+
+describe('keywordList', () => {
+  it('쉼표로 나누고 앞뒤 공백과 빈 것을 뺀다', () => {
+    expect(keywordList(' a, b ,, c ')).toEqual(['a', 'b', 'c'])
+    expect(keywordList('')).toEqual([])
+  })
+})
+
+describe('hasKeyword', () => {
+  it('대소문자를 무시하고 키워드 전체가 같을 때만 참', () => {
+    expect(hasKeyword('Explainable AI, SHAP', 'explainable ai')).toBe(true)
+    expect(hasKeyword('explainable AI', 'AI')).toBe(false)
+  })
+})
+
+describe('toggleKeyword', () => {
+  it('없으면 끝에 더하고 있으면 뺀다', () => {
+    expect(toggleKeyword('', 'SHAP')).toBe('SHAP')
+    expect(toggleKeyword('a, b', 'SHAP')).toBe('a, b, SHAP')
+    expect(toggleKeyword('a, shap , b', 'SHAP')).toBe('a, b')
+    expect(toggleKeyword('a, ', 'SHAP')).toBe('a, SHAP')
+  })
+})
+
+describe('replaceToken', () => {
+  it('적고 있는 낱말을 빼고 키워드를 끝에 더한다. 이미 있으면 더하지 않는다', () => {
+    expect(replaceToken('gra', 'graph neural network')).toBe('graph neural network')
+    expect(replaceToken('a, gra', 'graph neural network')).toBe('a, graph neural network')
+    expect(replaceToken('SHAP, sh', 'SHAP')).toBe('SHAP')
+    expect(replaceToken('a, ', 'b')).toBe('a, b')
+  })
+})
+
+describe('currentToken', () => {
+  it('마지막 쉼표 뒤의 글을 소문자로 돌려준다', () => {
+    expect(currentToken('a, Gra')).toBe('gra')
+    expect(currentToken('a, ')).toBe('')
+    expect(currentToken('abc')).toBe('abc')
+  })
+})
+
+describe('KEYWORD_SUGGESTIONS', () => {
+  it.each(
+    KEYWORD_SUGGESTIONS.flatMap((g) => [
+      [g.label, 'en', g.en] as const,
+      [g.label, 'ko', g.ko] as const
+    ])
+  )('%s %s: 중복이 없고 cleanKeywords를 거쳐도 그대로다', (_label, _lang, list) => {
+    expect(new Set(list.map((k) => k.toLowerCase())).size).toBe(list.length)
+    for (const k of list) expect(cleanKeywords([k])).toEqual([k])
   })
 })

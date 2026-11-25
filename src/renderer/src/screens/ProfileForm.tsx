@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ACTIVE_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
 import type { Category, Profile, PublicState, SaveInput } from '../../../shared/types'
-import { longKeywords } from '../format'
+import { KeywordField } from '../components/KeywordField'
+import { keywordList, longKeywords } from '../format'
 
 interface Props {
   initial: PublicState
@@ -11,12 +12,6 @@ interface Props {
   submitLabel: string
   showCategories?: boolean
 }
-
-const splitKeywords = (text: string): string[] =>
-  text
-    .split(',')
-    .map((k) => k.trim())
-    .filter((k) => k !== '')
 
 export function ProfileForm({
   initial,
@@ -47,8 +42,8 @@ export function ProfileForm({
     if (pending) return
     const input: SaveInput = {
       profile: {
-        keywordsEn: splitKeywords(keywordsEn),
-        keywordsKo: splitKeywords(keywordsKo),
+        keywordsEn: keywordList(keywordsEn),
+        keywordsKo: keywordList(keywordsKo),
         country
       },
       settings: { ...settings, notifyTime, openAtLogin, enabled }
@@ -80,21 +75,15 @@ export function ProfileForm({
 
   return (
     <form className="form" onSubmit={(e) => void submit(e)} noValidate>
-      <div className="field">
-        <label className="label" htmlFor="pf-en">
-          Keywords (English)
-        </label>
-        <input
-          id="pf-en"
-          className="input"
-          type="text"
-          value={keywordsEn}
-          onChange={(e) => setKeywordsEn(e.target.value)}
-          aria-required="true"
-          aria-describedby={tooLong ? 'pf-en-hint pf-en-long' : 'pf-en-hint'}
-          autoComplete="off"
-          spellCheck={false}
-        />
+      <KeywordField
+        id="pf-en"
+        label="Keywords (English)"
+        lang="en"
+        value={keywordsEn}
+        onChange={setKeywordsEn}
+        required
+        describedBy={tooLong ? 'pf-en-hint pf-en-long' : 'pf-en-hint'}
+      >
         <p id="pf-en-hint" className="hint">
           짧은 키워드 여러 개를 쉼표로 구분합니다. 예: graph neural network, structural analysis
         </p>
@@ -103,22 +92,15 @@ export function ProfileForm({
             키워드가 깁니다. 그대로 일치하는 글만 찾으므로 짧게 나누어 주십시오.
           </p>
         )}
-      </div>
+      </KeywordField>
 
-      <div className="field">
-        <label className="label" htmlFor="pf-ko">
-          Keywords (Korean, optional)
-        </label>
-        <input
-          id="pf-ko"
-          className="input"
-          type="text"
-          value={keywordsKo}
-          onChange={(e) => setKeywordsKo(e.target.value)}
-          autoComplete="off"
-          spellCheck={false}
-        />
-      </div>
+      <KeywordField
+        id="pf-ko"
+        label="Keywords (Korean, optional)"
+        lang="ko"
+        value={keywordsKo}
+        onChange={setKeywordsKo}
+      />
 
       <div className="field">
         <label className="label" htmlFor="pf-country">
