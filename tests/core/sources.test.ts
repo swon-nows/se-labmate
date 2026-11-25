@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import type { Category, RawItem } from '../../src/shared/types'
-import { isHttpUrl } from '../../src/main/core/text'
+import { isHttpUrl, normalizeTitle } from '../../src/main/core/text'
 import { buildArxivUrl, parseArxiv } from '../../src/main/core/sources/arxiv'
 import { buildOpenAlexUrl, parseOpenAlex } from '../../src/main/core/sources/openalex'
 import { abstractText, keySentence } from '../../src/main/core/sources/summary'
@@ -152,6 +152,8 @@ test('Google 뉴스 출처 없음·제목 끝 불일치·limit', () => {
   const [a, b] = parseGnews(GNEWS_PLAIN) // 날짜 최신순이라 20일 기사(a)가 먼저
   expect(b.source).toBe('Google News')
   expect(b.title).toBe('출처 없는 기사 - 어딘가')
+  // 저장된 id가 바뀌면 안 되므로, 출처 없는 기사의 id는 보이는 이름이 아니라 옛 이름 'Google 뉴스'로 만든다.
+  expect(b.id).toBe(`news:${normalizeTitle(b.title)}:${normalizeTitle('Google 뉴스')}`)
   expect(a.source).toBe('연합뉴스')
   expect(a.title).toBe('제목 끝이 다른 기사 - 어딘가')
   expect(a.id).toBe('news:제목끝이다른기사어딘가:연합뉴스')

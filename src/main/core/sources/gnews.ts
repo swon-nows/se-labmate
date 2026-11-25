@@ -2,6 +2,9 @@ import type { RawItem } from '../../../shared/types'
 import { normalizeTitle } from '../text'
 import { finish, quoteAll, textOf, xml } from './common'
 
+// 출처 없는 기사의 id에만 쓴다: 저장된 id가 바뀌면 이미 본 뉴스가 다시 새 소식이 된다.
+const LEGACY_ID_NAME = 'Google 뉴스'
+
 export function buildGnewsUrl(keywords: string[], edition: 'ko' | 'en'): string {
   const u = new URL('https://news.google.com/rss/search')
   u.searchParams.set('q', `${quoteAll(keywords, ' OR ')} when:7d`)
@@ -27,7 +30,7 @@ export function parseGnews(body: string, limit = 30): RawItem[] {
     const key = normalizeTitle(title)
     if (key === '') continue
     const it = finish({
-      id: `news:${key}:${normalizeTitle(name)}`,
+      id: `news:${key}:${normalizeTitle(source || LEGACY_ID_NAME)}`,
       category: 'news',
       source: name,
       title,
