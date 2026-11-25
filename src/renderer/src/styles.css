@@ -475,6 +475,11 @@ select.input {
   font-size: 12px;
 }
 
+/* 글자를 치는 동안 적고 있는 낱말과 맞지 않는 추천: 숨기지 않고 흐리게만 한다(목록 높이가 변하지 않는다). */
+.chip.is-dim {
+  opacity: 0.4;
+}
+
 .feed-group {
   margin-top: 20px;
 }

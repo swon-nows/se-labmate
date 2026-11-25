@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { KEYWORD_SUGGESTIONS } from '../../../shared/keyword-suggestions'
 import {
   MAX_KEYWORDS,
+  chipAction,
   currentToken,
   hasKeyword,
   keywordList,
@@ -32,31 +33,55 @@ export function KeywordField({
   children
 }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
-  // 글자를 치는 동안에만 적고 있는 낱말로 추천을 거른다. 칩을 누르면 다시 전체가 보인다.
+  // 글자를 치는 동안에만 적고 있는 낱말과 맞지 않는 칩을 흐리게 하고, 누르면 그 낱말을 바꾼다.
   const [typing, setTyping] = useState(false)
+  const fieldRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pressing = useRef(false) // 마우스·펜 버튼이 눌려 있는 동안
+  const closePending = useRef(false) // 눌린 채 포커스가 나가서 버튼을 뗄 때 닫을 차례
   const panelId = `${id}-suggestions`
 
-  const all = KEYWORD_SUGGESTIONS.map((g) => ({ label: g.label, items: g[lang] }))
+  // 목록이 문서 흐름 안에 있어서, 아래 버튼을 누르는 순간 닫으면 내용이 올라가 첫 클릭이 사라진다.
+  // 그래서 버튼을 뗀 뒤에(클릭이 먼저 전달되도록 한 틱 늦춰) 닫는다.
+  useEffect(() => {
+    const down = (): void => {
+      pressing.current = true
+    }
+    const up = (): void => {
+      pressing.current = false
+      if (!closePending.current) return
+      closePending.current = false
+      setTimeout(() => {
+        if (!fieldRef.current?.contains(document.activeElement)) setOpen(false)
+      }, 0)
+    }
+    document.addEventListener('pointerdown', down, true)
+    document.addEventListener('pointerup', up, true)
+    document.addEventListener('pointercancel', up, true)
+    return () => {
+      document.removeEventListener('pointerdown', down, true)
+      document.removeEventListener('pointerup', up, true)
+      document.removeEventListener('pointercancel', up, true)
+    }
+  }, [])
+
   const token = currentToken(value)
   const filtering = typing && token !== ''
-  const groups = all
-    .map((g) => ({
-      ...g,
-      items: filtering ? g.items.filter((k) => k.toLowerCase().includes(token)) : g.items
-    }))
-    .filter((g) => g.items.length > 0)
-  const expanded = open && groups.length > 0
   // 적고 있는 낱말은 칩으로 바뀌므로 세지 않는다.
   const full = keywordList(value).length - (filtering ? 1 : 0) >= MAX_KEYWORDS
 
   return (
     <div
+      ref={fieldRef}
       className="field"
+      onFocus={() => {
+        closePending.current = false
+      }}
       onBlur={(e) => {
-        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
-        setOpen(false)
+        if (fieldRef.current?.contains(e.relatedTarget as Node | null)) return
         setTyping(false)
+        if (pressing.current) closePending.current = true
+        else setOpen(false)
       }}
       onKeyDown={(e) => {
         if (e.key !== 'Escape' || !open) return
@@ -79,16 +104,19 @@ export function KeywordField({
           setOpen(true)
           setTyping(true)
         }}
-        onFocus={() => setOpen(true)}
+        // 칩에서 Escape로 돌아올 때는 닫힌 채로 둔다.
+        onFocus={(e) => {
+          if (!fieldRef.current?.contains(e.relatedTarget as Node | null)) setOpen(true)
+        }}
         onClick={() => setOpen(true)}
         aria-required={required ? 'true' : undefined}
         aria-describedby={describedBy}
-        aria-expanded={expanded}
+        aria-expanded={open}
         aria-controls={panelId}
         autoComplete="off"
         spellCheck={false}
       />
-      {expanded && (
+      {open && (
         // 빈 곳을 눌러도 입력칸의 포커스가 빠져나가지 않게 한다.
         <div
           id={panelId}
@@ -97,25 +125,24 @@ export function KeywordField({
           aria-label="Suggested keywords"
           onMouseDown={(e) => e.preventDefault()}
         >
-          {groups.map((g) => (
+          {KEYWORD_SUGGESTIONS.map((g) => (
             <div key={g.label} className="suggest-group">
               <p className="suggest-title">{g.label}</p>
               <div className="chips" lang={lang}>
-                {g.items.map((k) => {
-                  const pressed = hasKeyword(value, k)
-                  const blocked = full && !pressed
+                {g[lang].map((k) => {
+                  const action = chipAction(value, k, filtering)
+                  const dim = filtering && !k.toLowerCase().includes(token)
                   return (
                     <button
                       key={k}
                       type="button"
-                      className="chip chip-sm"
-                      aria-pressed={pressed}
-                      aria-disabled={blocked ? 'true' : undefined}
+                      className={dim ? 'chip chip-sm is-dim' : 'chip chip-sm'}
+                      aria-pressed={hasKeyword(value, k)}
+                      aria-disabled={action === 'blocked' ? 'true' : undefined}
                       onClick={() => {
-                        if (blocked) return
-                        // 적고 있는 낱말이 있으면 그 낱말을 추천으로 바꾼다.
+                        if (action === 'blocked') return
                         onChange(
-                          filtering && !pressed ? replaceToken(value, k) : toggleKeyword(value, k)
+                          action === 'replace' ? replaceToken(value, k) : toggleKeyword(value, k)
                         )
                         setTyping(false)
                       }}

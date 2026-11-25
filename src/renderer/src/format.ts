@@ -47,6 +47,19 @@ export function replaceToken(text: string, keyword: string): string {
   return (done.some((k) => sameKeyword(k, keyword)) ? done : [...done, keyword]).join(', ')
 }
 
+// 추천 칩을 눌렀을 때의 동작. filtering은 글자를 치는 중이고 적고 있는 낱말이 있다는 뜻이다.
+// 적고 있는 낱말은 칩으로 바뀌므로 개수에 넣지 않는다.
+export function chipAction(
+  value: string,
+  keyword: string,
+  filtering: boolean
+): 'replace' | 'toggle' | 'blocked' {
+  if (hasKeyword(value, keyword)) return 'toggle'
+  const count = keywordList(value).length
+  if (filtering) return count - 1 < MAX_KEYWORDS ? 'replace' : 'blocked'
+  return count < MAX_KEYWORDS ? 'toggle' : 'blocked'
+}
+
 // 지금 적고 있는 낱말: 마지막 쉼표 뒤의 글.
 export function currentToken(text: string): string {
   return text
