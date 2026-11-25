@@ -10,29 +10,37 @@ export interface Post {
 
 const squash = (s: string): string => s.replace(/\s+/g, ' ').trim()
 
-// 숫자 엔티티는 유효한 코드 포인트만 풀고, 나머지는 그대로 둔다.
-const fromCode = (whole: string, code: number): string =>
-  Number.isInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
+const NAMED: Record<string, string> = {
+  nbsp: ' ',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  amp: '&',
+  apos: "'"
+}
+
+// 한 번에 풀어서 &amp;lt;가 <가 되지 않게 한다. 범위 밖 숫자 엔티티는 그대로 둔다.
+const decodeEntity = (whole: string, ref: string): string => {
+  if (ref[0] !== '#') return NAMED[ref.toLowerCase()]
+  const code =
+    ref[1].toLowerCase() === 'x' ? parseInt(ref.slice(2), 16) : parseInt(ref.slice(1), 10)
+  return code <= 0x10ffff ? String.fromCodePoint(code) : whole
+}
 
 export function htmlText(fragment: string): string {
   return squash(
     fragment
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&#x([0-9a-f]+);/gi, (m, h: string) => fromCode(m, parseInt(h, 16)))
-      .replace(/&#(\d+);/g, (m, d: string) => fromCode(m, parseInt(d, 10)))
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&') // 마지막에 풀어야 &amp;lt;가 <가 되지 않는다
+      .replace(/<[^<>]*>/g, ' ')
+      .replace(/&(#x[0-9a-f]+|#\d+|nbsp|lt|gt|quot|amp|apos);/gi, decodeEntity)
   )
 }
 
 export function dateOf(y: string, m: string, d: string): string | null {
   const [mo, da] = [Number(m), Number(d)]
-  if (!(mo >= 1 && mo <= 12 && da >= 1 && da <= 31)) return null
+  if (!/^\d{4}$/.test(y) || !(mo >= 1 && mo <= 12 && da >= 1 && da <= 31)) return null
   const t = new Date(Date.UTC(Number(y), mo - 1, da))
-  return Number.isNaN(t.getTime()) ? null : t.toISOString()
+  // 2월 31일 같은 날짜는 Date가 다음 달로 넘겨 버리므로 되짚어 본다.
+  return t.getUTCMonth() === mo - 1 && t.getUTCDate() === da ? t.toISOString() : null
 }
 
 export function finishPosts(posts: Post[]): Post[] {

@@ -17,6 +17,9 @@ test('htmlText는 태그를 공백으로 바꾸고 엔티티를 풀며 공백을
   expect(htmlText('a<br>b')).toBe('a b')
   expect(htmlText('&amp;lt;')).toBe('&lt;') // &amp;는 마지막에 풀어 두 번 풀리지 않게 한다
   expect(htmlText('&quot;x&quot; &#65;&#x42;')).toBe('"x" AB')
+  expect(htmlText('&#38;lt;')).toBe('&lt;') // 숫자 엔티티로 푼 &도 다시 풀리지 않는다
+  expect(htmlText('&#99999999999; &#x110000; &bogus;')).toBe('&#99999999999; &#x110000; &bogus;')
+  expect(htmlText('1 < 2 <b>x</b>')).toBe('1 < 2 x')
 })
 
 test('dateOf는 UTC 자정 ISO, 범위 밖이면 null', () => {
@@ -24,6 +27,12 @@ test('dateOf는 UTC 자정 ISO, 범위 밖이면 null', () => {
   expect(dateOf('2026', '13', '1')).toBeNull()
   expect(dateOf('2026', '0', '1')).toBeNull()
   expect(dateOf('2026', '1', '32')).toBeNull()
+  expect(dateOf('2026', '2', '31')).toBeNull() // Date가 3월 3일로 넘기지 않게
+  expect(dateOf('2026', '4', '31')).toBeNull()
+  expect(dateOf('2024', '2', '29')).toBe('2024-02-29T00:00:00.000Z')
+  expect(dateOf('2026', '2', '29')).toBeNull()
+  expect(dateOf('26', '11', '25')).toBeNull() // 두 자리 해는 1926으로 읽히지 않게
+  expect(dateOf('', '11', '25')).toBeNull()
 })
 
 test('finishPosts는 제목을 정리하고 잘못된 글과 중복 key를 버린다', () => {
