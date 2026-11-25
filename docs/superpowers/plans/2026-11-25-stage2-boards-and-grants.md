@@ -10,14 +10,14 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-23-research-assistant-design.md` (4.2, 4.3, 4.4와 이 계획 끝의 "설계에서 바뀌는 것")
 
-**실행 방식:** 브랜치 `stage2`. Task 1 → (Task 2, 3, 4 동시에) → Task 5 → Task 6 → Task 7. 동시에 도는 과제는 서로 다른 파일만 만지고 커밋하지 않는다(메인이 검증 뒤 커밋).
+**실행 방식:** 브랜치 `stage2`. Task 1 → (Task 2, 3, 4, 7 동시에) → (Task 5, 8 동시에) → Task 6 → Task 10. Task 9는 메인이 그 사이에 한다. 동시에 도는 과제는 서로 다른 파일만 만지고 커밋하지 않는다(메인이 검증 뒤 커밋).
 
 ## Global Constraints
 
 - 삭제·되돌리기 명령 금지: `rm`, `git rm`, `git clean`, `git reset --hard`, `git checkout -- <파일>`, `git restore`, `git stash`. 필요하면 멈추고 보고한다.
 - `git push` 금지. `git add -A`, `git add .` 금지(파일을 하나씩 적는다).
 - 외부 요청에 사용자 정보를 넣지 않는다. `User-Agent`는 `research-assistant`만.
-- 화면 글자는 한국어 격식체. 이모지 없음.
+- 화면 글자(2026-11-25 사용자 결정): 짧은 표기(탭, 버튼, 입력칸 이름, 구역 제목, 카테고리 이름, 상태 낱말)는 영어, 문장(안내, 빈 화면, 오류, 설명)은 한국어 격식체. 이모지 없음. 앱 이름은 `SE LabMate`.
 - 외부에서 온 글자(제목·저널명·키워드)는 일반 글자로만 표시한다. `dangerouslySetInnerHTML` 금지. 여는 주소는 `http:`/`https:`만.
 - `src/main/core/**`와 `src/shared/**`는 `electron`을 import하지 않는다.
 - 새 의존성 금지.
@@ -166,32 +166,57 @@ expect(finishPosts([p({ key: '1', title: '  공지   사항 ' }), p({ key: '1', 
 - [ ] **Step 4:** `npm test && npm run typecheck` → 통과
 - [ ] **Step 5:** 커밋 `feat: state v2 with boards, POST and charset in fetchText, board post helpers`
 
-### Task 2: 논문의 저널명과 핵심 키워드 — 담당: Sonnet (커밋하지 않음)
+### Task 2: 논문의 저널명, 핵심 키워드, 한 줄 요약 — 담당: Sonnet (커밋하지 않음)
 
 **Files:**
+- Create: `src/main/core/sources/summary.ts`
 - Modify: `src/main/core/sources/openalex.ts`, `src/main/core/sources/arxiv.ts`
 - Test: `tests/core/sources.test.ts`
 
-**Interfaces:** Consumes `RawItem.venue`, `RawItem.keywords` (Task 1). 함수 이름과 시그니처는 그대로다.
+**Interfaces:** Consumes `RawItem.venue`, `RawItem.keywords` (Task 1). 기존 함수 이름과 시그니처는 그대로다. Produces:
+
+```ts
+// src/main/core/sources/summary.ts
+export function abstractText(inverted: unknown): string   // OpenAlex의 { 단어: [위치…] }를 위치 순서대로 공백으로 이은 글. 객체가 아니면 ''
+export function keySentence(abstract: string): string     // 초록에서 고른 한 문장(한 줄 요약). AI를 쓰지 않는다.
+```
+
+`keySentence` 규칙: (1) 공백 정리. 맨 앞의 `Abstract` 표지는 뒤에 `:`·`.`·`-`·`—`가 붙어 있을 때만 뗀다. (2) 문장 나누기: `.`·`?`·`!` 뒤에 공백이 오고 그다음 글자가 영문 대문자·숫자·따옴표·여는 괄호·한글일 때(`/(?<=[.?!])\s+(?=[A-Z0-9"'(\[가-힣])/`). (3) 다음 표현이 든 첫 문장을 고른다(대소문자 무시): `we`, `this|the present|the current` + `paper|study|work|article|thesis|dissertation|research|letter|survey|review`. 없으면 첫 문장. (4) 240자(코드 포인트)를 넘으면 240자에서 자르고 `…`를 붙인다. (5) 빈 글이면 `''`.
 
 규칙:
 
-- OpenAlex: `select`는 `id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic`. `venue` = `primary_location.source.display_name`(앞뒤 공백 제거, 비면 필드 없음). `summary`는 `''`. `keywords` = `keywords[]`를 `score` 내림차순으로 정렬한 `display_name` 앞 5개. 하나도 없고 `primary_topic.display_name`이 있으면 그것 하나. 그래도 없으면 필드 없음.
-- arXiv: `venue` = `<arxiv:journal_ref>` 글자(공백 정리, 없으면 필드 없음). `keywords` = `<category term="…">`의 `term`들(문서 순서, 중복 제거, 앞 5개). `<category>`는 하나일 때 객체, 여럿일 때 배열로 온다. `summary`는 지금처럼 초록 앞 200자.
+- OpenAlex: `select`는 `id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic,abstract_inverted_index`. `venue` = `primary_location.source.display_name`(앞뒤 공백 제거, 비면 필드 없음). `summary` = `keySentence(abstractText(abstract_inverted_index))`(초록이 없는 논문이 많다. 그때는 `''`). `keywords` = `keywords[]`를 `score` 내림차순으로 정렬한 `display_name` 앞 5개. 하나도 없고 `primary_topic.display_name`이 있으면 그것 하나. 그래도 없으면 필드 없음.
+- arXiv: `venue` = `<arxiv:journal_ref>` 글자(공백 정리, 없으면 필드 없음). `keywords` = `<category term="…">`의 `term`들(문서 순서, 중복 제거, 앞 5개). `<category>`는 하나일 때 객체, 여럿일 때 배열로 온다. `summary` = `keySentence(초록)`(지금의 "앞 200자"를 대신한다).
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
 ```ts
 test('OpenAlex: 저널명과 핵심 키워드', () => {
   const items = parseOpenAlex(fx('openalex-keywords.json'))
-  expect(items[0]).toMatchObject({ venue: 'Lirias', summary: '',
-    keywords: ['public employment services', 'model interpretability', 'job matching', 'counterfactual explanations', 'SHAP'] })
+  expect(items[0]).toMatchObject({ venue: 'Lirias',
+    keywords: ['public employment services', 'model interpretability', 'job matching', 'decision support system', 'counterfactual explanations'] })
+  expect(items[0].summary.startsWith('This dissertation examines how interpretable ML')).toBe(true)
+  expect([...items[0].summary]).toHaveLength(241) // 341자 문장 → 240자 + …
   const noKw = items.find((i) => i.title.startsWith('Hyperbolic Multi-view'))!
-  expect(noKw.keywords).toEqual(['Misinformation and Its Impacts'])
-  expect(noKw.venue).toBe('Communications in computer and information science')
+  expect(noKw).toMatchObject({ keywords: ['Misinformation and Its Impacts'], venue: 'Communications in computer and information science', summary: '' })
   expect(new URL(buildOpenAlexUrl(['a'], new Date('2026-11-24T03:00:00Z'), 'K')).searchParams.get('select'))
-    .toBe('id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic')
+    .toBe('id,doi,title,publication_date,primary_location,type,cited_by_count,keywords,primary_topic,abstract_inverted_index')
 })
+test('keySentence', () => {
+  expect(keySentence('Graph neural networks are popular. In this paper, we propose X for bridges. Results show Y.')).toBe('In this paper, we propose X for bridges.')
+  expect(keySentence('Abstract: Bridges age. Cracks grow. Monitoring is costly.')).toBe('Bridges age.')
+  expect(keySentence('Abstract concepts are hard. They resist models.')).toBe('Abstract concepts are hard.')
+  expect(keySentence('The value is 3.5 mm e.g. small. We measure it.')).toBe('We measure it.')
+  expect(keySentence('구조물 손상을 탐지한다. 그래프 신경망을 쓴다.')).toBe('구조물 손상을 탐지한다.')
+  expect(keySentence('   ')).toBe('')
+  const long = 'We ' + 'x'.repeat(300) + '.'
+  expect([...keySentence(long)]).toHaveLength(241); expect(keySentence(long).endsWith('…')).toBe(true)
+})
+test('abstractText', () => {
+  expect(abstractText({ We: [0], propose: [1], a: [2, 4], and: [3], b: [5] })).toBe('We propose a and a b')
+  expect(abstractText(null)).toBe(''); expect(abstractText('x')).toBe('')
+})
+test('arXiv: 요약은 초록에서 고른 한 문장', () => { /* fixture의 모든 항목: summary가 비어 있지 않고 241자 이하. 인라인 초록 'Bridges age. We propose X.' → 'We propose X.' */ })
 test('OpenAlex: 키워드도 주제도 없으면 필드가 없다', () => { /* 인라인 JSON, 'keywords' in item === false, 'venue' in item === false */ })
 test('arXiv: 분류와 journal_ref', () => {
   for (const it of parseArxiv(fx('arxiv.xml'))) { expect(it.keywords!.length).toBeGreaterThan(0); for (const k of it.keywords!) expect(k).toMatch(/^[a-z-]+(\.[A-Za-z-]+)?$/) }
@@ -435,6 +460,7 @@ removeBoard(id: string): Promise<void>
 
 - `collect`: 켜고 끄는 조건을 직접 쓰지 않고 `activeSources(profile, settings, key !== '', state.boards)`의 이름으로만 판단한다. 시작할 때 `sourceErrors`에서 켜진 출처가 아닌 이름을 지운다. 기존 다섯 출처 뒤에 `board`가 있는 출처를 순서대로 `readBoard(board, fetchText, boardKnown[board.id], now)`로 읽고, 성공하면 `boardKnown[board.id]`를 돌려받은 값으로 바꾼다. 실패하면 오류만 남기고 `boardKnown`은 그대로다. 돌려주는 상태에 `boardKnown`을 담는다.
 - `applyCollected`: `boardKnown`은 `collected`의 것을 쓴다.
+- `mergeIncoming`: 한 번의 수집 안에서 같은 id가 다시 오면 먼저 온 것이 남되, 먼저 온 것의 빈 값(`summary`가 `''`, `venue`·`keywords`가 없음)만 나중 것으로 채운다(OpenAlex에는 초록이 없고 arXiv에는 있는 논문). `matched`는 채운 뒤의 제목+요약으로 계산한다. 이전 수집에서 이미 저장된 항목은 지금처럼 건드리지 않는다.
 - `validateBoard`: 모양(`name`·`url`이 문자열, `category`가 `BOARD_CATEGORIES` 안)이 아니면 `입력 형식이 올바르지 않습니다.` / 이름은 공백 정리 뒤 1~30자, 아니면 `이름을 1~30자로 입력해 주십시오.` / 주소는 앞뒤 공백을 떼고 `isHttpUrl`이며 500자 이하, 아니면 `주소는 http:// 또는 https://로 시작해야 합니다.` / 이미 10개면 `게시판은 10개까지 등록할 수 있습니다.` / 이름이 등록된 게시판이나 기본 출처 이름(`OpenAlex`, `arXiv`, `GitHub`, `Google 뉴스(한국어)`, `Google 뉴스(영문)`, `IRIS`, `한국연구재단`)과 같으면 `이미 쓰고 있는 이름입니다.` / `new URL(url).href`가 등록된 게시판이나 `BUILTIN_BOARDS`의 주소와 같으면 `이미 등록된 주소입니다.` 통과하면 `{ id: boardId(href), name, url: href, category }`.
 - IPC `previewBoard`: 주소가 문자열이 아니거나 `isHttpUrl`이 아니면 `{ ok: false, error: '주소는 http:// 또는 https://로 시작해야 합니다.' }`. `readPosts`가 던지면 그 메시지, 0건이면 `글 목록을 찾지 못했습니다`. 성공하면 모든 글에 날짜가 있을 때는 최신순, 아니면 받은 순서로 앞 5건의 `{ title, date }`.
 - IPC `addBoard`: `validateBoard` → 상태에 더하고 저장(실패하면 `설정을 저장하지 못했습니다.`) → `collectFresh()`를 기다리지 않고 시작 → `{ ok: true }`.
@@ -467,7 +493,9 @@ test('꺼진 카테고리의 게시판은 요청하지 않고 옛 오류도 지�
 // tests/core/boards-index.test.ts: readPosts가 주소별로 맞는 읽기를 고르는지(부른 URL·본문으로 확인), 일반 페이지 0건이면 '글 목록을 찾지 못했습니다', boardId가 같은 주소에 같은 값·길이 10
 // tests/format.test.ts: activeSources 기존 테스트를 새 시그니처(이름 비교는 .map((s) => s.name))로 고치고, KR + grant 켬 → IRIS·한국연구재단 포함, OTHER → 없음, 사용자 게시판은 등록 순으로 끝에, 카테고리를 끄면 빠짐
 // tests/core/profile.test.ts: validateBoard의 오류 문구 여섯 개와 성공 값
-// tests/core/merge.test.ts: applyCollected가 collected.boardKnown을 쓴다
+// tests/core/merge.test.ts: applyCollected가 collected.boardKnown을 쓴다.
+//   같은 수집의 중복은 빈 값만 채운다: [raw({ id: 'paper:a', source: 'OpenAlex', venue: 'J', keywords: ['k'], summary: '' }), raw({ id: 'paper:a', source: 'arXiv', summary: 'We propose xai.', keywords: ['cs.LG'] })]
+//   → source 'OpenAlex', venue 'J', keywords ['k'], summary 'We propose xai.', matched에 'xai'(키워드 ['xai']). 이미 저장된 id는 그대로.
 ```
 
 - [ ] **Step 2:** `npm test` → 새 테스트 실패 확인
@@ -475,7 +503,7 @@ test('꺼진 카테고리의 게시판은 요청하지 않고 옛 오류도 지�
 - [ ] **Step 4:** `npm test && npm run typecheck && npm run build` → 통과
 - [ ] **Step 5:** 커밋 `feat: board sources in collector, registry, and IPC`
 
-### Task 6: 화면 — 담당: Sonnet
+### Task 6: 화면(논문 줄, 게시판, 카테고리) — 담당: Sonnet
 
 **Files:**
 - Create: `src/renderer/src/components/BoardsEditor.tsx`
@@ -491,23 +519,27 @@ export function paperChips(item: Pick<Item, 'matched' | 'keywords'>): { text: st
 // 일치한 내 키워드(match: true)를 먼저, 이어서 논문 키워드 중 대소문자 무시로 겹치지 않는 것(match: false). 합쳐서 6개까지.
 ```
 
-화면 규칙:
+화면 규칙 (표기는 Global Constraints대로: 짧은 표기는 영어, 문장은 한국어):
 
-- **논문 줄** (`item.category === 'paper'`): 제목 아래 한 줄에 출처 배지(`OpenAlex`/`arXiv`), 저널명(`item.venue`, 없고 출처가 arXiv면 `사전공개`, 그것도 없으면 생략), 게재일자(`isoDate(item.date)`). 그 아래 줄에 키워드 칩(`paperChips`), 하나도 없으면 줄을 만들지 않는다. 초록(`summary`)과 `일치: …` 글자는 논문 줄에서 보이지 않는다. 아래 줄의 왼쪽 글자는 `withCategory`일 때 `논문`만, 아니면 비운다. 저장·관심 없음 버튼은 그대로.
-  - 클래스: `item-paper-meta`(줄) 안에 `src-badge`, `venue`, `pub-date`; `kw-list`(`<ul aria-label="핵심 키워드">`) 안에 `kw`, 일치는 `kw is-match`.
-  - 모양: 줄은 13px, `--muted`. 배지는 11px, 1px `--line` 테두리, 모서리 4px, 안쪽 여백 `1px 6px`. 저널명은 `--text`, 굵기 500, 한 줄 넘치면 말줄임. 날짜는 `font-variant-numeric: tabular-nums`. 칩은 12px, 알약 모양, 바탕 `--surface`, 글자 `--muted`; 일치 칩은 글자 `--accent`, 바탕 없음, 안쪽 1px `--accent` 테두리. 칩 줄은 여러 줄로 넘어간다.
+- **논문 줄** (`item.category === 'paper'`), 위에서 아래로:
+  1. 제목(지금 그대로)
+  2. 한 줄 요약: `item.summary`가 있으면 `<p className="item-summary">`(지금 클래스, 두 줄까지 말줄임)로 보이고 `title` 속성에 전체 문장. 없으면 줄을 만들지 않는다.
+  3. 정보 줄 `item-paper-meta`: 출처 배지 `src-badge`(`OpenAlex`/`arXiv`), 저널명 `venue`(`item.venue`, 없고 출처가 arXiv면 `Preprint`, 그것도 없으면 생략), 게재일자 `pub-date`(`isoDate(item.date)`).
+  4. 키워드 칩 `<ul className="kw-list" aria-label="Keywords">` 안에 `kw`, 일치는 `kw is-match`. `paperChips`가 비면 줄을 만들지 않는다.
+  5. 아래 줄: 왼쪽 글자는 `withCategory`일 때 카테고리 이름만, 아니면 비운다(`Match: …`는 논문 줄에서 빼고 칩으로 대신한다). 버튼은 그대로.
+  - 모양: 정보 줄은 13px, `--muted`, 요소 사이 8px. 배지는 11px, 1px `--line` 테두리, 모서리 4px, 안쪽 여백 `1px 6px`. 저널명은 `--text`, 굵기 500, 한 줄 넘치면 말줄임. 날짜는 `font-variant-numeric: tabular-nums`. 칩은 12px, 알약 모양, 바탕 `--surface`, 글자 `--muted`; 일치 칩은 글자 `--accent`, 바탕 없음, 안쪽 1px `--accent` 테두리. 칩 줄은 여러 줄로 넘어간다.
 - **다른 카테고리 줄**은 지금 그대로다.
 - **카테고리 칩**: `App`이 `activeSources(...)`의 카테고리(중복 없이 `CATEGORIES` 순서)를 `Feed`에 넘기고, 칩은 그 카테고리만 보인다. `Feed`의 `sources` prop(이름 배열)은 그대로 둔다.
-- **설정의 카테고리 켜기/끄기**: 여섯 개 모두. 아래 안내 `과제 공고는 국가가 한국일 때 IRIS와 한국연구재단의 신규 공고를 가져옵니다. 학회와 학교 공지는 아래 게시판에 등록한 주소에서 가져옵니다.`
-- **게시판 구역** (`BoardsEditor`, 설정에서 프로필 폼과 출처 상태 사이): 제목 `게시판`, 설명 `학교·학회 공지 게시판의 주소를 등록하면 새 글을 알려 드립니다.`
-  - 등록된 게시판 목록: 이름, 분류(`CATEGORY_LABEL`), 주소(흐리게, 말줄임), `삭제` 버튼(`btn-quiet`) → `removeBoard` 후 `onChanged()`.
-  - 추가 폼: `이름`(최대 30자), `주소`(`type="url"`), `분류`(select: 학교 공지·학회·과제 공고, 기본 학교 공지), 버튼 `글 목록 확인` → `previewBoard(주소)`.
+- **설정의 Categories 켜기/끄기**: 여섯 개 모두. 아래 안내 `Grants는 Region이 Korea일 때 IRIS와 한국연구재단의 신규 공고를 가져옵니다. Conferences와 School은 아래 Boards에 등록한 주소에서 가져옵니다.`
+- **게시판 구역** (`BoardsEditor`, 설정에서 프로필 폼과 Sources 사이): 제목 `Boards`, 설명 `학교·학회 공지 게시판의 주소를 등록하면 새 글을 알려 드립니다.`
+  - 등록된 게시판 목록: 이름, 분류(`CATEGORY_LABEL`), 주소(흐리게, 말줄임), `Remove` 버튼(`btn-quiet`) → `removeBoard` 후 `onChanged()`.
+  - 추가 폼: `Name`(최대 30자), `URL`(`type="url"`), `Category`(select: School·Conferences·Grants, 기본 School), 버튼 `Check` → `previewBoard(주소)`.
   - 기다리는 동안: `<LiveOrb size={16} busy />`와 `글 목록을 읽는 중입니다`. 버튼은 `aria-disabled`.
-  - 성공: `최근 글을 읽었습니다. 맞으면 등록해 주십시오.`와 글 목록(제목, 날짜가 있으면 `isoDate`) 그리고 `등록` 버튼(`btn-primary`) → `addBoard` → 성공하면 폼을 비우고 `onChanged()`, 실패하면 오류 문구.
+  - 성공: `최근 글을 읽었습니다. 맞으면 등록해 주십시오.`와 글 목록(제목, 날짜가 있으면 `isoDate`) 그리고 `Add` 버튼(`btn-primary`) → `addBoard` → 성공하면 폼을 비우고 `onChanged()`, 실패하면 오류 문구.
   - 실패: 오류 문구(`.errors`)와 안내 `목록을 스크립트로 그리거나 로그인이 필요한 게시판은 읽지 못합니다.`
   - 이름·주소·분류를 고치면 미리보기를 지운다(다시 확인해야 등록할 수 있다).
   - 10개가 등록되어 있으면 추가 폼 대신 `게시판은 10개까지 등록할 수 있습니다.`
-- **첫 실행 화면**: 폼 아래에 한 줄 `학교·학회 게시판은 시작한 뒤 설정에서 추가할 수 있습니다.`
+- **첫 실행 화면**: 폼 아래에 한 줄 `학교·학회 게시판은 시작한 뒤 Settings에서 추가할 수 있습니다.`
 - 새 요소도 `:hover`·`:focus-visible`·어두운 모드·`prefers-reduced-motion` 규칙을 지킨다(기존 스타일의 방식을 따른다).
 
 - [ ] **Step 1: 실패하는 테스트 작성**
@@ -523,12 +555,134 @@ expect(paperChips({ matched: ['a', 'b'], keywords: ['c', 'd', 'e', 'f', 'g'] }))
 - [ ] **Step 2:** `npx vitest run tests/format.test.ts` → 실패 확인
 - [ ] **Step 3:** 구현
 - [ ] **Step 4:** `npm test && npm run typecheck && npm run build` → 통과
-- [ ] **Step 5:** 커밋 `feat: paper metadata row, board settings, all categories`
+- [ ] **Step 5:** 커밋 `feat: paper summary and metadata row, board settings, all categories`
 
-### Task 7: 마무리 — 담당: Fable(메인)
+### Task 7: 앱 이름 SE LabMate, 영어 표기, Region 안내 — 담당: Sonnet (Task 2~4와 동시에, 커밋하지 않음)
+
+사용자 요청(2026-11-25): 앱 이름을 `SE LabMate`로, 탭·버튼·입력칸 이름 같은 낱말은 짧은 영어로. "국가"가 무엇인지 알 수 없다는 지적.
+
+**Files:**
+- Modify: `electron-builder.yml`, `package.json`(`author`만), `src/renderer/index.html`, `src/shared/types.ts`(`CATEGORY_LABEL`만), `src/main/tray.ts`, `src/main/notify.ts`, `src/main/index.ts`(메뉴·대화상자의 글자만), `src/main/core/schedule.ts`(`notificationBody`), `src/renderer/src/App.tsx`, `src/renderer/src/screens/{Feed,Onboarding,Settings,ProfileForm}.tsx`, `src/renderer/src/components/ItemRow.tsx`, `src/renderer/src/format.ts`(`relativeDate`), `docs/windows-trial-checklist.md`(앱 이름과 바뀐 버튼 이름)
+- Test: `tests/core/schedule.test.ts`, `tests/format.test.ts` (그 밖에 바뀐 글자를 단언하던 테스트)
+
+글자만 바꾼다. 동작·구조·클래스 이름·id·IPC 이름은 그대로다.
+
+| 지금 | 바꿀 값 |
+|---|---|
+| `연구비서` (창 제목, 머리글, 트레이 도움말, 알림 제목, 메뉴, 대화상자 제목, `productName`, `author`) | `SE LabMate` |
+| 탭 `새 소식` / `지난 소식` / `저장함`, 탭 묶음 `aria-label="보기"` | `New` / `Past` / `Saved`, `Views` |
+| `새로 고침` / `수집 중` | `Refresh` / `Collecting` |
+| `설정` / `피드로` | `Settings` / `Back` |
+| 머리글 `새 소식 ${count}건` | `${count} new` |
+| `CATEGORY_LABEL`: 논문·저장소·뉴스·과제 공고·학회·학교 공지 | `Papers`·`Repos`·`News`·`Grants`·`Conferences`·`School` |
+| 항목 `저장` / `저장 취소` / `관심 없음` | `Save` / `Unsave` / `Hide` |
+| `더 보기 (N)` | `More (N)` |
+| `다시 시도` | `Retry` |
+| `키워드 고치기` | `Edit keywords` |
+| `일치: a, b` | `Match: a, b` |
+| `영문 주제 키워드` | `Keywords (English)` |
+| `한글 주제 키워드 (선택)` | `Keywords (Korean, optional)` |
+| `국가` / `한국` / `그 외` | `Region` / `Korea` / `Other` |
+| `OpenAlex API 키 (선택)` | `OpenAlex API key (optional)` |
+| `발급 방법 (무료, 약 30초)` | `Get a key (free)` |
+| 키 `저장됨` / `삭제` | `Saved` / `Remove` |
+| `알림 시각` | `Notify at` |
+| `로그인 시 자동 실행` | `Open at login` |
+| `카테고리`(legend, 칩 묶음 aria-label) | `Categories` |
+| 설정 폼 제출 `저장` / 첫 실행 제출 `시작하기` | `Save` / `Start` |
+| `연구비서 시작하기` | `Welcome to SE LabMate` |
+| `출처 상태` | `Sources` |
+| `정상` / `실패: …` / `확인 중` | `OK` / `Failed: …` / `Checking` |
+| `알림 테스트`(버튼) | `Test notification` |
+| `오늘` / `어제` / `N일 전` | `Today` / `Yesterday` / `Nd ago` |
+| 트레이 `열기` / `새로 고침` / `종료` | `Open` / `Refresh` / `Quit` |
+| 트레이 도움말 `연구비서 — 새 소식 있음` | `SE LabMate — new items` |
+| 알림 본문 `새 소식 7건 (논문 3 · 저장소 2)` / `새 소식 0건` | `7 new (Papers 3 · Repos 2)` / `0 new` |
+| 앱 메뉴 | `About SE LabMate`, `Hide SE LabMate`, `Hide Others`, `Show All`, `Quit SE LabMate`, `Edit`(Undo, Redo, Cut, Copy, Paste, Select All), `Window`(Minimize, Close), `Develop`(Developer Tools, Reload) |
+
+- 문장은 한국어 그대로 둔다: 안내(`hint`), 빈 화면 문장, 오류·상태 문장(`저장했습니다.`, `알림을 보냈습니다…`, `저장하면 삭제됩니다`, `알림 테스트입니다`), 대화상자 본문, `sourceErrorText`의 문장. 문장 안에 든 앱 이름만 `SE LabMate`로 바꾼다.
+- Region 선택 아래에 안내를 더한다: `Korea를 고르면 한국어 뉴스와 국내 과제 공고(IRIS, 한국연구재단)를 함께 가져옵니다. Other는 영문 소식만 가져옵니다.`
+- `electron-builder.yml`: `productName: SE LabMate`, `mac.extendInfo.CFBundleName: SE LabMate`(영문이라 NFD 문제는 없다. 주석을 그에 맞게 고친다), `nsis.artifactName`과 `dmg.artifactName`은 `se-labmate-${version}-${arch}.${ext}`. `appId`, `win.executableName`, `package.json`의 `name`은 바꾸지 않는다(데이터 폴더·알림 권한·로그인 항목·Windows 덮어쓰기 설치가 이 값에 묶여 있다).
+
+- [ ] **Step 1:** 바뀔 글자를 단언하는 테스트를 새 값으로 고친다(`notificationBody({ paper: 3, repo: 2, news: 1, conference: 1 })` → `'7 new (Papers 3 · Repos 2 · News 1 · Conferences 1)'`, `notificationBody({})` → `'0 new'`, `relativeDate` → `Today`/`Yesterday`/`5d ago`) → 실패 확인
+- [ ] **Step 2:** 표대로 바꾼다. `grep -rn "연구비서" src electron-builder.yml package.json` 결과가 주석뿐인지 확인한다.
+- [ ] **Step 3:** `npx vitest run tests/core/schedule.test.ts tests/format.test.ts tests/core/tick.test.ts && npm run typecheck:web` → 통과. 보고서에 바꾼 글자의 전체 목록(파일, 이전 → 이후)과 한국어로 남긴 문장 목록을 적는다.
+
+### Task 8: 키워드 추천 목록 — 담당: Sonnet (Task 7 뒤, Task 5와 동시에, 커밋하지 않음)
+
+사용자 요청(2026-11-25): 키워드 입력칸을 누르면 아래에 키워드 목록이 펼쳐진다. 우선 건축구조와 AI 분야만.
+
+**Files:**
+- Create: `src/shared/keyword-suggestions.ts`, `src/renderer/src/components/KeywordField.tsx`
+- Modify: `src/renderer/src/screens/ProfileForm.tsx`(두 키워드 입력칸을 `KeywordField`로), `src/renderer/src/styles.css`, `src/renderer/src/format.ts`
+- Test: `tests/format.test.ts`
+
+**Interfaces — Produces:**
+
+```ts
+// src/shared/keyword-suggestions.ts
+export interface SuggestionGroup { label: string; en: string[]; ko: string[] }
+export const KEYWORD_SUGGESTIONS: SuggestionGroup[] = [
+  { label: 'Structural',
+    en: ['structural engineering', 'structural analysis', 'structural design', 'structural health monitoring', 'structural optimization', 'topology optimization', 'finite element analysis', 'seismic design', 'earthquake engineering', 'reinforced concrete', 'steel structure', 'composite structure', 'structural reliability', 'damage detection', 'building information modeling', 'generative design', 'high-rise building', 'wind engineering'],
+    ko: ['건축구조', '구조해석', '구조설계', '구조 최적화', '내진설계', '철근콘크리트', '강구조', '합성구조', '구조물 건전성 모니터링', '손상 탐지', '유한요소해석', 'BIM', '초고층 건축', '모듈러 건축', '스마트 건설'] },
+  { label: 'AI',
+    en: ['explainable AI', 'machine learning', 'deep learning', 'graph neural network', 'physics-informed neural network', 'surrogate model', 'large language model', 'generative AI', 'reinforcement learning', 'computer vision', 'uncertainty quantification', 'Bayesian optimization', 'digital twin', 'SHAP', 'mechanistic interpretability'],
+    ko: ['인공지능', '설명가능 인공지능', '머신러닝', '딥러닝', '그래프 신경망', '대리모델', '생성형 AI', '거대언어모델', '강화학습', '컴퓨터 비전', '디지털 트윈'] }
+]
+// src/renderer/src/format.ts
+export const MAX_KEYWORDS = 8
+export function keywordList(text: string): string[]                   // 쉼표로 나누고 앞뒤 공백을 뗀, 빈 것 없는 목록(ProfileForm의 splitKeywords를 옮긴다)
+export function hasKeyword(text: string, keyword: string): boolean    // 대소문자 무시
+export function toggleKeyword(text: string, keyword: string): string  // 있으면 빼고 없으면 끝에 더한다. 결과는 ', '로 잇는다
+export function currentToken(text: string): string                    // 마지막 쉼표 뒤의 글(앞뒤 공백 제거, 소문자)
+// src/renderer/src/components/KeywordField.tsx
+export function KeywordField(p: { id: string; label: string; lang: 'en' | 'ko'; value: string; onChange: (v: string) => void;
+  required?: boolean; describedBy?: string; children?: React.ReactNode /* 입력칸 아래 안내 */ }): React.JSX.Element
+```
+
+동작:
+
+- 입력칸은 지금과 같다(쉼표로 구분해 직접 적을 수 있다). 입력칸에 포커스가 가면 바로 아래에 추천 목록이 펼쳐진다. 떠 있는 창이 아니라 문서 흐름 안에서 펼쳐져 아래 내용을 밀어낸다.
+- 목록은 묶음(`Structural`, `AI`)마다 작은 제목과 칩 버튼들이다. 이미 입력된 키워드의 칩은 `aria-pressed="true"`. 칩을 누르면 `toggleKeyword`로 입력값에 더하거나 뺀다. 누른 뒤에도 목록은 열려 있고 입력칸의 포커스가 유지된다(칩의 `onMouseDown`에서 `preventDefault`).
+- 입력 중인 낱말(`currentToken`)이 있고 그것이 이미 완성된 키워드가 아니면, 그 글자가 든 추천만 보인다. 맞는 것이 없는 묶음은 숨기고, 전부 없으면 목록을 숨긴다.
+- 키워드가 이미 `MAX_KEYWORDS`개면 눌리지 않은 칩은 `aria-disabled="true"`이고 눌러도 더해지지 않는다. 목록 아래에 `키워드는 8개까지 저장됩니다.`
+- 닫기: 포커스가 이 입력칸 묶음 밖으로 나가면, 또는 Escape(포커스는 입력칸에 남는다). 키보드로는 Tab으로 칩에 들어갈 수 있고, 그동안 목록은 열려 있다.
+- 접근성: 입력칸에 `aria-expanded`와 `aria-controls`, 목록은 `role="group"`과 `aria-label="Suggested keywords"`.
+- 모양: 목록 상자는 1px `--line` 테두리, 모서리 8px, 안쪽 여백 10px, 위 여백 6px. 묶음 제목은 11px, `--muted`, 글자 사이 0.04em. 칩은 기존 `.chip`의 모양을 그대로 쓰되 12px로 줄인 변형(`chip chip-sm`). 펼칠 때 150ms의 투명도·4px 이동 전환(`prefers-reduced-motion: no-preference` 안에서만).
+- 영문 입력칸은 `lang="en"`(영문 목록), 한글 입력칸은 `lang="ko"`(한글 목록).
+
+- [ ] **Step 1: 실패하는 테스트 작성**
+
+```ts
+expect(keywordList(' a, b ,, c ')).toEqual(['a', 'b', 'c'])
+expect(hasKeyword('Explainable AI, SHAP', 'explainable ai')).toBe(true); expect(hasKeyword('explainable AI', 'AI')).toBe(false)
+expect(toggleKeyword('', 'SHAP')).toBe('SHAP')
+expect(toggleKeyword('a, b', 'SHAP')).toBe('a, b, SHAP')
+expect(toggleKeyword('a, shap , b', 'SHAP')).toBe('a, b')
+expect(toggleKeyword('a, ', 'SHAP')).toBe('a, SHAP')
+expect(currentToken('a, Gra')).toBe('gra'); expect(currentToken('a, ')).toBe(''); expect(currentToken('abc')).toBe('abc')
+// 추천 목록: 묶음마다 en·ko에 중복이 없고, 모든 키워드가 cleanKeywords를 거쳐도 그대로다(쉼표·따옴표·세로줄 없음, 60자 이하)
+```
+
+- [ ] **Step 2:** `npx vitest run tests/format.test.ts` → 실패 확인
+- [ ] **Step 3:** 구현
+- [ ] **Step 4:** `npx vitest run tests/format.test.ts && npm run typecheck:web` → 통과
+
+### Task 9: 오브 그리기 최적화 — 담당: Fable(메인)
+
+사용자 보고(2026-11-25): Windows에서 오브가 버벅이거나 덜 만들어진 것처럼 보인다. 원인 후보는 (1) 1배 화면에서 1px 안팎의 점이 반 픽셀씩 움직이며 깜빡이는 것, (2) 점마다 삼각함수 6번·객체 생성·`globalAlpha` 변경·`fill`을 하는 그리기 비용이다. 승인된 움직임(속도·기울기·숨쉬기·튐)과 점 배치는 그대로 두고 다음만 바꾼다.
+
+- [ ] 캔버스 해상도를 `max(2, devicePixelRatio)`배로 그린다(1배 화면에서도 2배로 그려 줄여 보인다).
+- [ ] 프레임마다 삼각함수는 한 번만 계산하고, 점마다 객체를 만들지 않는다. 밝기를 6단계로 나눠 단계마다 경로 하나로 한 번에 칠한다.
+- [ ] 화면 주사율이 높아도 초당 60장 정도만 그린다.
+- [ ] `tests/orb-math.test.ts`를 새 함수에 맞추고, 느린 CPU를 흉내 낸 상태(CDP `Emulation.setCPUThrottlingRate`)에서 바꾸기 전후의 그리기 시간을 잰다.
+
+### Task 10: 마무리 — 담당: Fable(메인)
 
 - [ ] 전체 검토(Opus)와 지적 사항 수정
 - [ ] 임시 `--user-data-dir`로 띄워 확인: v1 상태 파일 이전, 과제 공고 표시, 서울대 건축학과 게시판 미리보기·등록·새 글, EUC-KR 게시판 미리보기(대한건축학회), 논문 줄 모양(밝은/어두운 모드), 화면 캡처
+- [ ] 포장된 앱의 `package.json`에 `productName`이 들어가지 않았는지(데이터 폴더가 `research-assistant` 그대로인지) 확인
 - [ ] `package.json` 버전 `0.2.0`, 설계 문서와 이 계획에 결과 기록, `npm run build:mac`
 
 ## 설계에서 바뀌는 것 (2026-11-25)
@@ -536,7 +690,8 @@ expect(paperChips({ matched: ['a', 'b'], keywords: ['c', 'd', 'e', 'f', 'g'] }))
 1. **처음 등록한 게시판의 최근 글은 새 소식으로 보인다.** 설계 4.2는 "등록 시점에 이미 있던 글은 새 소식으로 치지 않는다"였다. 그대로 하면 등록 직후와 2단계로 올린 직후에 과제 공고·학교 공지가 비어 보여 동작하는지 알 수 없다. 날짜가 있는 최근 30일의 글을 최신순 10건까지만 새 소식으로 치고, 나머지와 날짜 없는 글은 기준선으로 둔다. [Claude 판단]
 2. **게시판 주소는 첫 실행 화면이 아니라 설정에서 등록한다.** 첫 실행 화면을 짧게 유지하기 위해서다. [Claude 판단]
 3. **스크립트로 그리는 사이트도 전용 읽기가 있으면 읽는다.** 서울대 건축학과(사용자 지정)가 그런 사이트라 전용 읽기를 넣었다.
-4. **논문 줄**: 제목 아래에 출처·저널명·게재일자·핵심 키워드. [사용자 요청 2026-11-25] 초록 미리보기와 "일치:" 글자는 논문 줄에서 뺐다(일치한 키워드는 강조 칩으로 보인다). [Claude 판단]
+4. **논문 줄**: 제목 → 한 줄 요약 → 출처·저널명·게재일자 → 핵심 키워드. [사용자 요청 2026-11-25] 한 줄 요약은 AI가 쓴 글이 아니라 초록에서 고른 한 문장이고, 초록이 공개되지 않은 논문에는 없다. "일치:" 글자는 논문 줄에서 빼고 강조 칩으로 대신한다. [Claude 판단]
+6. **앱 이름은 SE LabMate, 짧은 표기는 영어, 키워드 추천 목록(건축구조·AI), 오브 최적화.** [사용자 요청 2026-11-25]
 5. **과제 공고의 중복**: IRIS와 한국연구재단에 같은 제목의 공고가 있으면 한 번만 보인다.
 
 ## 이 계획에 넣지 않은 것
