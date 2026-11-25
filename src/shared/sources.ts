@@ -57,6 +57,14 @@ export function activeSources(
 export const allFailed = (sources: string[], errors: Record<string, string>): boolean =>
   sources.length > 0 && sources.every((s) => Object.hasOwn(errors, s))
 
+// 켜진 출처가 하나 이상이고, 그 모두가 닿지 못해 실패했는가(fetch-text의 고정 문구). 사이트가 바뀐 실패는 넣지 않는다.
+export const allUnreachable = (names: string[], errors: Record<string, string>): boolean =>
+  names.length > 0 &&
+  names.every(
+    (n) =>
+      Object.hasOwn(errors, n) && (errors[n] === '네트워크 오류' || errors[n] === '요청 시간 초과')
+  )
+
 // 설정의 출처 상태에 보일 글. 사용자가 할 일이 있는 오류만 바꾸고, 그 밖은 메시지 그대로.
 export function sourceErrorText(name: string, message: string): string {
   if (name === 'OpenAlex' && (message === 'HTTP 401' || message === 'HTTP 403'))

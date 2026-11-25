@@ -4,12 +4,12 @@ import { finish, quoteAll, ymd } from './common'
 import { abstractText, keySentence } from './summary'
 
 interface Work {
-  id?: string
-  doi?: string | null
-  title?: string | null
-  publication_date?: string
+  id?: unknown
+  doi?: unknown
+  title?: unknown
+  publication_date?: unknown
   primary_location?: {
-    landing_page_url?: string | null
+    landing_page_url?: unknown
     source?: { display_name?: unknown } | null
   } | null
   keywords?: unknown
@@ -24,6 +24,7 @@ interface Kw {
 // 외부 JSON이라 필드 타입을 믿지 않는다: 문자열이 아니면 빈 글. 레코드 하나가 소스 전체를 막으면 안 된다.
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '')
 const score = (k: Kw): number => (typeof k.score === 'number' ? k.score : 0)
+const opt = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
 export function buildOpenAlexUrl(keywords: string[], today: Date, apiKey: string): string {
   const u = new URL('https://api.openalex.org/works')
@@ -42,11 +43,13 @@ export function buildOpenAlexUrl(keywords: string[], today: Date, apiKey: string
 }
 
 export function parseOpenAlex(body: string): RawItem[] {
-  const results = JSON.parse(body)?.results as Work[] | undefined
+  const results: unknown = JSON.parse(body)?.results
   if (!Array.isArray(results)) throw new Error('OpenAlex 응답에 results가 없습니다')
   const out: RawItem[] = []
-  for (const w of results) {
-    const title = w.title ?? ''
+  for (const entry of results) {
+    if (!entry || typeof entry !== 'object') continue
+    const w = entry as Work
+    const title = opt(w.title) ?? ''
     const venue = str(w.primary_location?.source?.display_name)
     const keywords = ((Array.isArray(w.keywords) ? w.keywords : []) as (Kw | null)[])
       .filter((k): k is Kw => !!k && typeof k === 'object' && str(k.display_name) !== '')
@@ -60,8 +63,8 @@ export function parseOpenAlex(body: string): RawItem[] {
       category: 'paper',
       source: 'OpenAlex',
       title,
-      url: w.doi ?? w.primary_location?.landing_page_url ?? w.id ?? '',
-      date: w.publication_date ?? '',
+      url: opt(w.doi) ?? opt(w.primary_location?.landing_page_url) ?? opt(w.id) ?? '',
+      date: opt(w.publication_date) ?? '',
       summary: keySentence(abstractText(w.abstract_inverted_index)),
       ...(venue ? { venue } : {}),
       ...(keywords.length ? { keywords } : {})

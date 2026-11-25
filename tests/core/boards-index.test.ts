@@ -69,9 +69,16 @@ test('그 밖의 주소는 GET으로 읽어 일반 읽기로 푼다', async () =
   expect(await readPosts('https://www.nrf.re.kr/cms/board/list', other)).toHaveLength(10)
 })
 
-test('일반 페이지에서 글을 0건 찾으면 글 목록을 찾지 못했다고 던진다', async () => {
+test('피드도 아니고 HTML 목록도 없으면 글 목록을 찾지 못했다고 던진다', async () => {
   const f = fake('<html><body><a href="/a">메뉴</a></body></html>')
   await expect(readPosts('https://a.b/', f)).rejects.toThrow('글 목록을 찾지 못했습니다')
+})
+
+test('항목이 없는 피드는 오류가 아니라 빈 목록이다', async () => {
+  const rss = '<rss version="2.0"><channel><title>x</title></channel></rss>'
+  await expect(readPosts('https://a.b/feed', fake(rss))).resolves.toEqual([])
+  const atom = '<feed xmlns="http://www.w3.org/2005/Atom"><title>x</title></feed>'
+  await expect(readPosts('https://a.b/atom', fake(atom))).resolves.toEqual([])
 })
 
 test('boardId는 같은 주소에 같은 값, 길이 10의 16진수', () => {
@@ -90,7 +97,7 @@ test('readBoard: 과제 공고는 제목으로 id를 만들고 출처·분류·�
     title: '2026년도 제5차 과학기술분야 연구기획과제 공모',
     url: 'https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024799&ancmPrg=ancmIng',
     date: '2026-11-13T00:00:00.000Z',
-    summary: '한국연구재단 · 접수 2026.11.13 ~ 2026.11.26'
+    summary: '한국연구재단 · 접수 2026-11-13 ~ 2026-11-26'
   })
   expect(known).toContain(fresh[0].id)
   expect(known).toContain(fresh[0].url)

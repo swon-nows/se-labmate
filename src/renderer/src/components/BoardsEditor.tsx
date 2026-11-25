@@ -1,10 +1,8 @@
-import { useId, useRef, useState } from 'react'
-import { BOARD_CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
+import { useEffect, useId, useRef, useState } from 'react'
+import { BOARD_CATEGORIES, CATEGORY_LABEL, MAX_BOARDS } from '../../../shared/types'
 import type { Board, BoardCategory, PreviewResult } from '../../../shared/types'
 import { isoDate } from '../format'
 import { LiveOrb } from './LiveOrb'
-
-const MAX_BOARDS = 10 // main의 validateBoard와 같은 값
 
 interface Props {
   boards: Board[]
@@ -23,6 +21,16 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
   const [removeFailed, setRemoveFailed] = useState(false)
   // 가장 최근 요청의 답만 받는다. 입력을 고치면 먼저 보낸 요청의 답은 버린다.
   const seq = useRef(0)
+  const nameRef = useRef<HTMLInputElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  // 다시 받은 목록을 그린 뒤에 옮긴다: 누른 버튼은 그때 사라지고, 열 번째를 등록하면 입력 폼도 사라진다.
+  const focusAfter = useRef<'name' | 'title' | null>(null)
+  useEffect(() => {
+    const to = focusAfter.current
+    focusAfter.current = null
+    if (to === 'name' && nameRef.current) nameRef.current.focus()
+    else if (to !== null) titleRef.current?.focus()
+  }, [boards])
 
   const touch = (): void => {
     seq.current++
@@ -66,6 +74,7 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
             setCategory('school')
             setCheck(null)
           }
+          focusAfter.current = 'name'
           await onChanged()
         },
         () => failed('등록하지 못했습니다. 다시 시도해 주십시오.')
@@ -79,14 +88,17 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
     setRemoveFailed(false)
     window.api
       .removeBoard(boardId)
-      .then(onChanged)
+      .then(() => {
+        focusAfter.current = 'title'
+        return onChanged()
+      })
       .catch(() => setRemoveFailed(true))
       .finally(() => setRemoving(false))
   }
 
   return (
     <section className="boards" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="section-title">
+      <h2 id={`${id}-title`} ref={titleRef} className="section-title" tabIndex={-1}>
         Boards
       </h2>
       <p className="hint section-desc">
@@ -143,6 +155,7 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
               Name
             </label>
             <input
+              ref={nameRef}
               id={`${id}-name`}
               className="input"
               type="text"
@@ -195,10 +208,17 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
               Check
             </button>
             <div className="board-status" role="status">
-              {check === 'checking' && (
+              {check === 'checking' ? (
                 <>
                   <LiveOrb size={16} busy />글 목록을 읽는 중입니다
                 </>
+              ) : adding ? (
+                <>
+                  <LiveOrb size={16} busy />
+                  등록하는 중입니다
+                </>
+              ) : (
+                check?.ok && '최근 글을 읽었습니다. 맞으면 등록해 주십시오.'
               )}
             </div>
           </div>
@@ -217,7 +237,6 @@ export function BoardsEditor({ boards, onChanged }: Props): React.JSX.Element {
           )}
           {check !== null && check !== 'checking' && check.ok && (
             <div className="board-preview">
-              <p role="status">최근 글을 읽었습니다. 맞으면 등록해 주십시오.</p>
               <ul className="post-list">
                 {check.posts.map((post, i) => (
                   <li key={i} className="post-row">

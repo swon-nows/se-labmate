@@ -1,4 +1,5 @@
-import type { Item } from '../../shared/types'
+import { CATEGORIES, MAX_KEYWORDS } from '../../shared/types'
+import type { Category, Item } from '../../shared/types'
 
 const pad = (n: number): string => String(n).padStart(2, '0')
 const dayNumber = (d: Date): number => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5
@@ -25,8 +26,7 @@ export function formatStars(n: number): string {
   return n < 1000 ? String(n) : `${(n / 1000).toFixed(1)}k`
 }
 
-// 저장되는 키워드는 8개까지다(main의 cleanKeywords와 같은 값).
-export const MAX_KEYWORDS = 8
+export { MAX_KEYWORDS }
 
 export function keywordList(text: string): string[] {
   return text
@@ -80,6 +80,21 @@ export function currentToken(text: string): string {
 // 키워드는 따옴표로 묶은 구절 그대로 찾으므로, 낱말이 다섯 이상이면 거의 아무것도 맞지 않는다.
 export function longKeywords(input: string): string[] {
   return keywordList(input).filter((k) => k.split(/\s+/).length >= 5)
+}
+
+// 피드의 칩: 켜진 출처가 없어도 목록에 항목이 있는 카테고리는 보여야 한다(게시판을 지운 뒤 남은 새 글 등).
+export function feedCategories(active: Category[], present: Category[]): Category[] {
+  return CATEGORIES.filter((c) => active.includes(c) || present.includes(c))
+}
+
+// 칩 묶음 안에서 화살표·Home·End로 옮길 칩의 번호. 끝에서는 반대쪽 끝으로 돌아간다.
+export function rovingIndex(current: number, count: number, key: string): number {
+  if (count === 0) return current
+  if (key === 'ArrowRight' || key === 'ArrowDown') return (current + 1) % count
+  if (key === 'ArrowLeft' || key === 'ArrowUp') return (current - 1 + count) % count
+  if (key === 'Home') return 0
+  if (key === 'End') return count - 1
+  return current
 }
 
 // 논문 줄의 칩: 일치한 내 키워드를 먼저, 이어서 겹치지 않는 논문 키워드. 6개까지.

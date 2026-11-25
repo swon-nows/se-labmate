@@ -260,10 +260,12 @@ if (!app.requestSingleInstanceLock()) {
     electronApp.setAppUserModelId('com.researchassistant.app')
     app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
-    file = join(app.getPath('userData'), 'state.json')
+    // 옛 앱(연구비서 v0.1)이 같은 폴더의 state.json을 v1로만 읽으므로 v2는 따로 둔다. state.json은 읽기만 한다.
+    file = join(app.getPath('userData'), 'state.v2.json')
+    const legacyFile = join(app.getPath('userData'), 'state.json')
     let corruptBackup: string | null = null
     try {
-      state = loadState(file, (path) => (corruptBackup = path))
+      state = loadState(file, (path) => (corruptBackup = path), legacyFile)
     } catch {
       // 기본값으로 덮어쓰면 하나뿐인 사본을 잃는다. 아무것도 만들지 않고 끝낸다.
       dialog.showErrorBox('SE LabMate', '저장 파일을 읽을 수 없어 종료합니다.\n' + file)

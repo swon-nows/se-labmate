@@ -1,5 +1,5 @@
 import { BUILTIN_BOARDS, FIXED_SOURCE_NAMES } from '../../shared/sources'
-import { BOARD_CATEGORIES, CATEGORIES } from '../../shared/types'
+import { BOARD_CATEGORIES, CATEGORIES, MAX_BOARDS } from '../../shared/types'
 import type {
   AppState,
   Board,
@@ -97,7 +97,8 @@ export function validateBoard(
   const url = input.url.trim()
   if (!isHttpUrl(url) || url.length > 500)
     return { ok: false, error: '주소는 http:// 또는 https://로 시작해야 합니다.' }
-  if (boards.length >= 10) return { ok: false, error: '게시판은 10개까지 등록할 수 있습니다.' }
+  if (boards.length >= MAX_BOARDS)
+    return { ok: false, error: `게시판은 ${MAX_BOARDS}개까지 등록할 수 있습니다.` }
   if (RESERVED_NAMES.includes(name) || boards.some((b) => b.name === name))
     return { ok: false, error: '이미 쓰고 있는 이름입니다.' }
   const href = new URL(url).href

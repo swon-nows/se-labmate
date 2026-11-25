@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { cleanKeywords } from '../src/main/core/text'
 import {
   currentToken,
+  feedCategories,
   formatStars,
   hasKeyword,
   isoDate,
@@ -18,6 +19,7 @@ import {
   FIXED_SOURCE_NAMES,
   activeSources,
   allFailed,
+  allUnreachable,
   sourceErrorText
 } from '../src/shared/sources'
 import type { Board, Category, Profile, Settings } from '../src/shared/types'
@@ -153,6 +155,20 @@ describe('allFailed', () => {
   })
 })
 
+describe('allUnreachable', () => {
+  it('켜진 출처가 하나 이상이고 모두 네트워크 오류나 시간 초과일 때만 참', () => {
+    expect(
+      allUnreachable(['arXiv', 'GitHub'], { arXiv: '네트워크 오류', GitHub: '요청 시간 초과' })
+    ).toBe(true)
+    expect(
+      allUnreachable(['arXiv', 'GitHub'], { arXiv: '네트워크 오류', GitHub: 'HTTP 404' })
+    ).toBe(false)
+    expect(allUnreachable(['arXiv', 'GitHub'], { arXiv: '네트워크 오류' })).toBe(false)
+    expect(allUnreachable([], {})).toBe(false)
+    expect(allUnreachable(['constructor'], {})).toBe(false)
+  })
+})
+
 describe('sourceErrorText', () => {
   const KEY = '키가 올바르지 않습니다. Settings에서 키를 확인해 주십시오.'
   const LIMIT = '요청 한도를 넘었습니다. 다음 수집 때 다시 시도합니다.'
@@ -259,5 +275,18 @@ describe('paperChips', () => {
   })
   it('합쳐서 6개까지', () => {
     expect(paperChips({ matched: ['a', 'b'], keywords: ['c', 'd', 'e', 'f', 'g'] })).toHaveLength(6)
+  })
+})
+
+describe('feedCategories', () => {
+  it('켜진 출처의 카테고리와 목록에 있는 카테고리를 CATEGORIES 순서로 겹치지 않게 합친다', () => {
+    expect(feedCategories(['paper', 'grant'], ['school', 'paper'])).toEqual([
+      'paper',
+      'grant',
+      'school'
+    ])
+  })
+  it('둘 다 비면 빈 목록', () => {
+    expect(feedCategories([], [])).toEqual([])
   })
 })

@@ -63,7 +63,8 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
         </h2>
         <ul className="source-list">
           {sources.map((name) => {
-            const error = status.errors[name]
+            // constructor 같은 이름이 Object의 속성으로 읽히지 않게 한다.
+            const error = Object.hasOwn(status.errors, name) ? status.errors[name] : undefined
             return (
               <li key={name} className="source-row">
                 <span className="source-name">{name}</span>

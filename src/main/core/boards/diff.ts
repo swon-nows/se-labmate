@@ -17,6 +17,10 @@ export function diffPosts<T extends Seen>(
   // 600개를 넘는 목록이 읽을 때마다 새 글로 되풀이되지 않는다.
   const posts = all.slice(0, KNOWN_MAX / 2)
   const ms = (p: T): number => (p.date === null ? NaN : Date.parse(p.date))
+  // 모든 글이 같은 주소인 피드처럼 목록에 두 번 이상 나오는 주소는 글을 가리지 못하므로 id만 쓴다.
+  const urlCount = new Map<string, number>()
+  for (const p of posts) urlCount.set(p.url, (urlCount.get(p.url) ?? 0) + 1)
+  const keys = (p: T): string[] => (urlCount.get(p.url) === 1 ? [p.id, p.url] : [p.id])
   let fresh: T[]
   // 빈 기록도 처음 읽는 것이다: 빈 목록을 먼저 읽고 저장한 뒤 옛 글이 한꺼번에 새 글로 쏟아지지 않게 한다.
   if (known === undefined || known.length === 0) {
@@ -28,9 +32,9 @@ export function diffPosts<T extends Seen>(
       .slice(0, FIRST_READ_MAX)
   } else {
     const have = new Set(known)
-    fresh = posts.filter((p) => !have.has(p.id) && !have.has(p.url))
+    fresh = posts.filter((p) => !keys(p).some((k) => have.has(k)))
   }
-  const current = posts.flatMap((p) => [p.id, p.url])
+  const current = posts.flatMap(keys)
   const inList = new Set(current)
   // 이번 목록에 없는 이전 값은 남기고(빈 목록이 와도 잊지 않는다), 이번 글은 뒤에 붙여 잘려 나가지 않게 한다.
   const next = new Set([...(known ?? []).filter((k) => !inList.has(k)), ...current])

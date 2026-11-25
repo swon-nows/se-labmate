@@ -6,6 +6,7 @@ import {
   currentToken,
   hasKeyword,
   replaceToken,
+  rovingIndex,
   toggleKeyword
 } from '../format'
 
@@ -38,6 +39,8 @@ export function KeywordField({
   const inputRef = useRef<HTMLInputElement>(null)
   const pressing = useRef(false) // 마우스·펜 버튼이 눌려 있는 동안
   const closePending = useRef(false) // 눌린 채 포커스가 나가서 버튼을 뗄 때 닫을 차례
+  // 칩 60여 개가 저마다 Tab 자리를 차지하지 않게 하나만 Tab으로 닿고 나머지는 화살표로 옮긴다.
+  const [tabChip, setTabChip] = useState(`${KEYWORD_SUGGESTIONS[0].label}/0`)
   const panelId = `${id}-suggestions`
 
   // 목록이 문서 흐름 안에 있어서, 아래 버튼을 누르는 순간 닫으면 내용이 올라가 첫 클릭이 사라진다.
@@ -119,7 +122,7 @@ export function KeywordField({
         aria-required={required ? 'true' : undefined}
         aria-describedby={describedBy}
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={open ? panelId : undefined}
         autoComplete="off"
         spellCheck={false}
       />
@@ -131,21 +134,32 @@ export function KeywordField({
           role="group"
           aria-label="Suggested keywords"
           onMouseDown={(e) => e.preventDefault()}
+          onKeyDown={(e) => {
+            const chips = [...e.currentTarget.querySelectorAll('button')]
+            const from = chips.indexOf(e.target as HTMLButtonElement)
+            const to = rovingIndex(from, chips.length, e.key)
+            if (from < 0 || to === from) return
+            e.preventDefault()
+            chips[to].focus()
+          }}
         >
           {KEYWORD_SUGGESTIONS.map((g) => (
             <div key={g.label} className="suggest-group">
               <p className="suggest-title">{g.label}</p>
               <div className="chips" lang={lang}>
-                {g[lang].map((k) => {
+                {g[lang].map((k, j) => {
                   const action = chipAction(value, k, filtering)
                   const pressed = hasKeyword(value, k)
                   // 눌린 칩은 흐리게 하지 않는다(고른 표시가 사라진다).
                   const dim = filtering && !pressed && !k.toLowerCase().includes(token)
+                  const chip = `${g.label}/${j}`
                   return (
                     <button
                       key={k}
                       type="button"
                       className={dim ? 'chip chip-sm is-dim' : 'chip chip-sm'}
+                      tabIndex={chip === tabChip ? 0 : -1}
+                      onFocus={() => setTabChip(chip)}
                       aria-pressed={pressed}
                       aria-disabled={action === 'blocked' ? 'true' : undefined}
                       onClick={() => {

@@ -1,3 +1,5 @@
+import { MAX_KEYWORDS } from '../../shared/types'
+
 export function normalizeTitle(title: string): string {
   return title
     .normalize('NFKC')
@@ -33,5 +35,5 @@ export function cleanKeywords(input: string[]): string[] {
     seen.add(key)
     out.push(k)
   }
-  return out.slice(0, 8)
+  return out.slice(0, MAX_KEYWORDS)
 }

@@ -133,11 +133,17 @@ const v1State = (): Record<string, unknown> => {
   return v1
 }
 
-test('v1 파일은 v2로 옮기고 원본을 state.v1.json으로 남긴다', () => {
+// 옛 앱이 같은 폴더의 state.json을 계속 쓰므로 새 앱은 그 파일을 한 바이트도 바꾸지 않아야 한다.
+const legacySetup = (legacy: string): { dir: string; f: string; old: string; bytes: Buffer } => {
   const dir = tmp()
-  const f = join(dir, 'state.json')
-  writeFileSync(f, JSON.stringify(v1State()))
-  const s = loadState(f)
+  const old = join(dir, 'state.json')
+  writeFileSync(old, legacy)
+  return { dir, f: join(dir, 'state.v2.json'), old, bytes: readFileSync(old) }
+}
+
+test('v2 파일이 없으면 옛 v1 파일을 메모리에서만 v2로 옮기고 옛 파일은 그대로 둔다', () => {
+  const { dir, f, old, bytes } = legacySetup(JSON.stringify(v1State()))
+  const s = loadState(f, undefined, old)
   expect(s).toMatchObject({
     version: 2,
     boards: [],
@@ -154,17 +160,62 @@ test('v1 파일은 v2로 옮기고 원본을 state.v1.json으로 남긴다', () 
   })
   expect(s.items['paper:b']).toMatchObject({ summary: 'abstract…' })
   expect(s.items['paper:b'].venue).toBeUndefined()
-  expect(JSON.parse(readFileSync(join(dir, 'state.v1.json'), 'utf8')).version).toBe(1)
-  expect(corruptFiles(dir)).toHaveLength(0)
+  expect(readFileSync(old).equals(bytes)).toBe(true)
+  expect(readdirSync(dir).sort()).toEqual(['state.json'])
 })
 
-test('state.v1.json이 이미 있으면 덮어쓰지 않는다', () => {
+test('저장은 state.v2.json에만 하고 옛 파일은 그대로 남는다', () => {
+  const { dir, f, old, bytes } = legacySetup(JSON.stringify(v1State()))
+  saveState(f, loadState(f, undefined, old))
+  expect(readdirSync(dir).sort()).toEqual(['state.json', 'state.v2.json'])
+  expect(readFileSync(old).equals(bytes)).toBe(true)
+  expect(loadState(f).profile).toMatchObject({ keywordsEn: ['xai'] })
+})
+
+test('v2 파일이 있으면 옛 파일은 더 새롭거나 달라도 읽지 않는다', () => {
+  const { f, old, bytes } = legacySetup(
+    JSON.stringify({
+      ...v1State(),
+      profile: { keywordsEn: ['old'], keywordsKo: [], country: 'KR' }
+    })
+  )
+  const s = st({ profile: { keywordsEn: ['new'], keywordsKo: [], country: 'KR' } })
+  saveState(f, s)
+  fs.utimesSync(old, new Date(Date.now() + 60_000), new Date(Date.now() + 60_000))
+  expect(loadState(f, undefined, old)).toEqual(s)
+  expect(readFileSync(old).equals(bytes)).toBe(true)
+})
+
+test.each([
+  ['깨진 옛 파일', '{"version":1,"items":{'],
+  ['모르는 version의 옛 파일', JSON.stringify({ ...v1State(), version: 3 })],
+  ['모양이 틀린 v1 파일', '{"version":1}']
+])('%s은 무시하고 기본 상태로 시작하며 옛 파일은 그대로 둔다', (_, legacy) => {
+  const { dir, f, old, bytes } = legacySetup(legacy)
+  const onCorrupt = vi.fn()
+  expect(loadState(f, onCorrupt, old)).toEqual(defaultState())
+  expect(onCorrupt).not.toHaveBeenCalled()
+  expect(readFileSync(old).equals(bytes)).toBe(true)
+  expect(readdirSync(dir)).toEqual(['state.json'])
+})
+
+test('깨진 v2 파일은 옮겨 두고 onCorrupt를 부르며 옛 파일은 보지 않는다', () => {
+  const { dir, f, old, bytes } = legacySetup(JSON.stringify(v1State()))
+  writeFileSync(f, '{"version":2,"items":{')
+  const onCorrupt = vi.fn<(backupPath: string) => void>()
+  expect(loadState(f, onCorrupt, old)).toEqual(defaultState())
+  expect(corruptFiles(dir)).toHaveLength(1)
+  expect(existsSync(f)).toBe(false)
+  expect(onCorrupt).toHaveBeenCalledWith(join(dir, corruptFiles(dir)[0]))
+  expect(readFileSync(old).equals(bytes)).toBe(true)
+})
+
+test('v2 파일에 든 v1 내용은 깨진 파일로 다룬다', () => {
   const dir = tmp()
-  const f = join(dir, 'state.json')
+  const f = join(dir, 'state.v2.json')
   writeFileSync(f, JSON.stringify(v1State()))
-  writeFileSync(join(dir, 'state.v1.json'), 'keep')
-  expect(loadState(f).version).toBe(2)
-  expect(readFileSync(join(dir, 'state.v1.json'), 'utf8')).toBe('keep')
+  expect(loadState(f)).toEqual(defaultState())
+  expect(corruptFiles(dir)).toHaveLength(1)
 })
 
 test('모르는 version은 깨진 파일로 다룬다', () => {

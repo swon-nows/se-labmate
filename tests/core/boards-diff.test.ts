@@ -90,3 +90,15 @@ test('300건이 넘는 목록이 그대로면 읽을 때마다 새 글이 되풀
     'new'
   ])
 })
+
+test('목록에 여러 번 나오는 주소는 글을 가리지 못한다(모든 글이 같은 주소인 피드)', () => {
+  const post = (id: string): { id: string; url: string; date: string | null } => ({
+    id,
+    url: 'https://a.b/feed',
+    date: null
+  })
+  const r1 = diffPosts([post('a'), post('b')], undefined, now)
+  expect(r1.known).not.toContain('https://a.b/feed')
+  const r2 = diffPosts([post('c'), post('a'), post('b')], r1.known, now)
+  expect(r2.fresh.map((p) => p.id)).toEqual(['c'])
+})

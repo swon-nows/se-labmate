@@ -102,6 +102,34 @@ describe('createFetchText', () => {
     await expect(createFetchText(() => Promise.resolve(res))('https://x')).resolves.toBe('한글')
   })
 
+  test('헤더의 charset이 meta의 다른 charset보다 먼저다', async () => {
+    const meta = new TextEncoder().encode('<meta charset="euc-kr">')
+    const body = new Uint8Array([...meta, ...new TextEncoder().encode('공지')])
+    const res = new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } })
+    await expect(createFetchText(() => Promise.resolve(res))('https://x')).resolves.toBe(
+      '<meta charset="euc-kr">공지'
+    )
+  })
+
+  test('content-length가 8MB를 넘으면 본문을 읽지 않고 응답이 너무 큽니다', async () => {
+    const arrayBuffer = vi.fn(() => Promise.resolve(new ArrayBuffer(0)))
+    const res = (length: string): Awaited<ReturnType<FetchFn>> => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-length': length }),
+      arrayBuffer
+    })
+    const e = await errorOf(
+      createFetchText(() => Promise.resolve(res(String(8 * 1024 * 1024 + 1))))('https://x')
+    )
+    expect(e.message).toBe('응답이 너무 큽니다')
+    expect(arrayBuffer).not.toHaveBeenCalled()
+    await expect(
+      createFetchText(() => Promise.resolve(res(String(8 * 1024 * 1024))))('https://x')
+    ).resolves.toBe('')
+    await expect(createFetchText(() => Promise.resolve(res('abc')))('https://x')).resolves.toBe('')
+  })
+
   test('8MB를 넘으면 응답이 너무 큽니다', async () => {
     const big = (n: number): Promise<Response> => Promise.resolve(new Response(new Uint8Array(n)))
     const e = await errorOf(createFetchText(() => big(8 * 1024 * 1024 + 1))('https://x'))

@@ -40,7 +40,7 @@ export function mergeIncoming(
   return out
 }
 
-// mergeIncoming이 90일보다 오래된 항목을 받지 않으므로, 수집 뒤 180일 지나 지운 항목은 다시 들어올 수 없다.
+// 날짜가 있는 출처는 mergeIncoming이 90일보다 오래된 항목을 받지 않아 180일 뒤 지운 항목이 다시 들어올 수 없다. 게시판 글(날짜 없으면 수집 시각)을 막는 것은 boardKnown이다.
 export function pruneOld(items: Record<string, Item>, now: string): Record<string, Item> {
   const cutoff = Date.parse(now) - 180 * 86_400_000
   return Object.fromEntries(

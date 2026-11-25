@@ -28,6 +28,9 @@ export interface Item extends RawItem {
   saved: boolean
   hidden: boolean
 }
+// 언어마다 저장하는 키워드 수와 사용자가 등록하는 게시판 수(기본 게시판은 세지 않는다). 화면과 main이 함께 쓴다.
+export const MAX_KEYWORDS = 8
+export const MAX_BOARDS = 10
 export interface Profile {
   keywordsEn: string[]
   keywordsKo: string[]
@@ -64,7 +67,7 @@ export interface AppState {
   lastNotifiedAt: string | null
   sourceErrors: Record<string, string> // 출처 이름 → 마지막 실패 메시지
   boards: Board[]
-  boardKnown: Record<string, string[]> // 게시판 id → 지난번까지 본 글의 id와 주소. 키가 없으면 아직 읽은 적 없음
+  boardKnown: Record<string, string[]> // 게시판 id → 지난번까지 본 글의 id와 주소. 키가 없거나 빈 배열이면 아직 읽은 적 없음
 }
 export interface FeedGroup {
   category: Category

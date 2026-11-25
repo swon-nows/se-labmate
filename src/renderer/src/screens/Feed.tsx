@@ -6,6 +6,7 @@ import type { Category, CollectStatus, Item } from '../../../shared/types'
 import { CategoryChips } from '../components/CategoryChips'
 import { ItemRow } from '../components/ItemRow'
 import { LiveOrb } from '../components/LiveOrb'
+import { feedCategories } from '../format'
 import { mergeBatch } from '../session'
 
 interface Props {
@@ -127,7 +128,23 @@ export function Feed({
     onCount(fresh.length)
   }, [fresh.length, onCount])
 
-  const visibleCats = categories.filter((c) => shown.includes(c))
+  const listOf = (list: Item[] | null | 'failed', except?: ReadonlySet<string>): Item[] =>
+    Array.isArray(list)
+      ? list.filter((i) => !hidden.has(i.id) && enabled[i.category] && !except?.has(i.id))
+      : []
+  // 열린 탭에 늘어놓을 항목. 지난 소식에서는 이번 새 소식 목록에 아직 있는 항목을 뺀다.
+  const listed =
+    tab === 'new'
+      ? fresh
+      : tab === 'past'
+        ? listOf(past, new Set(session.map((i) => i.id)))
+        : listOf(saved)
+  // 켜진 출처가 없는 카테고리의 항목에도 칩이 있어야 보이고 숨길 수 있다.
+  const chipCats = feedCategories(
+    categories,
+    listed.map((i) => i.category)
+  )
+  const visibleCats = chipCats.filter((c) => shown.includes(c))
 
   const isSaved = (i: Item): boolean => savedNow.get(i.id) ?? i.saved
   const toggleSave = (i: Item): Promise<void> => {
@@ -256,12 +273,8 @@ export function Feed({
     })
   }
 
-  // except: 지난 소식에서는 이번 새 소식 목록에 아직 있는 항목을 뺀다.
-  const flatItems = (
-    list: Item[] | null | 'failed',
-    emptyText: string,
-    except?: ReadonlySet<string>
-  ): React.ReactNode => {
+  // list는 열린 탭의 목록이다. 늘어놓을 항목은 위에서 고른 listed다.
+  const flatItems = (list: Item[] | null | 'failed', emptyText: string): React.ReactNode => {
     if (list === null) return null
     if (list === 'failed')
       return (
@@ -269,10 +282,9 @@ export function Feed({
           목록을 불러오지 못했습니다.
         </p>
       )
-    const items = list.filter((i) => !hidden.has(i.id) && enabled[i.category] && !except?.has(i.id))
-    if (items.length === 0) return <p className="note muted">{emptyText}</p>
+    if (listed.length === 0) return <p className="note muted">{emptyText}</p>
     if (visibleCats.length === 0) return noCategory
-    const rows = items.filter((i) => shown.includes(i.category))
+    const rows = listed.filter((i) => shown.includes(i.category))
     if (rows.length === 0) return noMatch
     return <ul className="item-list flat">{rows.map((i, k) => row(i, true, k))}</ul>
   }
@@ -295,14 +307,13 @@ export function Feed({
         ))}
       </div>
       <CategoryChips
-        categories={categories}
+        categories={chipCats}
         shown={shown}
         onToggle={(c) => setShown((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]))}
       />
       <div role="tabpanel" aria-labelledby={`${ids}-${tab}`}>
         {tab === 'new' && newItems()}
-        {tab === 'past' &&
-          flatItems(past, '지난 소식이 없습니다.', new Set(session.map((i) => i.id)))}
+        {tab === 'past' && flatItems(past, '지난 소식이 없습니다.')}
         {tab === 'saved' && flatItems(saved, '저장한 항목이 없습니다.')}
       </div>
     </>

@@ -14,7 +14,7 @@ test('IRIS', () => {
     title: '2026년도 제5차 과학기술분야 연구기획과제 공모',
     url: 'https://www.iris.go.kr/contents/retrieveBsnsAncmView.do?ancmId=024799&ancmPrg=ancmIng',
     date: '2026-11-13T00:00:00.000Z',
-    summary: '한국연구재단 · 접수 2026.11.13 ~ 2026.11.26'
+    summary: '한국연구재단 · 접수 2026-11-13 ~ 2026-11-26'
   })
   expect(() => parseIris('{"message":"error"}', 'ancmIng')).toThrow('IRIS 응답에 목록이 없습니다')
   expect(() => parseIris('<html>점검 중</html>', 'ancmIng')).toThrow('IRIS 응답에 목록이 없습니다')
@@ -31,13 +31,13 @@ test('IRIS 요약은 있는 항목만 이어 붙인다', () => {
     )[0]?.summary
   expect(summary({})).toBe('')
   expect(summary({ sorgnNm: '한국연구재단' })).toBe('한국연구재단')
-  expect(summary({ rcveStrDe: '2026.11.13' })).toBe('접수 2026.11.13')
-  expect(summary({ rcveEndDe: '2026.11.26' })).toBe('접수 2026.11.26')
+  expect(summary({ rcveStrDe: '2026.11.13' })).toBe('접수 2026-11-13')
+  expect(summary({ rcveEndDe: '2026.11.26' })).toBe('접수 2026-11-26')
   expect(summary({ sorgnNm: '한국연구재단', rcveEndDe: '2026.11.26' })).toBe(
-    '한국연구재단 · 접수 2026.11.26'
+    '한국연구재단 · 접수 2026-11-26'
   )
   expect(summary({ rcveStrDe: '2026.11.13', rcveEndDe: '2026.11.26' })).toBe(
-    '접수 2026.11.13 ~ 2026.11.26'
+    '접수 2026-11-13 ~ 2026-11-26'
   )
 })
 
@@ -56,6 +56,49 @@ test('readIris는 접수 중과 접수 예정을 POST로 읽는다', async () =>
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
   })
   expect(posts).toHaveLength(4) // 같은 key는 한 번만
+})
+
+// IRIS는 한 쪽에 10건을 주고 쪽 크기 인자는 무시한다. 끝을 지난 쪽은 빈 목록이다.
+const irisPage = (from: number, n: number): string =>
+  JSON.stringify({
+    listBsnsAncmBtinSitu: Array.from({ length: n }, (_, i) => ({
+      ancmId: String(from + i),
+      ancmTl: `공고 ${from + i}`,
+      ancmDe: '2026-11-01'
+    }))
+  })
+
+test('readIris는 10건이 찬 쪽 다음 쪽을 더 읽고, 덜 찬 쪽에서 멈춘다', async () => {
+  const bodies: (string | undefined)[] = []
+  const posts = await readIris(async (_u, _h, b) => {
+    bodies.push(b)
+    if (b === 'pageIndex=1&ancmPrg=ancmIng') return irisPage(0, 10)
+    if (b === 'pageIndex=2&ancmPrg=ancmIng') return irisPage(10, 3)
+    return irisPage(100, 0)
+  })
+  expect(posts).toHaveLength(13)
+  expect(bodies).toEqual([
+    'pageIndex=1&ancmPrg=ancmIng',
+    'pageIndex=2&ancmPrg=ancmIng',
+    'pageIndex=1&ancmPrg=ancmPre'
+  ])
+})
+
+test('readIris는 목록마다 세 쪽까지만 읽는다', async () => {
+  const bodies: (string | undefined)[] = []
+  const posts = await readIris(async (_u, _h, b) => {
+    bodies.push(b)
+    return irisPage(bodies.length * 10, 10)
+  })
+  expect(bodies).toEqual([
+    'pageIndex=1&ancmPrg=ancmIng',
+    'pageIndex=2&ancmPrg=ancmIng',
+    'pageIndex=3&ancmPrg=ancmIng',
+    'pageIndex=1&ancmPrg=ancmPre',
+    'pageIndex=2&ancmPrg=ancmPre',
+    'pageIndex=3&ancmPrg=ancmPre'
+  ])
+  expect(posts).toHaveLength(60)
 })
 
 test('한국연구재단', () => {

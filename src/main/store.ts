@@ -1,6 +1,5 @@
 import {
   closeSync,
-  copyFileSync,
   existsSync,
   fsyncSync,
   mkdirSync,
@@ -46,10 +45,8 @@ function isState(v: unknown): v is AppState {
   )
 }
 
-// v1 → v2: 원본은 state.v1.json으로 남기고(있으면 덮어쓰지 않는다), OpenAlex의 저널 이름을 summary에서 venue로 옮긴다.
-function migrateV1(file: string, v: Record<string, unknown>): unknown {
-  const backup = join(dirname(file), 'state.v1.json')
-  if (!existsSync(backup)) copyFileSync(file, backup)
+// v1 → v2(메모리에서만): OpenAlex의 저널 이름을 summary에서 venue로 옮긴다.
+function migrateV1(v: Record<string, unknown>): unknown {
   if (!isObject(v.items)) return { ...v, version: 2, boards: [], boardKnown: {} }
   const items = Object.fromEntries(
     Object.entries(v.items).map(([id, it]) => [
@@ -62,9 +59,26 @@ function migrateV1(file: string, v: Record<string, unknown>): unknown {
   return { ...v, version: 2, boards: [], boardKnown: {}, items }
 }
 
+// 옛 앱(v0.1)이 같은 폴더의 이 파일을 계속 쓰므로 읽기만 한다. 쓸 수 없는 내용이면 없는 것으로 본다.
+function loadLegacy(legacyFile: string): AppState {
+  try {
+    const value: unknown = JSON.parse(readFileSync(legacyFile, 'utf8'))
+    const migrated = isObject(value) && value.version === 1 ? migrateV1(value) : null
+    if (isState(migrated)) return migrated
+  } catch {
+    // 읽거나 해석할 수 없는 옛 파일
+  }
+  return defaultState()
+}
+
 // onCorrupt: 깨진 파일을 옮겨 둔 경로를 받는다(사용자에게 알리기 위해).
-export function loadState(file: string, onCorrupt?: (backupPath: string) => void): AppState {
-  if (!existsSync(file)) return defaultState()
+// legacyFile: file이 아직 없을 때만 읽는 v1 파일. 고치지도 옮기지도 않는다.
+export function loadState(
+  file: string,
+  onCorrupt?: (backupPath: string) => void,
+  legacyFile?: string
+): AppState {
+  if (!existsSync(file)) return legacyFile ? loadLegacy(legacyFile) : defaultState()
   const text = readFileSync(file, 'utf8') // 읽기 오류는 깨진 파일이 아니므로 그대로 던진다
   let value: unknown
   try {
@@ -72,7 +86,6 @@ export function loadState(file: string, onCorrupt?: (backupPath: string) => void
   } catch {
     value = null
   }
-  if (isObject(value) && value.version === 1) value = migrateV1(file, value)
   if (isState(value)) return value
   // 깨진 파일은 지우지 않고 옆에 남겨 둔다.
   const backup = join(dirname(file), `state.corrupt-${Date.now()}.json`)
@@ -84,7 +97,7 @@ export function loadState(file: string, onCorrupt?: (backupPath: string) => void
 export function saveState(file: string, state: AppState): void {
   mkdirSync(dirname(file), { recursive: true })
   const tmp = file + '.tmp'
-  // 이름을 바꾸기 전에 디스크까지 내려 쓴다. 전원이 나가도 빈 state.json이 좋은 파일을 대신하지 않게 한다.
+  // 이름을 바꾸기 전에 디스크까지 내려 쓴다. 전원이 나가도 빈 파일이 좋은 파일을 대신하지 않게 한다.
   const fd = openSync(tmp, 'w')
   try {
     writeFileSync(fd, JSON.stringify(state)) // writeSync와 달리 부분 쓰기를 끝까지 이어 쓴다

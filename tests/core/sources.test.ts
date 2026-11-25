@@ -145,6 +145,18 @@ test('글자 없는 제목은 버린다', () => {
   })
   expect(parseOpenAlex(body)).toEqual([])
 })
+test('OpenAlex: 모양이 틀린 레코드는 던지지 않고 건너뛴다', () => {
+  const good = JSON.parse(OPENALEX_ONE).results[0]
+  const body = JSON.stringify({ results: [null, 5, { title: 7 }, good] })
+  expect(parseOpenAlex(body).map((i) => i.url)).toEqual(['https://doi.org/10.1/x'])
+  // 문자열이 아닌 doi·id·날짜는 없는 것으로 본다.
+  const odd = { ...good, doi: 7, id: ['x'], publication_date: 20261123 }
+  expect(parseOpenAlex(JSON.stringify({ results: [odd] }))).toEqual([])
+  expect(
+    parseOpenAlex(JSON.stringify({ results: [{ ...good, doi: 7 }] })).map((i) => i.url)
+  ).toEqual(['https://doi.org/10.1/x'])
+})
+
 test('arXiv 오류 entry는 논문이 아니라 오류다', () => {
   expect(() => parseArxiv(ARXIV_ERROR)).toThrow('incorrect id format for not-a-valid-id')
 })

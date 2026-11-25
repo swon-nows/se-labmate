@@ -18,7 +18,7 @@ export function buildGnewsUrl(keywords: string[], edition: 'ko' | 'en'): string 
 export function parseGnews(body: string, limit = 30): RawItem[] {
   const channel = xml.parse(body)?.rss?.channel
   if (!channel || typeof channel !== 'object')
-    throw new Error('Google 뉴스 응답에 rss.channel이 없습니다')
+    throw new Error('Google News 응답에 rss.channel이 없습니다')
   const out: RawItem[] = []
   for (const e of (channel.item ?? []) as Record<string, unknown>[]) {
     const source = textOf(e.source).trim()

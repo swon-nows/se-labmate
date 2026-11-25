@@ -210,3 +210,23 @@ test('큰 문서도 오래 걸리지 않는다', () => {
   expect(posts).toHaveLength(3000)
   expect(Date.now() - t).toBeLessThan(3000)
 })
+
+test('제목(과 날짜)이 같은 글이 여럿이면 key에 주소를 붙여 모두 남긴다', () => {
+  const titles = [
+    '같은 제목의 공지사항',
+    '같은 제목의 공지사항',
+    '셋째 공지사항 제목',
+    '넷째 공지사항 제목'
+  ]
+  const html = [...titles, '다섯째 공지사항 제목']
+    .map((t, i) => `<a href="/n/${i + 1}">${t}</a>`)
+    .join('')
+  const posts = parseHtmlList(html, 'https://a.b/')
+  expect(posts).toHaveLength(5)
+  const same = normalizeTitle('같은 제목의 공지사항')
+  expect(posts.slice(0, 3).map((p) => p.key)).toEqual([
+    `${same}:https://a.b/n/1`,
+    `${same}:https://a.b/n/2`,
+    normalizeTitle('셋째 공지사항 제목')
+  ])
+})

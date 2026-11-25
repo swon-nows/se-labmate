@@ -1,5 +1,6 @@
-import { activeSources, allFailed } from '../../shared/sources'
+import { activeSources, allUnreachable } from '../../shared/sources'
 import type { AppState } from '../../shared/types'
+import { KEY_UNREADABLE } from './collect-runner'
 import { unseenCounts } from './feed'
 import { notificationBody, shouldNotify, shouldRunDaily } from './schedule'
 
@@ -15,7 +16,7 @@ export interface TickDeps {
 // 한 번의 일정 확인. 이전 확인이 끝나기 전에 온 호출은 건너뛰고, 돌려주는 Promise는 거부하지 않는다.
 export function createTick(d: TickDeps): () => Promise<void> {
   let busy = false
-  let notBefore = 0 // 모두 실패한 뒤 다시 해 볼 수 있는 시각(ms)
+  let notBefore = 0 // 모두 닿지 못한 뒤 다시 해 볼 수 있는 시각(ms)
   return async () => {
     if (busy) return
     busy = true
@@ -29,16 +30,18 @@ export function createTick(d: TickDeps): () => Promise<void> {
       d.update({ ...s, lastDailyRunAt: now.toISOString() })
       await d.collectNow()
       const after = d.getState()
-      // 깨어난 직후 온라인 표시만 남은 경우처럼 모두 실패했으면 오늘 몫을 되돌리고 5분 뒤에 다시 본다.
+      // 깨어난 직후 온라인 표시만 남은 경우처럼 모두 닿지 못했으면 오늘 몫을 되돌리고 5분 뒤에 다시 본다.
+      // 닿았지만 실패한 것(사이트가 바뀜 등)은 다시 해도 같으므로 평소처럼 오늘 몫을 쓴다.
+      // 키를 풀지 못한 OpenAlex는 요청하지 않았으므로 닿았는지 따지는 데 넣지 않는다.
       const sources = after.profile
         ? activeSources(
             after.profile,
             after.settings,
-            after.openAlexKeyEnc !== null,
+            after.openAlexKeyEnc !== null && after.sourceErrors.OpenAlex !== KEY_UNREADABLE,
             after.boards
           ).map((x) => x.name)
         : []
-      if (allFailed(sources, after.sourceErrors)) {
+      if (allUnreachable(sources, after.sourceErrors)) {
         notBefore = d.now().getTime() + 5 * 60_000 // 쓰기가 던져도 5분 간격은 지킨다
         d.update({ ...after, lastDailyRunAt: s.lastDailyRunAt })
         return

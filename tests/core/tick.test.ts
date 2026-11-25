@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Mock } from 'vitest'
+import { KEY_UNREADABLE } from '../../src/main/core/collect-runner'
 import { unseenCounts } from '../../src/main/core/feed'
 import { notificationBody } from '../../src/main/core/schedule'
 import { createTick } from '../../src/main/core/tick'
@@ -113,7 +114,7 @@ describe('createTick', () => {
     expect(t.collect).toHaveBeenCalledTimes(2)
   })
 
-  test('켜진 출처가 모두 실패하면 오늘 몫을 쓰지 않고 5분 뒤에 다시 돈다', async () => {
+  test('켜진 출처가 모두 닿지 않으면(오프라인) 오늘 몫을 쓰지 않고 5분 뒤에 다시 돈다', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     let fail = true
     const t = setup(due(), async () => {
@@ -122,11 +123,11 @@ describe('createTick', () => {
         t.set({
           ...s,
           sourceErrors: {
-            arXiv: 'HTTP 503',
-            GitHub: 'HTTP 503',
+            arXiv: '요청 시간 초과',
+            GitHub: '네트워크 오류',
             'Google News (EN)': '네트워크 오류',
             IRIS: '네트워크 오류',
-            한국연구재단: '네트워크 오류'
+            한국연구재단: '요청 시간 초과'
           }
         })
       else
@@ -158,6 +159,47 @@ describe('createTick', () => {
     expect(t.notify).toHaveBeenCalledTimes(1)
   })
 
+  test('모두 실패해도 닿기는 했으면(사이트가 바뀜) 오늘 몫을 쓰고 평소대로 알린다', async () => {
+    const t = setup(due(), async () => {
+      t.set({
+        ...t.get(),
+        sourceErrors: {
+          arXiv: 'HTTP 404',
+          GitHub: 'HTTP 404',
+          'Google News (EN)': '네트워크 오류',
+          IRIS: 'IRIS 응답에 목록이 없습니다',
+          한국연구재단: '한국연구재단 페이지에서 목록을 찾지 못했습니다'
+        },
+        items: { a: mk({ id: 'a' }) }
+      })
+    })
+    await t.tick()
+    expect(t.get().lastDailyRunAt).toBe(NOW)
+    expect(t.notify).toHaveBeenCalledTimes(1)
+    expect(t.notify).toHaveBeenCalledWith('1 new (Papers 1)')
+    t.at(later(5))
+    await t.tick()
+    expect(t.collect).toHaveBeenCalledTimes(1)
+  })
+
+  test('키를 풀지 못한 OpenAlex는 요청하지 않았으므로 오프라인 판단에 넣지 않는다', async () => {
+    const t = setup({ ...due(), openAlexKeyEnc: 'ZW5j' }, async () => {
+      t.set({
+        ...t.get(),
+        sourceErrors: {
+          OpenAlex: KEY_UNREADABLE,
+          arXiv: '네트워크 오류',
+          GitHub: '네트워크 오류',
+          'Google News (EN)': '네트워크 오류',
+          IRIS: '네트워크 오류',
+          한국연구재단: '네트워크 오류'
+        }
+      })
+    })
+    await t.tick()
+    expect(t.get().lastDailyRunAt).toBe(OLD_RUN)
+  })
+
   test('일부 출처만 실패하면 평소대로 오늘 몫을 쓴다', async () => {
     const t = setup(due(), async () => {
       t.set({ ...t.get(), sourceErrors: { GitHub: 'HTTP 403' }, items: { a: mk({ id: 'a' }) } })
@@ -170,8 +212,8 @@ describe('createTick', () => {
   test('모두 실패해 되돌리는 쓰기가 던져도 5분 동안은 다시 돌지 않고, 5분 뒤에는 돈다', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const errors = {
-      arXiv: 'HTTP 503',
-      GitHub: 'HTTP 503',
+      arXiv: '요청 시간 초과',
+      GitHub: '네트워크 오류',
       'Google News (EN)': '네트워크 오류',
       IRIS: '네트워크 오류',
       한국연구재단: '네트워크 오류'

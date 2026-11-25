@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cleanKeywords } from '../src/main/core/text'
-import { MAX_KEYWORDS, chipAction } from '../src/renderer/src/format'
+import { MAX_KEYWORDS, chipAction, rovingIndex } from '../src/renderer/src/format'
 
 const words = (n: number): string[] => Array.from({ length: n }, (_, i) => 'k' + i)
 
@@ -30,5 +30,22 @@ describe('chipAction', () => {
     expect(chipAction('gra', 'graph neural network', true)).toBe('replace')
     expect(chipAction(`${list(MAX_KEYWORDS - 1)}, ty`, 'SHAP', true)).toBe('replace')
     expect(chipAction(`${list(MAX_KEYWORDS)}, ty`, 'SHAP', true)).toBe('blocked')
+  })
+})
+
+describe('rovingIndex', () => {
+  it('오른쪽·아래는 다음, 왼쪽·위는 이전 칩이고 끝에서 돌아간다', () => {
+    expect(rovingIndex(0, 3, 'ArrowRight')).toBe(1)
+    expect(rovingIndex(2, 3, 'ArrowDown')).toBe(0)
+    expect(rovingIndex(1, 3, 'ArrowLeft')).toBe(0)
+    expect(rovingIndex(0, 3, 'ArrowUp')).toBe(2)
+  })
+  it('Home은 처음, End는 마지막', () => {
+    expect(rovingIndex(1, 3, 'Home')).toBe(0)
+    expect(rovingIndex(1, 3, 'End')).toBe(2)
+  })
+  it('다른 키이거나 칩이 없으면 그대로', () => {
+    expect(rovingIndex(1, 3, 'a')).toBe(1)
+    expect(rovingIndex(0, 0, 'ArrowRight')).toBe(0)
   })
 })

@@ -63,6 +63,16 @@ test('finishPosts는 제목을 정리하고 잘못된 글과 중복 key를 버�
   ])
 })
 
+test('finishPosts는 300 코드 포인트가 넘는 제목을 300에서 자르고 …를 붙인다', () => {
+  const astral = '\u{1D400}' // UTF-16으로 두 칸인 글자: 코드 포인트로 세는지 본다
+  const [long, exact] = finishPosts([
+    p({ key: '1', title: '가'.repeat(299) + astral + astral }),
+    p({ key: '2', title: '가'.repeat(299) + astral })
+  ])
+  expect(long.title).toBe('가'.repeat(299) + astral + '…')
+  expect(exact.title).toBe('가'.repeat(299) + astral)
+})
+
 test('stripBlocks는 주석·script·style을 공백으로 바꾼다', () => {
   expect(
     stripBlocks('a<!-- x -->b<script>var a = "<a>"</script>c<STYLE type="text/css">p{}</STYLE>d')

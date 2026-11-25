@@ -119,6 +119,7 @@ select {
 .btn.refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   width: 128px;
   padding: 0 10px 0 7px;
@@ -771,10 +772,6 @@ select.input {
   align-items: center;
   gap: 8px;
   color: var(--muted);
-}
-
-.board-preview > p {
-  margin-bottom: 8px;
 }
 
 .post-list {

@@ -11,7 +11,7 @@ export type FetchFn = (
 
 const MAX_BYTES = 8 * 1024 * 1024
 
-// 오류 메시지는 state.json과 화면에 남는다. 원래 메시지에는 키가 든 URL이 섞일 수 있어 고정 문구로 바꾼다.
+// 오류 메시지는 저장 파일과 화면에 남는다. 원래 메시지에는 키가 든 URL이 섞일 수 있어 고정 문구로 바꾼다.
 const failed = (e: unknown): never => {
   const timeout = (e as { name?: unknown } | null)?.name === 'TimeoutError'
   throw new Error(timeout ? '요청 시간 초과' : '네트워크 오류')
@@ -40,6 +40,8 @@ export function createFetchText(fetchFn: FetchFn): FetchText {
     }
     const res = await fetchFn(url, init).catch(failed)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    // 크다고 미리 밝힌 응답은 내려받지 않는다. 헤더가 없거나 틀릴 수 있어 받은 뒤에도 다시 잰다.
+    if (Number(res.headers.get('content-length')) > MAX_BYTES) throw new Error('응답이 너무 큽니다')
     const buf = await res.arrayBuffer().catch(failed)
     if (buf.byteLength > MAX_BYTES) throw new Error('응답이 너무 큽니다')
     return decode(new Uint8Array(buf), res.headers.get('content-type'))

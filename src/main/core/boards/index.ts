@@ -3,7 +3,7 @@ import type { Board, RawItem } from '../../../shared/types'
 import type { FetchText } from '../fetch-text'
 import { normalizeTitle } from '../text'
 import { diffPosts } from './diff'
-import { parseBoardPage } from './generic'
+import { parseFeed, parseHtmlList } from './generic'
 import { readIris } from './iris'
 import { parseNrf } from './nrf'
 import type { Post } from './post'
@@ -20,7 +20,11 @@ export async function readPosts(url: string, fetchText: FetchText): Promise<Post
     return parseNrf(await fetchText(url))
   const category = snuDaaeCategory(url)
   if (category !== null) return readSnuDaae(category, fetchText)
-  const posts = parseBoardPage(await fetchText(url), url)
+  const body = await fetchText(url)
+  // 항목이 없는 피드는 아직 글이 없는 것일 뿐이다. 피드도 아니고 HTML 목록도 없을 때만 실패다.
+  const feed = parseFeed(body)
+  if (feed !== null) return feed
+  const posts = parseHtmlList(body, url)
   if (posts.length === 0) throw new Error('글 목록을 찾지 못했습니다')
   return posts
 }

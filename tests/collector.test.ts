@@ -1,12 +1,15 @@
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { collect, type CollectDeps } from '../src/main/collector'
 import { boardId } from '../src/main/core/boards/index'
 import { pastItems, takeNew } from '../src/main/core/feed'
+import { applyCollected } from '../src/main/core/merge'
+import { validateBoard } from '../src/main/core/profile'
 import { defaultState, loadState, saveState } from '../src/main/store'
-import type { Profile } from '../src/shared/types'
+import { BUILTIN_BOARDS } from '../src/shared/sources'
+import type { AppState, Profile } from '../src/shared/types'
 import { NOW, mk, st } from './helpers'
 
 const fx = (n: string): string => readFileSync(`tests/fixtures/${n}`, 'utf8')
@@ -216,6 +219,39 @@ test('다시 실행하면 같은 결과가 와도 새 소식이 없고, 받았�
   for (const id of takenIds) expect(past.has(id)).toBe(true)
 })
 
+const markSeen = (s: AppState): AppState => ({
+  ...s,
+  items: Object.fromEntries(Object.entries(s.items).map(([id, i]) => [id, { ...i, seenAt: NOW }]))
+})
+
+test('v1에서 올라와도 본 항목은 본 채로 남고, 새 소식은 처음 읽는 과제 공고뿐이다', async () => {
+  const seen = markSeen(await collect(withProfile, deps({ openAlexKey: 'K' })))
+  // v1 모양: 게시판이 없고, OpenAlex의 저널 이름은 summary에 있었고, 논문 키워드와 과제 공고는 없었다.
+  const v1Items = Object.fromEntries(
+    Object.entries(seen.items)
+      .filter(([, i]) => i.category !== 'grant')
+      .map(([id, i]) => {
+        const plain = { ...i, venue: undefined, keywords: undefined } // JSON에 쓰면 빠진다
+        if (i.source === 'OpenAlex') return [id, { ...plain, summary: i.venue ?? '' }]
+        return [id, i.source === 'arXiv' ? plain : i]
+      })
+  )
+  const v1 = { ...seen, version: 1, boards: undefined, boardKnown: undefined, items: v1Items }
+  const dir = mkdtempSync(join(tmpdir(), 'ra-')) // 임시 폴더는 운영체제에 맡긴다
+  writeFileSync(join(dir, 'state.json'), JSON.stringify(v1))
+  const loaded = loadState(join(dir, 'state.v2.json'), undefined, join(dir, 'state.json'))
+  const after = applyCollected(loaded, await collect(loaded, deps({ openAlexKey: 'K' })), NOW)
+
+  const v1Ids = Object.keys(v1Items)
+  expect(v1Ids.length).toBeGreaterThan(0)
+  expect(v1Ids.filter((id) => after.items[id]?.seenAt !== NOW)).toEqual([])
+  const unseen = Object.values(after.items).filter((i) => i.seenAt === null)
+  expect(unseen.length).toBeGreaterThan(0)
+  expect(unseen.every((i) => i.category === 'grant')).toBe(true)
+  for (const b of BUILTIN_BOARDS)
+    expect(unseen.filter((i) => i.source === b.name).length).toBeLessThanOrEqual(10)
+})
+
 describe('게시판과 과제 공고', () => {
   const NOW = '2026-11-25T03:00:00.000Z'
   const deps = (o: Opts = {}): ReturnType<typeof fakeDeps> => fakeDeps(o, NOW)
@@ -270,6 +306,30 @@ describe('게시판과 과제 공고', () => {
     expect(Object.keys(out.boardKnown).sort()).toEqual([board.id, board2.id, 'iris', 'nrf'].sort())
     expect(Object.values(out.items).some((i) => i.source === '컴퓨터공학부')).toBe(true)
     expect(Object.values(out.items).some((i) => i.source === '건축학과')).toBe(false)
+  })
+
+  test('게시판을 지웠다가 같은 주소로 다시 등록해도 같은 id이고 본 글이 새 글로 돌아오지 않는다', async () => {
+    const input = { name: '건축학과', url, category: 'school' as const }
+    const first = validateBoard(input, [])
+    if (!first.ok) throw new Error(first.error)
+    const seen = markSeen(await collect({ ...withProfileKR, boards: [first.board] }, deps({})))
+    const before = Object.keys(seen.items).sort()
+    expect(before.some((id) => id.startsWith(`board:${first.board.id}:`))).toBe(true)
+
+    // ipc의 removeBoard처럼 목록에서 빼고 그 게시판의 boardKnown을 지운다.
+    const boardKnown = { ...seen.boardKnown }
+    delete boardKnown[first.board.id]
+    const removed = await collect({ ...seen, boards: [], boardKnown }, deps({}))
+
+    const again = validateBoard(input, removed.boards)
+    if (!again.ok) throw new Error(again.error)
+    expect(again.board.id).toBe(first.board.id)
+    const readded = await collect({ ...removed, boards: [again.board] }, deps({}))
+
+    expect(Object.values(readded.items).filter((i) => i.seenAt === null)).toEqual([])
+    expect(Object.keys(readded.items).sort()).toEqual(before)
+    const known = readded.boardKnown[again.board.id]
+    expect(new Set(known).size).toBe(known.length)
   })
 
   test('꺼진 카테고리의 게시판은 요청하지 않고 옛 오류도 지운다', async () => {

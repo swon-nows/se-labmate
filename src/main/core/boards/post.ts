@@ -9,6 +9,11 @@ export interface Post {
 }
 
 const squash = (s: string): string => s.replace(/\s+/g, ' ').trim()
+const MAX_TITLE = 300 // 코드 포인트. 아주 긴 제목이 화면과 저장 파일을 채우지 않게 한다
+const clip = (s: string): string => {
+  const chars = [...s]
+  return chars.length > MAX_TITLE ? chars.slice(0, MAX_TITLE).join('') + '…' : s
+}
 
 const NAMED: Record<string, string> = {
   nbsp: ' ',
@@ -95,7 +100,7 @@ export function finishPosts(posts: Post[]): Post[] {
     if (title === '' || p.key === '' || !isHttpUrl(p.url) || seen.has(p.key)) continue
     seen.add(p.key)
     const t = p.date === null ? NaN : new Date(p.date).getTime()
-    out.push({ ...p, title, date: Number.isNaN(t) ? null : new Date(t).toISOString() })
+    out.push({ ...p, title: clip(title), date: Number.isNaN(t) ? null : new Date(t).toISOString() })
   }
   return out
 }

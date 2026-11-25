@@ -167,5 +167,11 @@ export function parseHtmlList(html: string, baseUrl: string): Post[] {
       }))
     }
   }
-  return best ? finishPosts(best.posts) : []
+  if (!best) return []
+  // finishPosts는 key가 같은 글 중 첫 글만 남기므로, 제목(과 날짜)이 겹치는 글은 주소를 붙여 가른다.
+  const count = new Map<string, number>()
+  for (const p of best.posts) count.set(p.key, (count.get(p.key) ?? 0) + 1)
+  return finishPosts(
+    best.posts.map((p) => (count.get(p.key) === 1 ? p : { ...p, key: `${p.key}:${p.url}` }))
+  )
 }
