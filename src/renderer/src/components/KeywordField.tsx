@@ -5,7 +5,6 @@ import {
   chipAction,
   currentToken,
   hasKeyword,
-  keywordList,
   replaceToken,
   toggleKeyword
 } from '../format'
@@ -42,33 +41,38 @@ export function KeywordField({
   const panelId = `${id}-suggestions`
 
   // 목록이 문서 흐름 안에 있어서, 아래 버튼을 누르는 순간 닫으면 내용이 올라가 첫 클릭이 사라진다.
-  // 그래서 버튼을 뗀 뒤에(클릭이 먼저 전달되도록 한 틱 늦춰) 닫는다.
+  // 그래서 버튼을 뗀 뒤에(클릭이 먼저 전달되도록 한 틱 늦춰) 닫는다. 입력 중 표시도 그때 함께 끈다.
   useEffect(() => {
     const down = (): void => {
       pressing.current = true
     }
-    const up = (): void => {
+    // 버튼을 뗀 일이 전달되지 않는 경우(컨텍스트 메뉴, 기본 select 팝업, 창 포커스 이동)도 뗀 것으로 본다.
+    const release = (): void => {
       pressing.current = false
       if (!closePending.current) return
       closePending.current = false
       setTimeout(() => {
-        if (!fieldRef.current?.contains(document.activeElement)) setOpen(false)
+        if (fieldRef.current?.contains(document.activeElement)) return
+        setOpen(false)
+        setTyping(false)
       }, 0)
     }
     document.addEventListener('pointerdown', down, true)
-    document.addEventListener('pointerup', up, true)
-    document.addEventListener('pointercancel', up, true)
+    document.addEventListener('pointerup', release, true)
+    document.addEventListener('pointercancel', release, true)
+    document.addEventListener('contextmenu', release, true)
+    window.addEventListener('blur', release)
     return () => {
       document.removeEventListener('pointerdown', down, true)
-      document.removeEventListener('pointerup', up, true)
-      document.removeEventListener('pointercancel', up, true)
+      document.removeEventListener('pointerup', release, true)
+      document.removeEventListener('pointercancel', release, true)
+      document.removeEventListener('contextmenu', release, true)
+      window.removeEventListener('blur', release)
     }
   }, [])
 
   const token = currentToken(value)
   const filtering = typing && token !== ''
-  // 적고 있는 낱말은 칩으로 바뀌므로 세지 않는다.
-  const full = keywordList(value).length - (filtering ? 1 : 0) >= MAX_KEYWORDS
 
   return (
     <div
@@ -79,9 +83,12 @@ export function KeywordField({
       }}
       onBlur={(e) => {
         if (fieldRef.current?.contains(e.relatedTarget as Node | null)) return
-        setTyping(false)
-        if (pressing.current) closePending.current = true
-        else setOpen(false)
+        if (pressing.current) {
+          closePending.current = true
+        } else {
+          setOpen(false)
+          setTyping(false)
+        }
       }}
       onKeyDown={(e) => {
         if (e.key !== 'Escape' || !open) return
@@ -131,13 +138,15 @@ export function KeywordField({
               <div className="chips" lang={lang}>
                 {g[lang].map((k) => {
                   const action = chipAction(value, k, filtering)
-                  const dim = filtering && !k.toLowerCase().includes(token)
+                  const pressed = hasKeyword(value, k)
+                  // 눌린 칩은 흐리게 하지 않는다(고른 표시가 사라진다).
+                  const dim = filtering && !pressed && !k.toLowerCase().includes(token)
                   return (
                     <button
                       key={k}
                       type="button"
                       className={dim ? 'chip chip-sm is-dim' : 'chip chip-sm'}
-                      aria-pressed={hasKeyword(value, k)}
+                      aria-pressed={pressed}
                       aria-disabled={action === 'blocked' ? 'true' : undefined}
                       onClick={() => {
                         if (action === 'blocked') return
@@ -154,7 +163,8 @@ export function KeywordField({
               </div>
             </div>
           ))}
-          {full && <p className="hint">키워드는 {MAX_KEYWORDS}개까지 저장됩니다.</p>}
+          {/* 항상 보여 목록 높이가 개수나 입력에 따라 변하지 않게 한다. */}
+          <p className="hint">키워드는 {MAX_KEYWORDS}개까지 저장됩니다.</p>
         </div>
       )}
       {children}
