@@ -254,8 +254,12 @@ describe('게시판과 과제 공고', () => {
     expect(
       school.every((i) => i.source === '건축학과' && i.id.startsWith(`board:${board.id}:`))
     ).toBe(true)
+    expect(s1.boardKnown[board.id].length).toBeGreaterThan(0)
     const s2 = await collect(s1, deps({}))
     expect(Object.keys(s2.items).length).toBe(Object.keys(s1.items).length)
+    // items를 비워도 boardKnown만으로 새 글이 없다: 저장된 id로 걸러진 것이 아니다.
+    const s3 = await collect({ ...s1, items: {} }, deps({}))
+    expect(Object.values(s3.items).filter((i) => i.category === 'school')).toHaveLength(0)
   })
 
   test('게시판 하나가 실패해도 나머지는 계속하고, 그 게시판의 boardKnown은 그대로다', async () => {

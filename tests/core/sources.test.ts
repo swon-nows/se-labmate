@@ -150,7 +150,7 @@ test('arXiv 오류 entry는 논문이 아니라 오류다', () => {
 })
 test('Google 뉴스 출처 없음·제목 끝 불일치·limit', () => {
   const [a, b] = parseGnews(GNEWS_PLAIN) // 날짜 최신순이라 20일 기사(a)가 먼저
-  expect(b.source).toBe('Google 뉴스')
+  expect(b.source).toBe('Google News')
   expect(b.title).toBe('출처 없는 기사 - 어딘가')
   expect(a.source).toBe('연합뉴스')
   expect(a.title).toBe('제목 끝이 다른 기사 - 어딘가')

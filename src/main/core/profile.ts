@@ -1,4 +1,4 @@
-import { BUILTIN_BOARDS } from '../../shared/sources'
+import { BUILTIN_BOARDS, FIXED_SOURCE_NAMES } from '../../shared/sources'
 import { BOARD_CATEGORIES, CATEGORIES } from '../../shared/types'
 import type {
   AppState,
@@ -77,15 +77,7 @@ export function applyProfile(
   }
 }
 
-const RESERVED_NAMES = [
-  'OpenAlex',
-  'arXiv',
-  'GitHub',
-  'Google News (KO)',
-  'Google News (EN)',
-  'IRIS',
-  '한국연구재단'
-]
+const RESERVED_NAMES = [...FIXED_SOURCE_NAMES, ...BUILTIN_BOARDS.map((b) => b.name)]
 
 // 출처 이름은 오류 표시의 키라서 겹치면 안 된다.
 export function validateBoard(

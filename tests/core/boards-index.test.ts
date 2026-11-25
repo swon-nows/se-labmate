@@ -102,11 +102,24 @@ test('readBoard: 게시판 글의 id와 날짜 없는 글, 제목이 비는 과�
     <item><title>- - -</title><link>https://a.b/2</link><guid>g2</guid></item>
   </channel></rss>`
   const board = { id: 'b1', name: '공고판', url: 'https://a.b/feed', category: 'school' as const }
-  const school = await readBoard(board, fake(rss), [], NOW)
+  const school = await readBoard(board, fake(rss), ['x'], NOW)
   expect(school.fresh.map((i) => [i.id, i.source, i.category, i.date])).toEqual([
     ['board:b1:g1', '공고판', 'school', '2026-11-23T00:00:00.000Z'],
     ['board:b1:g2', '공고판', 'school', NOW.toISOString()]
   ])
-  const grant = await readBoard({ ...board, category: 'grant' }, fake(rss), [], NOW)
+  const grant = await readBoard({ ...board, category: 'grant' }, fake(rss), ['x'], NOW)
   expect(grant.fresh.map((i) => i.id)).toEqual(['grant:' + normalizeTitle('2027 연구과제 공고')])
+})
+
+test('readBoard: 처음 읽을 때는 최근 날짜의 글만 새 글이고, 모든 글의 id와 주소를 기록한다', async () => {
+  const rss = `<rss><channel>
+    <item><title>최근 글</title><link>https://a.b/1</link><guid>g1</guid><pubDate>Mon, 23 Nov 2026 00:00:00 GMT</pubDate></item>
+    <item><title>날짜 없는 글</title><link>https://a.b/2</link><guid>g2</guid></item>
+  </channel></rss>`
+  const board = { id: 'b1', name: '공고판', url: 'https://a.b/feed', category: 'school' as const }
+  const { fresh, known } = await readBoard(board, fake(rss), undefined, NOW)
+  expect(fresh.map((i) => i.id)).toEqual(['board:b1:g1'])
+  expect(known).toEqual(
+    expect.arrayContaining(['board:b1:g1', 'https://a.b/1', 'board:b1:g2', 'https://a.b/2'])
+  )
 })

@@ -189,4 +189,11 @@ describe('applyCollected', () => {
     const collected = st({ boardKnown: { iris: ['a', 'https://a.b/a'], nrf: ['b'] } })
     expect(applyCollected(live, collected, NOW).boardKnown).toEqual(collected.boardKnown)
   })
+
+  test('수집 중에 지운 게시판의 boardKnown은 되살아나지 않는다', () => {
+    const board = { id: 'b1', name: '공고판', url: 'https://a.b/', category: 'school' as const }
+    const live = st({ boards: [board] })
+    const collected = st({ boardKnown: { iris: ['a'], b1: ['b'], gone: ['c'] } })
+    expect(applyCollected(live, collected, NOW).boardKnown).toEqual({ iris: ['a'], b1: ['b'] })
+  })
 })

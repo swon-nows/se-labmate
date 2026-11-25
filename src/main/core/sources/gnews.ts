@@ -22,7 +22,7 @@ export function parseGnews(body: string, limit = 30): RawItem[] {
     const url = textOf(e.link).trim()
     let title = textOf(e.title).trim()
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3))
-    const name = source || 'Google 뉴스'
+    const name = source || 'Google News'
     // guid는 같은 기사도 몇 시간 뒤 바뀌므로 id는 제목과 언론사로 정한다.
     const key = normalizeTitle(title)
     if (key === '') continue

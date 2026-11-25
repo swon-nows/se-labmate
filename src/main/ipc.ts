@@ -138,9 +138,16 @@ export function registerIpc(d: IpcDeps): void {
   // 이미 모은 항목은 남긴다.
   ipcMain.handle('removeBoard', (_e, id: unknown) => {
     const s = d.getState()
-    if (typeof id !== 'string' || !s.boards.some((b) => b.id === id)) return
+    const board = s.boards.find((b) => b.id === id)
+    if (typeof id !== 'string' || board === undefined) return
     const boardKnown = { ...s.boardKnown }
     delete boardKnown[id]
-    d.update({ ...s, boards: s.boards.filter((b) => b.id !== id), boardKnown })
+    const sourceErrors = { ...s.sourceErrors }
+    delete sourceErrors[board.name]
+    try {
+      d.update({ ...s, boards: s.boards.filter((b) => b.id !== id), boardKnown, sourceErrors })
+    } catch {
+      // 저장하지 못해도 던지지 않는다: 목록은 그대로이니 다시 지울 수 있다.
+    }
   })
 }

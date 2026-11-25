@@ -13,7 +13,13 @@ import {
   toggleKeyword
 } from '../src/renderer/src/format'
 import { KEYWORD_SUGGESTIONS } from '../src/shared/keyword-suggestions'
-import { BUILTIN_BOARDS, activeSources, allFailed, sourceErrorText } from '../src/shared/sources'
+import {
+  BUILTIN_BOARDS,
+  FIXED_SOURCE_NAMES,
+  activeSources,
+  allFailed,
+  sourceErrorText
+} from '../src/shared/sources'
 import type { Board, Category, Profile, Settings } from '../src/shared/types'
 
 describe('relativeDate', () => {
@@ -76,6 +82,11 @@ describe('activeSources', () => {
     expect(grants.map((s) => [s.board, s.category])).toEqual(
       BUILTIN_BOARDS.map((b) => [b, 'grant'])
     )
+  })
+  it('게시판이 아닌 출처의 이름은 모두 FIXED_SOURCE_NAMES에 있다', () => {
+    const fixed = activeSources(profile, settings, true, [school]).filter((s) => !s.board)
+    expect(fixed.length).toBeGreaterThan(0)
+    for (const s of fixed) expect(FIXED_SOURCE_NAMES).toContain(s.name)
   })
   it('키가 없으면 OpenAlex가 빠진다', () => {
     expect(names(profile, settings, false)).not.toContain('OpenAlex')

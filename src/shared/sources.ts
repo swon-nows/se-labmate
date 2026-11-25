@@ -15,6 +15,15 @@ export const BUILTIN_BOARDS: Board[] = [
   }
 ]
 
+// 게시판이 아닌 출처의 이름. 사용자 게시판 이름이 이것과 겹치면 안 된다.
+export const FIXED_SOURCE_NAMES = [
+  'OpenAlex',
+  'arXiv',
+  'GitHub',
+  'Google News (KO)',
+  'Google News (EN)'
+]
+
 export interface Source {
   name: string
   category: Category
