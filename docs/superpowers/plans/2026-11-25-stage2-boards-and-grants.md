@@ -420,7 +420,7 @@ test('known은 600개까지, 이번 목록에 있는 것이 뒤에 남는다', (
 
 **Files:**
 - Create: `src/main/core/boards/index.ts`
-- Modify: `src/shared/sources.ts`, `src/main/collector.ts`, `src/main/core/merge.ts`, `src/main/core/profile.ts`, `src/main/core/tick.ts`, `src/main/ipc.ts`, `src/main/index.ts`, `src/preload/index.ts`, `src/preload/index.d.ts`, `src/renderer/src/App.tsx`·`screens/Settings.tsx`(새 `activeSources`에 맞춘 최소 수정)
+- Modify: `src/shared/sources.ts`, `src/main/collector.ts`, `src/main/core/merge.ts`, `src/main/core/profile.ts`, `src/main/core/collect-runner.ts`(문장 하나), `src/main/core/tick.ts`, `src/main/ipc.ts`, `src/main/index.ts`, `src/preload/index.ts`, `src/preload/index.d.ts`, `src/renderer/src/App.tsx`·`screens/Settings.tsx`(새 `activeSources`에 맞춘 최소 수정)
 - Test: `tests/core/boards-index.test.ts`, `tests/collector.test.ts`, `tests/format.test.ts`, `tests/core/merge.test.ts`, `tests/core/profile.test.ts`
 
 **Interfaces:**
@@ -435,7 +435,7 @@ export const BUILTIN_BOARDS: Board[] = [
 ]
 export interface Source { name: string; category: Category; board?: Board }
 export function activeSources(profile: Profile, settings: Settings, hasOpenAlexKey: boolean, boards: Board[]): Source[]
-// 순서: OpenAlex, arXiv, GitHub, Google 뉴스(한국어), Google 뉴스(영문), [국가가 KR이면 IRIS, 한국연구재단], 사용자 게시판(등록 순). 카테고리가 꺼진 것은 빠진다.
+// 순서: OpenAlex, arXiv, GitHub, Google News (KO), Google News (EN), [국가가 KR이면 IRIS, 한국연구재단], 사용자 게시판(등록 순). 카테고리가 꺼진 것은 빠진다.
 export const allFailed(names: string[], errors): boolean   // 그대로
 
 // src/main/core/boards/index.ts
@@ -461,11 +461,13 @@ removeBoard(id: string): Promise<void>
 - `collect`: 켜고 끄는 조건을 직접 쓰지 않고 `activeSources(profile, settings, key !== '', state.boards)`의 이름으로만 판단한다. 시작할 때 `sourceErrors`에서 켜진 출처가 아닌 이름을 지운다. 기존 다섯 출처 뒤에 `board`가 있는 출처를 순서대로 `readBoard(board, fetchText, boardKnown[board.id], now)`로 읽고, 성공하면 `boardKnown[board.id]`를 돌려받은 값으로 바꾼다. 실패하면 오류만 남기고 `boardKnown`은 그대로다. 돌려주는 상태에 `boardKnown`을 담는다.
 - `applyCollected`: `boardKnown`은 `collected`의 것을 쓴다.
 - `mergeIncoming`: 한 번의 수집 안에서 같은 id가 다시 오면 먼저 온 것이 남되, 먼저 온 것의 빈 값(`summary`가 `''`, `venue`·`keywords`가 없음)만 나중 것으로 채운다(OpenAlex에는 초록이 없고 arXiv에는 있는 논문). `matched`는 채운 뒤의 제목+요약으로 계산한다. 이전 수집에서 이미 저장된 항목은 지금처럼 건드리지 않는다.
-- `validateBoard`: 모양(`name`·`url`이 문자열, `category`가 `BOARD_CATEGORIES` 안)이 아니면 `입력 형식이 올바르지 않습니다.` / 이름은 공백 정리 뒤 1~30자, 아니면 `이름을 1~30자로 입력해 주십시오.` / 주소는 앞뒤 공백을 떼고 `isHttpUrl`이며 500자 이하, 아니면 `주소는 http:// 또는 https://로 시작해야 합니다.` / 이미 10개면 `게시판은 10개까지 등록할 수 있습니다.` / 이름이 등록된 게시판이나 기본 출처 이름(`OpenAlex`, `arXiv`, `GitHub`, `Google 뉴스(한국어)`, `Google 뉴스(영문)`, `IRIS`, `한국연구재단`)과 같으면 `이미 쓰고 있는 이름입니다.` / `new URL(url).href`가 등록된 게시판이나 `BUILTIN_BOARDS`의 주소와 같으면 `이미 등록된 주소입니다.` 통과하면 `{ id: boardId(href), name, url: href, category }`.
+- `validateBoard`: 모양(`name`·`url`이 문자열, `category`가 `BOARD_CATEGORIES` 안)이 아니면 `입력 형식이 올바르지 않습니다.` / 이름은 공백 정리 뒤 1~30자, 아니면 `이름을 1~30자로 입력해 주십시오.` / 주소는 앞뒤 공백을 떼고 `isHttpUrl`이며 500자 이하, 아니면 `주소는 http:// 또는 https://로 시작해야 합니다.` / 이미 10개면 `게시판은 10개까지 등록할 수 있습니다.` / 이름이 등록된 게시판이나 기본 출처 이름(`OpenAlex`, `arXiv`, `GitHub`, `Google News (KO)`, `Google News (EN)`, `IRIS`, `한국연구재단`)과 같으면 `이미 쓰고 있는 이름입니다.` / `new URL(url).href`가 등록된 게시판이나 `BUILTIN_BOARDS`의 주소와 같으면 `이미 등록된 주소입니다.` 통과하면 `{ id: boardId(href), name, url: href, category }`.
 - IPC `previewBoard`: 주소가 문자열이 아니거나 `isHttpUrl`이 아니면 `{ ok: false, error: '주소는 http:// 또는 https://로 시작해야 합니다.' }`. `readPosts`가 던지면 그 메시지, 0건이면 `글 목록을 찾지 못했습니다`. 성공하면 모든 글에 날짜가 있을 때는 최신순, 아니면 받은 순서로 앞 5건의 `{ title, date }`.
 - IPC `addBoard`: `validateBoard` → 상태에 더하고 저장(실패하면 `설정을 저장하지 못했습니다.`) → `collectFresh()`를 기다리지 않고 시작 → `{ ok: true }`.
 - IPC `removeBoard`: 그 id의 게시판과 `boardKnown[id]`를 지우고 저장. 모르는 id면 아무것도 하지 않는다. 이미 모은 항목은 남긴다.
 - `IpcDeps`에 `fetchText: FetchText`를 더하고 `index.ts`에서 넘긴다. 어떤 값이 와도 처리기는 던지지 않는다(기존 규칙).
+- 출처 이름을 영어로: `Google 뉴스(한국어)` → `Google News (KO)`, `Google 뉴스(영문)` → `Google News (EN)` (수집기, `activeSources`, 예약 이름 목록, 테스트 모두). 저장된 `sourceErrors`의 옛 이름은 위의 "켜진 출처가 아닌 이름을 지운다" 규칙으로 사라진다.
+- 화면 이름이 영어로 바뀐 데 맞춰 문장을 고친다(Task 7의 후속): `profile.ts`의 `영문 주제 키워드를 1개 이상 입력해 주십시오.` → `Keywords (English)를 1개 이상 입력해 주십시오.`, `알림 시각은 00:00~23:59 형식이어야 합니다.` → `Notify at은 00:00~23:59 형식이어야 합니다.` / `sources.ts`의 `…설정에서 키를 확인해 주십시오.` → `…Settings에서 키를 확인해 주십시오.` / `collect-runner.ts`의 `…설정에서 키를 다시 입력해 주십시오.` → `…Settings에서 키를 다시 입력해 주십시오.` 이 문장을 단언하는 테스트도 고친다.
 
 - [ ] **Step 1: 실패하는 테스트 작성** — 아래를 반드시 포함한다.
 
@@ -541,6 +543,7 @@ export function paperChips(item: Pick<Item, 'matched' | 'keywords'>): { text: st
   - 10개가 등록되어 있으면 추가 폼 대신 `게시판은 10개까지 등록할 수 있습니다.`
 - **첫 실행 화면**: 폼 아래에 한 줄 `학교·학회 게시판은 시작한 뒤 Settings에서 추가할 수 있습니다.`
 - 새 요소도 `:hover`·`:focus-visible`·어두운 모드·`prefers-reduced-motion` 규칙을 지킨다(기존 스타일의 방식을 따른다).
+- Task 7의 후속: `Feed.tsx`의 `…설정의 출처 상태를 확인해 주십시오.` → `…Settings의 Sources를 확인해 주십시오.` 한국어 글자 길이에 맞춰 폭을 고정해 둔 버튼(`styles.css`의 `.btn.refresh-btn`, `.nav-btn`, `.save-btn`)이 영어 글자(`Collecting`/`Refresh`, `Settings`/`Back`, `Unsave`/`Save`)를 넘치지 않게 담도록 폭을 맞추고, 그 옆 주석의 옛 한국어 글자도 고친다. 글자가 바뀌어도 버튼 폭이 변하지 않는다는 원래 목적은 지킨다.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 

@@ -229,7 +229,7 @@
 - Mac용은 사용자의 Mac에서 빌드한다. Windows용은 비공개 저장소의 GitHub Actions에서 빌드해 결과 파일을 내려받는다.
 - 지인용 설치 안내 한 장을 만든다(서명 경고 창을 넘기는 방법 포함).
 - 오브는 앱 안에 직접 만든 캔버스 컴포넌트(`LiveOrb`) 하나를 크기만 바꿔 쓴다(4.8의 2026-11-24 변경). 처음에 쓰던 Thinking Orbs와 React Bits Orb 파일·의존성은 참조 없이 남겨 두었고, 앱이 완성된 시점에 사용자 확인을 받아 지운다(사용자 결정 2026-11-24).
-- 프로젝트 위치: `~/Desktop/research-assistant/` (git 저장소).
+- 프로젝트 위치: `~/Desktop/se_labmate/` (git 저장소. 2026-11-25에 `research-assistant`에서 이름을 바꿨다. GitHub 저장소 이름과 앱의 데이터 폴더 이름은 `research-assistant` 그대로다).
 
 ## 7. 만드는 순서 [Claude 판단]
 
