@@ -10,7 +10,7 @@ export function abstractText(inverted: unknown): string {
     .join(' ')
 }
 
-// shortcut: 약어(e.g. 등) 뒤 대문자는 문장 끝으로 오인한다, 오탐이 잦아지면 약어 목록을 둔다.
+// shortcut: 약어 뒤에 대문자나 숫자가 오면(Fig. 3, No. 5) 문장 끝으로 오인해 나눈다, 오탐이 잦아지면 약어 목록을 둔다.
 const SPLIT = /(?<=[.?!])\s+(?=[A-Z0-9"'(\[가-힣])/
 const ABOUT_US =
   /\bwe\b|\b(?:this|the present|the current)\s+(?:paper|study|work|article|thesis|dissertation|research|letter|survey|review)\b/i
@@ -26,5 +26,5 @@ export function keySentence(abstract: string): string {
   const sentences = text.split(SPLIT)
   const pick = sentences.find((s) => ABOUT_US.test(s)) ?? sentences[0]
   const chars = [...pick]
-  return chars.length > MAX ? chars.slice(0, MAX).join('') + '…' : pick
+  return chars.length > MAX ? chars.slice(0, MAX).join('').trimEnd() + '…' : pick
 }

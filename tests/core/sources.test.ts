@@ -282,6 +282,37 @@ test('OpenAlex: 키워드도 주제도 없으면 필드가 없다', () => {
   expect('venue' in item).toBe(false)
   expect(item.summary).toBe('')
 })
+test('OpenAlex: 깨진 레코드 하나가 소스 전체를 막지 않는다', () => {
+  const body = JSON.stringify({
+    results: [
+      {
+        id: 'https://openalex.org/W4',
+        doi: 'https://doi.org/10.1/bad',
+        title: 'Malformed fields',
+        publication_date: '2026-11-23',
+        keywords: [null, { display_name: 5 }, { display_name: 'ok', score: 'x' }],
+        primary_location: { source: { display_name: 7 } },
+        primary_topic: { display_name: {} }
+      },
+      {
+        id: 'https://openalex.org/W5',
+        doi: 'https://doi.org/10.1/good',
+        title: 'Good record',
+        publication_date: '2026-11-22',
+        keywords: [{ display_name: 'fine', score: 0.5 }],
+        primary_location: { source: { display_name: 'Journal Z' } }
+      }
+    ]
+  })
+  const [bad, good] = parseOpenAlex(body)
+  expect(bad.keywords).toEqual(['ok'])
+  expect('venue' in bad).toBe(false)
+  expect(good).toMatchObject({ keywords: ['fine'], venue: 'Journal Z' })
+})
+test('keySentence: 자른 끝의 공백은 …앞에 남기지 않는다', () => {
+  const s = keySentence('We ' + 'x'.repeat(236) + ' tail.') // 240자째가 공백
+  expect(s).toBe('We ' + 'x'.repeat(236) + '…')
+})
 test('arXiv: 분류와 journal_ref', () => {
   for (const it of parseArxiv(fx('arxiv.xml'))) {
     expect(it.keywords!.length).toBeGreaterThan(0)
