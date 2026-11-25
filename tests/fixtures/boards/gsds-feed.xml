@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>서울대학교 데이터사이언스대학원</title>
+	<atom:link href="https://gsds.snu.ac.kr/feed/" rel="self" type="application/rss+xml" />
+	<link>https://gsds.snu.ac.kr</link>
+	<description>Seoul National University Graduate School of Data Science</description>
+	<lastBuildDate>Mon, 16 Nov 2026 10:55:26 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=7.1.5</generator>
+	<item>
+		<title>UIUC 박용주 교수, Fast Code Sandboxes for AI Agents, 11월 18일(수)</title>
+		<link>https://gsds.snu.ac.kr/uiuc-%eb%b0%95%ec%9a%a9%ec%a3%bc-%ea%b5%90%ec%88%98-fast-code-sandboxes-for-ai-agents-11%ec%9b%94-18%ec%9d%bc%ec%88%98/</link>
+					<comments>https://gsds.snu.ac.kr/uiuc-%eb%b0%95%ec%9a%a9%ec%a3%bc-%ea%b5%90%ec%88%98-fast-code-sandboxes-for-ai-agents-11%ec%9b%94-18%ec%9d%bc%ec%88%98/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Mon, 16 Nov 2026 10:55:25 +0000</pubDate>
+				<category><![CDATA[세미나]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18938</guid>
+
+					<description><![CDATA[이번 주 데이터사이언스 세미나 연사는 일리노이대학교 어바나-샴페인(UIUC) 컴퓨팅 및 데이터사이언스 대학의 박용주 교수입니다. 박 교수는 이번 강연에서 AI 에이전트를 위한 고속 코드 실행 환경(Fast Code Sandboxes)의 필요성을 설명하고, 실행 속도와 반복적인 코드 수정의 효율성을 획기적으로 개선하는 두 가지 시스템인 readie와 kishu를 소개합니다. 박 교수는 서울대 전기공학부에서 학사 학위를 받은 후, 미국 미시간대에서 컴퓨터공학 석사 및 [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">이번 주 데이터사이언스 세미나 연사는 일리노이대학교 어바나-샴페인(UIUC) 컴퓨팅 및 데이터사이언스 대학의 박용주 교수입니다. 박 교수는 이번 강연에서 AI 에이전트를 위한 고속 코드 실행 환경(Fast Code Sandboxes)의 필요성을 설명하고, 실행 속도와 반복적인 코드 수정의 효율성을 획기적으로 개선하는 두 가지 시스템인 readie와 kishu를 소개합니다.</p>
+
+
+
+<p class="wp-block-paragraph">박 교수는 서울대 전기공학부에서 학사 학위를 받은 후, 미국 미시간대에서 컴퓨터공학 석사 및 박사 학위를 취득했습니다. 2019년부터 일리노이대 어바나-샴페인에서 교수로 재직하고 있으며, 데이터 분석 자동화 스타트업 Keebo를 공동 창업해 최고기술책임자(CTO)와 최고과학자(Chief Scientist)를 역임했습니다.</p>
+
+
+
+<p class="wp-block-paragraph">Title: Fast Code Sandboxes for AI Agents</p>
+
+
+
+<p class="wp-block-paragraph">Time: 2026. 11. 18. (Wed) 09:00 ~ 10:30</p>
+
+
+
+<p class="wp-block-paragraph">Zoom: https://snu-ac-kr.zoom.us/j/2507466555<br></p>
+
+
+<div class="wp-block-image">
+<figure class="aligncenter size-large"><img fetchpriority="high" decoding="async" width="724" height="1024" src="https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-724x1024.jpg" alt="" class="wp-image-18939" srcset="https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-724x1024.jpg 724w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-212x300.jpg 212w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-767x1085.jpg 767w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-1086x1536.jpg 1086w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-1448x2048.jpg 1448w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1-scaled.jpg 1811w" sizes="(max-width: 724px) 100vw, 724px" /></figure>
+</div>]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/uiuc-%eb%b0%95%ec%9a%a9%ec%a3%bc-%ea%b5%90%ec%88%98-fast-code-sandboxes-for-ai-agents-11%ec%9b%94-18%ec%9d%bc%ec%88%98/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>2027년 「LG AI 청소년 캠프 4기」 멘토 모집 안내</title>
+		<link>https://gsds.snu.ac.kr/2027%eb%85%84-%e3%80%8clg-ai-%ec%b2%ad%ec%86%8c%eb%85%84-%ec%ba%a0%ed%94%84-4%ea%b8%b0%e3%80%8d-%eb%a9%98%ed%86%a0-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b4/</link>
+					<comments>https://gsds.snu.ac.kr/2027%eb%85%84-%e3%80%8clg-ai-%ec%b2%ad%ec%86%8c%eb%85%84-%ec%ba%a0%ed%94%84-4%ea%b8%b0%e3%80%8d-%eb%a9%98%ed%86%a0-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b4/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Fri, 13 Nov 2026 07:35:01 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18931</guid>
+
+					<description><![CDATA[2027년 「LG AI 청소년 캠프 4기」 멘토 모집 안내 2027년 2월부터 서울대학교 교육종합연구원은 LG 디스커버리랩과 함께 ⌜LG AI 청소년 캠프⌟를 시작합니다. 본 캠프는 참여 학생들이 문제를 발견하고 이를 AI의 활용과 협업을 통해 해결할 수 있는 성장의 기회를 제공하는 것을 목표로 합니다. 이에 학생들의 창의적 문제 해결 역량, AI에 대한 이해 및 협업 역량 성장에 도움을 [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph"><strong>2027년</strong> <strong>「LG AI</strong> <strong>청소년 캠프</strong> <strong>4기」</strong> <strong>멘토 모집 안내</strong></p>
+
+
+
+<p class="wp-block-paragraph">2027년 2월부터 서울대학교 교육종합연구원은 LG 디스커버리랩과 함께 ⌜LG AI 청소년 캠프⌟를 시작합니다. 본 캠프는 참여 학생들이 문제를 발견하고 이를 AI의 활용과 협업을 통해 해결할 수 있는 성장의 기회를 제공하는 것을 목표로 합니다. 이에 학생들의 창의적 문제 해결 역량, AI에 대한 이해 및 협업 역량 성장에 도움을 줄 수 있는 멘토를 아래와 같이 모집합니다.</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>모집 기간</strong><strong>: 2026</strong><strong>년</strong> <strong>11</strong><strong>월</strong> <strong>11</strong><strong>일</strong><strong>(</strong><strong>수</strong><strong>) ~ 12</strong><strong>월</strong> <strong>13</strong><strong>일</strong><strong>(</strong><strong>일</strong><strong>)</strong></p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>모집 인원</strong><strong>:</strong> 창의설계 멘토 25명 (서류심사)</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>활동 혜택</strong></p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 멘토 활동비 250만원(세전)</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 우수 활동 수당 (참여 횟수에 따른 차등 지급)</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; LG 디스커버리랩으로부터 멘토링 인증서(감사장) 발부</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>자격</strong></p>
+
+
+
+<p class="wp-block-paragraph">&#8211; AI 활용 문제 해결 프로젝트를 하는 중학생 멘토링에 관심 있는 서울대학교 학부생 또는 대학원생</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>활동 내용</strong></p>
+
+
+
+<p class="wp-block-paragraph"><strong></strong>○ <strong></strong><strong>멘토 사전 교육</strong> (2026년 2월 11일 목요일 10:00 – 15:00. 캠프 하루 전, 추후 변동 가능)</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 캠프 오리엔테이션 및 멘토링 활동 교육(창의설계, 퍼실리테이팅 등)</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 인권교육 및 CPR 교육 사전 이수</p>
+
+
+
+<p class="wp-block-paragraph">○ <strong></strong><strong>멘토 활동 기간 및 내용</strong></p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 대면 2박3일 캠프 1회 : 2026년 2월 11일(목) ~ 2월 13일(토), 서울대학교 컴퓨터연구소 예정</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 온라인 멘토링 9회: 2026년 2월 20일 ~ 4월 17일 중 토요일 09:00 – 12:00 예정</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 대면 최종 발표 1회: 2026년 5월 8일(토) 10:00 – 17:00, 마곡 LG사이언스파크 예정</p>
+
+
+
+<p class="wp-block-paragraph">* 멘토 사전 교육 불참 시 합격자 명단에서 제외될 수 있습니다.</p>
+
+
+
+<p class="wp-block-paragraph">* 진행 상황에 따라 일정이 변동될 수 있음에 양해 부탁드립니다.</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>모집 영역</strong><strong>:</strong> <strong>창의설계 멘토</strong><strong>(25</strong><strong>명 이내</strong><strong>)</strong></p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 창의설계 멘토 우대 조건</p>
+
+
+
+<p class="wp-block-paragraph">1) 멘토링 활동으로 학생의 창의적 문제해결력 및 협업 능력 향상을 도울 수 있는 자</p>
+
+
+
+<p class="wp-block-paragraph">2) 중학생의 필요사항을 잘 듣고 적절한 대응이 가능한 자</p>
+
+
+
+<p class="wp-block-paragraph">3) 멘토링 활동으로 문제해결을 위한 인공지능 활용 능력의 향상을 도울 수 있는 자</p>
+
+
+
+<p class="wp-block-paragraph"><strong>▮</strong><strong>지원 방법</strong></p>
+
+
+
+<p class="wp-block-paragraph">1) 제출 서류</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; [서식 1] 멘토지원신청서</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; [서식 2] 개인정보 수집·이용 및 제3자 제공 동의서</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; [서식 3] 자기소개서</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 인권 교육 및 CPR 교육 이수증 <strong>(</strong><strong>선발 이후 제출 가능</strong><strong>)</strong></p>
+
+
+
+<p class="wp-block-paragraph">2) 제출 방법</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 모든 서류를 PDF 1부로 병합하여 이메일(<strong>snuacer87@gmail.com</strong>)로 제출</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; PDF 파일명: 2027멘토지원신청서_이름</p>
+
+
+
+<p class="wp-block-paragraph">&#8211; 메일 제목: 멘토지원_이름</p>
+
+
+
+<p class="wp-block-paragraph">※ 병합 프로그램 참고: Npdf, Small pdf 등</p>
+
+
+
+<p class="wp-block-paragraph"></p>
+
+
+
+<p class="wp-block-paragraph"><strong>[</strong><strong>문의</strong><strong>]</strong> <strong>서울대학교 물리교육과 음향물리교육 연구실</strong> <strong></strong> <strong>snuacer87@gmail.com</strong></p>
+
+
+
+<p class="wp-block-paragraph"><strong>[</strong><strong>참조</strong><strong>] LG AI</strong> <strong>청소년 캠프 홈페이지</strong> <a href="https://lgaiyouthcamp.or.kr/"><u><strong>https://lgaiyouthcamp.or.kr/</strong></u></a></p>
+
+
+
+<p class="wp-block-paragraph"></p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/2027%eb%85%84-%e3%80%8clg-ai-%ec%b2%ad%ec%86%8c%eb%85%84-%ec%ba%a0%ed%94%84-4%ea%b8%b0%e3%80%8d-%eb%a9%98%ed%86%a0-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b4/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>&#060;등록&gt; 2026학년도 제2학기 등록금 분납 4차(최종) 수납계획 알림</title>
+		<link>https://gsds.snu.ac.kr/%eb%93%b1%eb%a1%9d-2026%ed%95%99%eb%85%84%eb%8f%84-%ec%a0%9c2%ed%95%99%ea%b8%b0-%eb%93%b1%eb%a1%9d%ea%b8%88-%eb%b6%84%eb%82%a9-4%ec%b0%a8%ec%b5%9c%ec%a2%85-%ec%88%98%eb%82%a9%ea%b3%84%ed%9a%8d/</link>
+					<comments>https://gsds.snu.ac.kr/%eb%93%b1%eb%a1%9d-2026%ed%95%99%eb%85%84%eb%8f%84-%ec%a0%9c2%ed%95%99%ea%b8%b0-%eb%93%b1%eb%a1%9d%ea%b8%88-%eb%b6%84%eb%82%a9-4%ec%b0%a8%ec%b5%9c%ec%a2%85-%ec%88%98%eb%82%a9%ea%b3%84%ed%9a%8d/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Fri, 13 Nov 2026 01:13:58 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18919</guid>
+
+					<description><![CDATA[Nov 13, 2026 2026학년도 제2학기 등록금 분납 4차(최종) 수납계획을 다음과 같이 알려드리오니, 해당 학생께서는 기간 내등록금을 납부할 수 있도록 하여 주시기 바랍니다.1. 수납대상자:      – 학부·대학원 재학생 분납 신청자      – 학부·대학원 수업연한초과자 중 학점변경에 따른 추가 납부 정산자     ※ 대상자 조회 방법: 학사행정 > 등록 > 등록대상자관리 > 등록대상자조회및산출처리          (조회조건: 납부상태-미정산자, 휴학생제외 명단 중 ‘수납정산금액’이 양수인 경우)2. 수납일정: 2026년 [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<h4 class="wp-block-heading">Nov 13, 2026</h4>
+
+
+
+<p class="wp-block-paragraph">2026학년도 제2학기 등록금 분납 4차(최종) 수납계획을 다음과 같이 알려드리오니, 해당 학생께서는 기간 내<strong>등록금을 납부할 수 있도록</strong> 하여 주시기 바랍니다.<br>1. 수납대상자:<br>      – 학부·대학원 재학생 분납 신청자<br>      – 학부·대학원 수업연한초과자 중 학점변경에 따른 추가 납부 정산자<br>     <strong>※ 대상자 조회 방법: 학사행정 > 등록 > 등록대상자관리 > 등록대상자조회및산출처리</strong><br><strong>          (조회조건: 납부상태-미정산자, 휴학생제외 명단 중 ‘수납정산금액’이 양수인 경우)</strong><br>2. 수납일정: <strong>2026년 11월 23일(월) 09:00 ~ 11월 25일(금) 17:00</strong><br>      ※ 등록 기간 중 24시간 납부 가능 (마지막 날 17시 마감)<br>      ※ 기간 내 완납하지 않을 경우 미등록 제적됨</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/%eb%93%b1%eb%a1%9d-2026%ed%95%99%eb%85%84%eb%8f%84-%ec%a0%9c2%ed%95%99%ea%b8%b0-%eb%93%b1%eb%a1%9d%ea%b8%88-%eb%b6%84%eb%82%a9-4%ec%b0%a8%ec%b5%9c%ec%a2%85-%ec%88%98%eb%82%a9%ea%b3%84%ed%9a%8d/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>LG 이문태 박사, Self-Improving AI Agents and Domain Scaling, 11월 11일(수)</title>
+		<link>https://gsds.snu.ac.kr/lg-%ec%9d%b4%eb%ac%b8%ed%83%9c-%eb%b0%95%ec%82%ac-self-improving-ai-agents-and-domain-scaling-11%ec%9b%94-11%ec%9d%bc%ec%88%98/</link>
+					<comments>https://gsds.snu.ac.kr/lg-%ec%9d%b4%eb%ac%b8%ed%83%9c-%eb%b0%95%ec%82%ac-self-improving-ai-agents-and-domain-scaling-11%ec%9b%94-11%ec%9d%bc%ec%88%98/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 07:12:48 +0000</pubDate>
+				<category><![CDATA[세미나]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18907</guid>
+
+					<description><![CDATA[이번 주 데이터사이언스 세미나 연사는 LG AI Research Superintelligence Lab의 부사장 겸 소장인 이문태 교수입니다. 이 교수는 미국 일리노이대학교 시카고 캠퍼스 컴퓨터사이언스 교수도 겸임하고 있습니다. 이 교수는 이번 강연에서 전문가의 암묵적 지식을 학습하고 스스로 데이터, 학습 과정, 에이전트 구조 및 평가 체계를 개선하는 Self-Improving AI 에이전트와 이를 구현하기 위한 EXAONE Foundry 플랫폼을 소개합니다. 이 교수는 [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">이번 주 데이터사이언스 세미나 연사는 LG AI Research Superintelligence Lab의 부사장 겸 소장인 이문태 교수입니다. 이 교수는 미국 일리노이대학교 시카고 캠퍼스 컴퓨터사이언스 교수도 겸임하고 있습니다. 이 교수는 이번 강연에서 전문가의 암묵적 지식을 학습하고 스스로 데이터, 학습 과정, 에이전트 구조 및 평가 체계를 개선하는 Self-Improving AI 에이전트와 이를 구현하기 위한 EXAONE Foundry 플랫폼을 소개합니다.</p>
+
+
+
+<p class="wp-block-paragraph">이 교수는 스탠포드에서 석사, 코넬대에서 컴퓨터사이언스 박사 학위를 받았으며, 2018년부터 일리노이대학교 교수로 재직해 왔습니다. 15년 이상의 머신러닝 연구 경험과 6년 이상의 대규모 언어모델 개발 경험을 바탕으로 현재 LG AI Research에서 데이터 및 평가, 모델 학습과 정렬, 에이전트 시스템 설계 등 AI 전반을 아우르는 연구를 수행하고 있습니다.</p>
+
+
+
+<p class="wp-block-paragraph">Title: Self-Improving AI Agents and Domain Scaling</p>
+
+
+
+<p class="wp-block-paragraph">Time: 2026. 11. 11. (Wed) 09:00 ~ 10:30</p>
+
+
+
+<p class="wp-block-paragraph">Zoom: https://snu-ac-kr.zoom.us/j/2507466555 <br></p>
+
+
+<div class="wp-block-image">
+<figure class="aligncenter size-large"><img decoding="async" width="724" height="1024" src="https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-724x1024.jpg" alt="" class="wp-image-18908" srcset="https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-724x1024.jpg 724w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-212x300.jpg 212w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-767x1085.jpg 767w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1086x1536.jpg 1086w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-1448x2048.jpg 1448w, https://gsds.snu.ac.kr/wp-content/uploads/2026/11/1-scaled.jpg 1811w" sizes="(max-width: 724px) 100vw, 724px" /></figure>
+</div>]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/lg-%ec%9d%b4%eb%ac%b8%ed%83%9c-%eb%b0%95%ec%82%ac-self-improving-ai-agents-and-domain-scaling-11%ec%9b%94-11%ec%9d%bc%ec%88%98/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>2026학년도 2학기 「강의 중간 수강소감 조사」실시 계획 알림(연장)</title>
+		<link>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-2%ed%95%99%ea%b8%b0%e3%80%8c%ea%b0%95%ec%9d%98-%ec%a4%91%ea%b0%84-%ec%88%98%ea%b0%95%ec%86%8c%ea%b0%90-%ec%a1%b0%ec%82%ac%e3%80%8d%ec%8b%a4%ec%8b%9c-%ea%b3%84%ed%9a%8d/</link>
+					<comments>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-2%ed%95%99%ea%b8%b0%e3%80%8c%ea%b0%95%ec%9d%98-%ec%a4%91%ea%b0%84-%ec%88%98%ea%b0%95%ec%86%8c%ea%b0%90-%ec%a1%b0%ec%82%ac%e3%80%8d%ec%8b%a4%ec%8b%9c-%ea%b3%84%ed%9a%8d/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Thu, 29 Oct 2026 00:00:46 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18895</guid>
+
+					<description><![CDATA[2026학년도 2학기 「강의 중간 수강소감 조사」를 아래와 같이 실시하여 강의개선에 활용하고자 하니 많은 참여 부탁드립니다.    1. 조사기간: 2026. 10. 29.(목) ~ 11. 12.(목)   2. 방   법: 포털 마이스누-기본정보-수업/성적-성적-강의평가   3. 대상교과목: 학부 및 대학원 개설 강좌 전체(대학원‘논문연구’교과목 제외)   4. 평가문항: 자유서술식 4개 문항(비대면 수업 관련 2개 문항은 해당할 경우 작성)     ○ 이 강의에서 특별히 좋거나 인상 깊은 점을 적어 주십시오.     ○ [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">2026학년도 2학기 「강의 중간 수강소감 조사」를 아래와 같이 실시하여 강의개선에 활용하고자 하니 많은 참여 부탁드립니다.</p>
+
+
+
+<p class="wp-block-paragraph">   1. 조사기간: <strong>2026. 10. 29.(목) ~ 11. 12.(목)</strong><br>   2. 방   법: 포털 마이스누-기본정보-수업/성적-성적-강의평가<br>   3. 대상교과목: 학부 및 대학원 개설 강좌 전체(대학원‘논문연구’교과목 제외)<br>   4. 평가문항: 자유서술식 4개 문항(비대면 수업 관련 2개 문항은 해당할 경우 작성)<br>     ○ 이 강의에서 특별히 좋거나 인상 깊은 점을 적어 주십시오.<br>     ○ 이 강의에서 개선할 점이 있다면 적어 주십시오.<br>     ○ 비대면 수업 방법(실시간화상수업, 강의동영상, 문서, 과제 등)이 교과목 특성에 적합하였는지 적어 주십시오.<br>      ○ 비대면 수업에 대한 전반적인 만족도와 개선할 점을 적어 주십시오.</p>
+
+
+
+<p class="wp-block-paragraph"></p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-2%ed%95%99%ea%b8%b0%e3%80%8c%ea%b0%95%ec%9d%98-%ec%a4%91%ea%b0%84-%ec%88%98%ea%b0%95%ec%86%8c%ea%b0%90-%ec%a1%b0%ec%82%ac%e3%80%8d%ec%8b%a4%ec%8b%9c-%ea%b3%84%ed%9a%8d/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>2026학년도 동계 계절학기 국내 타 대학 교류수학 신청 안내</title>
+		<link>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ed%95%99%ea%b8%b0-%ea%b5%ad%eb%82%b4-%ed%83%80-%eb%8c%80%ed%95%99-%ea%b5%90%eb%a5%98%ec%88%98%ed%95%99-%ec%8b%a0%ec%b2%ad/</link>
+					<comments>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ed%95%99%ea%b8%b0-%ea%b5%ad%eb%82%b4-%ed%83%80-%eb%8c%80%ed%95%99-%ea%b5%90%eb%a5%98%ec%88%98%ed%95%99-%ec%8b%a0%ec%b2%ad/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Sat, 24 Oct 2026 04:58:53 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18882</guid>
+
+					<description><![CDATA[2026학년도 동계 계절학기 국내 타 대학과의 교류수학에 관심 있는 학생은 마이스누 포털을 통해 신청한 후, 행정실 담당자 메일(shinehsy@snu.ac.kr)로 해당 내용을 전달하여 주시기 바랍니다.]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">2026학년도 동계 계절학기 국내 타 대학과의 교류수학에 관심 있는 학생은 마이스누 포털을 통해 신청한 후, 행정실 담당자 메일(shinehsy@snu.ac.kr)로 해당 내용을 전달하여 주시기 바랍니다.</p>
+
+
+
+<ol class="wp-block-list">
+<li><strong>신청가능 학점</strong>: 본교 신청학점을 포함하여 <strong>9학점 이내</strong></li>
+
+
+
+<li><strong>교류대학별 교류수학 일정 확인<br></strong>· 서울대학교 포털(mySNU) → 정보광장 → 게시판 → 학생공지 게시판<br>· 교류대학별 게시글에 첨부된 학점교류 신청 양식 파일 등 다운로드 받아 작성<br>※ 교류대학별로 모집 일정이 상이하므로, 교류대학별 학점교류 일정은 학생 본인이 학생공지 게시판 지속적으로 확인 요망</li>
+
+
+
+<li><strong>국내 타대학 교류수학 전산 신청<br></strong>· 서울대학교 포털(mySNU) → 학사정보 → 대외교류 → 국내교환학생 → 국내타교수학신청</li>
+
+
+
+<li><strong>수학변경 및 수학취소<br></strong>· 교류수학 과목변경 또는 취소를 희망할 경우, 반드시 전산 신청 등의 절차를 진행하여야 하며, 세부 절차는 첨부파일 참고</li>
+</ol>
+
+
+
+<p class="wp-block-paragraph"></p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ed%95%99%ea%b8%b0-%ea%b5%ad%eb%82%b4-%ed%83%80-%eb%8c%80%ed%95%99-%ea%b5%90%eb%a5%98%ec%88%98%ed%95%99-%ec%8b%a0%ec%b2%ad/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>Microsoft AI 황민하 박사, Agentic AI: Define-Design-Build, 10월 28일(수)</title>
+		<link>https://gsds.snu.ac.kr/microsoft-ai-%ed%99%a9%eb%af%bc%ed%95%98-%eb%b0%95%ec%82%ac-agentic-ai-define-design-build-10%ec%9b%94-28%ec%9d%bc%ec%88%98/</link>
+					<comments>https://gsds.snu.ac.kr/microsoft-ai-%ed%99%a9%eb%af%bc%ed%95%98-%eb%b0%95%ec%82%ac-agentic-ai-define-design-build-10%ec%9b%94-28%ec%9d%bc%ec%88%98/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 08:18:50 +0000</pubDate>
+				<category><![CDATA[Uncategorized]]></category>
+		<category><![CDATA[세미나]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18878</guid>
+
+					<description><![CDATA[이번 주 데이터사이언스 세미나 연사는 Microsoft AI의 Principal Applied Scientist인 황민하 박사입니다. 황 박사는 이번 강연에서 생성형 AI가 단순한 질의응답을 넘어 실제 업무를 수행하는 에이전트로 발전하는 흐름을 소개하고, 아이디어를 신뢰할 수 있는 AI 에이전트로 구현하기 위한 실용적인 방법론인 Define-Design-Build를 설명합니다 황 박사는 UCLA에서 마케팅 사이언스 박사 학위를, MIT에서 계산재료과학 및 공학 박사 학위를 취득했습니다. McGill [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">이번 주 데이터사이언스 세미나 연사는 Microsoft AI의 Principal Applied Scientist인 황민하 박사입니다. 황 박사는 이번 강연에서 생성형 AI가 단순한 질의응답을 넘어 실제 업무를 수행하는 에이전트로 발전하는 흐름을 소개하고, 아이디어를 신뢰할 수 있는 AI 에이전트로 구현하기 위한 실용적인 방법론인 Define-Design-Build를 설명합니다</p>
+
+
+
+<p class="wp-block-paragraph">황 박사는 UCLA에서 마케팅 사이언스 박사 학위를, MIT에서 계산재료과학 및 공학 박사 학위를 취득했습니다. McGill University에서 마케팅 조교수로 재직한 후 McKinsey &amp; Company에서 약 11년간 경영 컨설팅 및 마케팅 데이터 사이언스 분야의 전문가로 활동했습니다. 현재는 미국 마운틴뷰의 Microsoft AI에서 에이전틱 AI, 머신러닝, 자연어처리, 합성 데이터 및 AI 에이전트 평가 등에 관한 연구를 수행하고 있습니다.</p>
+
+
+
+<p class="wp-block-paragraph">Title: Agentic AI: Define-Design-Build</p>
+
+
+
+<p class="wp-block-paragraph">Time: 2026. 10. 28. (Wed) 09:00 ~ 10:30</p>
+
+
+
+<p class="wp-block-paragraph">Zoom: <a href="https://snu-ac-kr.zoom.us/j/2507466555">https://snu-ac-kr.zoom.us/j/2507466555</a></p>
+
+
+<div class="wp-block-image">
+<figure class="aligncenter size-large"><img decoding="async" width="724" height="1024" src="https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-724x1024.jpg" alt="" class="wp-image-18879" srcset="https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-724x1024.jpg 724w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-212x300.jpg 212w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-767x1085.jpg 767w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-1086x1536.jpg 1086w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-1448x2048.jpg 1448w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/1-2-scaled.jpg 1811w" sizes="(max-width: 724px) 100vw, 724px" /></figure>
+</div>]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/microsoft-ai-%ed%99%a9%eb%af%bc%ed%95%98-%eb%b0%95%ec%82%ac-agentic-ai-define-design-build-10%ec%9b%94-28%ec%9d%bc%ec%88%98/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>[BK21xERC 세미나] UIUC Dong Wang 교수, From Social Sensing to Social Intelligence: Building AI that Understands Society, 11월 3일 (화)</title>
+		<link>https://gsds.snu.ac.kr/bk21xerc-%ec%84%b8%eb%af%b8%eb%82%98-uiuc-dong-wang-%ea%b5%90%ec%88%98-from-social-sensing-to-social-intelligence-building-ai-that-understands-society-11%ec%9b%94-3%ec%9d%bc-%ed%99%94/</link>
+					<comments>https://gsds.snu.ac.kr/bk21xerc-%ec%84%b8%eb%af%b8%eb%82%98-uiuc-dong-wang-%ea%b5%90%ec%88%98-from-social-sensing-to-social-intelligence-building-ai-that-understands-society-11%ec%9b%94-3%ec%9d%bc-%ed%99%94/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 07:46:45 +0000</pubDate>
+				<category><![CDATA[세미나]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18871</guid>
+
+					<description><![CDATA[일시: 2026년 11월 3일 화요일 오전 10시 30분장소: 서울대학교 43동 411호연사: Prof. Dong Wang (Associate Dean for Research), School of Information Sciences, University of Illinois Urbana-Champaign]]></description>
+										<content:encoded><![CDATA[<div class="wp-block-image">
+<figure class="aligncenter size-large"><img loading="lazy" decoding="async" width="768" height="1024" src="https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-768x1024-1.jpg" alt="" class="wp-image-18872" srcset="https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-768x1024-1.jpg 768w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-225x300.jpg 225w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-1152x1536.jpg 1152w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-1536x2048.jpg 1536w, https://gsds.snu.ac.kr/wp-content/uploads/2026/10/BK21_ERC_Dong_Wang_2026-11-03_v3-scaled.jpg 1920w" sizes="auto, (max-width: 768px) 100vw, 768px" /></figure>
+</div>
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<p class="wp-block-paragraph">일시: 2026년 11월 3일 화요일 오전 10시 30분<br>장소: 서울대학교 43동 411호<br>연사: Prof. Dong Wang (Associate Dean for Research), School of Information Sciences, University of Illinois Urbana-Champaign</p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/bk21xerc-%ec%84%b8%eb%af%b8%eb%82%98-uiuc-dong-wang-%ea%b5%90%ec%88%98-from-social-sensing-to-social-intelligence-building-ai-that-understands-society-11%ec%9b%94-3%ec%9d%bc-%ed%99%94/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>&#060;장학&gt; 2026년 2학기 SNU Global EDGE Fellowship 프로그램 장학생 모집 안내2026년 2학기 SNU Global EDGE Fellowship 프로그램 장학생 모집 안내(대상확대)</title>
+		<link>https://gsds.snu.ac.kr/%ec%9e%a5%ed%95%99-2026%eb%85%84-2%ed%95%99%ea%b8%b0-snu-global-edge-fellowship-%ed%94%84%eb%a1%9c%ea%b7%b8%eb%9e%a8-%ec%9e%a5%ed%95%99%ec%83%9d-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b42026%eb%85%84/</link>
+					<comments>https://gsds.snu.ac.kr/%ec%9e%a5%ed%95%99-2026%eb%85%84-2%ed%95%99%ea%b8%b0-snu-global-edge-fellowship-%ed%94%84%eb%a1%9c%ea%b7%b8%eb%9e%a8-%ec%9e%a5%ed%95%99%ec%83%9d-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b42026%eb%85%84/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Wed, 21 Oct 2026 08:58:18 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18863</guid>
+
+					<description><![CDATA[우리 대학 4단계 BK21 대학원혁신사업의 일환으로, 다양한 국가의 우수 인재를 양성하여 우리 대학의 우수한 연구인력풀을 확보하고 신규 유학 수요를 발굴하고자, SNU Global EDGE Fellowship 프로그램 장학생을 다음과 같이 모집하니, 관심 있는 학생은 지원하시길 바랍니다. 가. 지원자격 (동시 충족)&#160;-2026학년도 2학기 본교 대학원 정규과정 재학생(석사과정 포함)(휴학생 지원불가)&#160;&#160;※ 2027학년도 1학기 수료 예정자 제외&#160;&#8211; 4단계 BK21사업 선정 교육연구단(팀)이 설립된 [&#8230;]]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">우리 대학 4단계 BK21 대학원혁신사업의 일환으로, 다양한 국가의 우수 인재를 양성하여 우리 대학의 우수한 연구인력풀을 확보하고 신규 유학 수요를 발굴하고자, SNU Global EDGE Fellowship 프로그램 장학생을 다음과 같이 모집하니, 관심 있는 학생은 지원하시길 바랍니다.</p>
+
+
+
+<p class="wp-block-paragraph"><strong>가. 지원자격 (동시 충족)</strong><br>&nbsp;-2026학년도 2학기 본교 대학원 정규과정 재학생<strong>(석사과정 포함)</strong>(휴학생 지원불가)<br>&nbsp;&nbsp;※ 2027학년도 1학기 수료 예정자 제외<br>&nbsp;&#8211; 4단계 BK21사업 선정 교육연구단(팀)이 설립된 학과(부) 소속 외국인 학생<br>&nbsp;&#8211; 2026년 2학기 기준 4단계 BK21사업 참여 외국인 대학원생 중 연구단 장학금 미수혜 대학원생</p>
+
+
+
+<p class="wp-block-paragraph"><strong>나. 지원내용: 등록금 전액 및 생활비 월 180만원 지급 (타 장학금 중복수혜* 불가)</strong><br>&nbsp;&nbsp;&nbsp;*&nbsp; BK21사업 연구장학금, 등록금 면제성 장학금 등 중복수혜 불가<br>&nbsp;&nbsp;※ 2026년 2학기 선발의 경우 11월에 이루어짐에 따라 선발학생이 기납부한 등록금 환불처리 예정, 생활비 9월분부터 소급 지급</p>
+
+
+
+<p class="wp-block-paragraph"><strong>다. 장학금 수혜 기간: 27학년도 1학기까지(수혜기간동안 BK21사업 참여대학원생 자격을 유지해야 함)</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;※ 수혜기간동안 BK21사업 참여대학원생 자격을 유지해야 함<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;※ 해당사업은 27년도 1학기까지 진행됨에 따라, 27학년도 1학기까지만 장학금 지급<br><strong>라. 선발인원: 5명</strong></p>
+
+
+
+<p class="wp-block-paragraph"><strong>마. 지원방법</strong><br>&nbsp;&nbsp;&#8211; 구비서류 데이터사이언스대학원 행정실로 제출<strong>[기한. 10. 29.(목) 14시까지]</strong></p>
+
+
+
+<p class="wp-block-paragraph"><strong>바. 제출서류 및 기타 유의사항: 붙임 참조</strong></p>
+
+
+
+<p class="wp-block-paragraph"></p>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/%ec%9e%a5%ed%95%99-2026%eb%85%84-2%ed%95%99%ea%b8%b0-snu-global-edge-fellowship-%ed%94%84%eb%a1%9c%ea%b7%b8%eb%9e%a8-%ec%9e%a5%ed%95%99%ec%83%9d-%eb%aa%a8%ec%a7%91-%ec%95%88%eb%82%b42026%eb%85%84/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+		<item>
+		<title>2026학년도 동계 계절수업 수강신청 안내</title>
+		<link>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ec%88%98%ec%97%85-%ec%88%98%ea%b0%95%ec%8b%a0%ec%b2%ad-%ec%95%88%eb%82%b4/</link>
+					<comments>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ec%88%98%ec%97%85-%ec%88%98%ea%b0%95%ec%8b%a0%ec%b2%ad-%ec%95%88%eb%82%b4/#respond</comments>
+		
+		<dc:creator><![CDATA[담당자]]></dc:creator>
+		<pubDate>Tue, 20 Oct 2026 23:11:20 +0000</pubDate>
+				<category><![CDATA[공지사항]]></category>
+		<guid isPermaLink="false">https://gsds.snu.ac.kr/?p=18849</guid>
+
+					<description><![CDATA[2026학년도 동계 계절수업 수강신청 일정을 안내 드리오니, 확인하여 주시기 바랍니다(GSDS 개설 과목은 없음).]]></description>
+										<content:encoded><![CDATA[
+<p class="wp-block-paragraph">2026학년도 동계 계절수업 수강신청 일정을 안내 드리오니, 확인하여 주시기 바랍니다(GSDS 개설 과목은 없음).</p>
+
+
+
+<ol class="wp-block-list">
+<li>수강신청 일정<br>· 예비수강신청: 2026. 10. 20.(화) ~ 10. 23.(금)<br>· 수강신청: 2026. 10. 27.(화) ~ 11. 3.(화) *토,일요일 제외<br>· 수강신청 변경: 2026. 11. 11.(수) ~ 11. 13.(금)<br>· 수업료 고지서 출력 및 납부:<br> (1차) 2026. 11. 18.(수) ~ 11. 23.(월)<br> (최종) 2026. 11. 26.(목) ~ 11. 27.(금)<br>· 수강취소: 2026. 12. 11.(금) ~ 1. 7.(목)<br>※ 취소일에 따른 환불액이 상이하며 관련 세부 내용은 첨부파일 참고</li>
+</ol>
+
+
+
+<ol start="2" class="wp-block-list">
+<li>수업 기간: 2026. 12. 22.(화) ~ 2027. 1. 25.(월)<br></li>
+
+
+
+<li>수강신청 가능학점: 최대 9학점(국내 타 대학 학점교류 포함)</li>
+</ol>
+]]></content:encoded>
+					
+					<wfw:commentRss>https://gsds.snu.ac.kr/2026%ed%95%99%eb%85%84%eb%8f%84-%eb%8f%99%ea%b3%84-%ea%b3%84%ec%a0%88%ec%88%98%ec%97%85-%ec%88%98%ea%b0%95%ec%8b%a0%ec%b2%ad-%ec%95%88%eb%82%b4/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+	</channel>
+</rss>
