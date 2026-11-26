@@ -25,7 +25,7 @@ export function cleanKeywords(input: string[]): string[] {
   const seen = new Set<string>()
   const out: string[] = []
   for (const raw of input) {
-    // 한 키워드는 60자까지(GitHub 검색 질의는 256자 제한)
+    // 한 키워드는 60자까지(검색 질의가 지나치게 길어지지 않게)
     const k = [...raw.replace(/[",|]/g, '').replace(/\s+/g, ' ').trim()]
       .slice(0, 60)
       .join('')
