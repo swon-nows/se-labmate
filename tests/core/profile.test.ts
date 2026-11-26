@@ -3,6 +3,7 @@ import { boardId } from '../../src/main/core/boards/index'
 import {
   applyProfile,
   isSaveInput,
+  needsCollect,
   validateBoard,
   validateProfile
 } from '../../src/main/core/profile'
@@ -130,6 +131,54 @@ describe('applyProfile', () => {
       throw new Error('no keychain')
     }
     expect(() => applyProfile(st(), { ...base, openAlexKey: 'k' }, fail, NOW)).toThrow()
+  })
+})
+
+describe('needsCollect', () => {
+  const before = st({ profile, settings, openAlexKeyEnc: 'k1' })
+  const after = (p: {
+    profile?: Partial<Profile>
+    settings?: Partial<Settings>
+    openAlexKeyEnc?: string | null
+  }): ReturnType<typeof st> => ({
+    ...before,
+    profile: { ...profile, ...p.profile },
+    settings: { ...settings, ...p.settings },
+    openAlexKeyEnc: p.openAlexKeyEnc === undefined ? 'k1' : p.openAlexKeyEnc
+  })
+
+  test('처음 만든 프로필이면 수집한다', () => {
+    expect(needsCollect(st(), after({}))).toBe(true)
+  })
+  test('바뀐 것이 없으면 수집하지 않는다', () => {
+    expect(needsCollect(before, after({}))).toBe(false)
+    expect(needsCollect(before, after({ profile: { keywordsEn: ['xai'] } }))).toBe(false)
+  })
+  test('알림 시각이나 로그인 시 열기만 바뀌면 수집하지 않는다', () => {
+    expect(needsCollect(before, after({ settings: { notifyTime: '18:30' } }))).toBe(false)
+    expect(needsCollect(before, after({ settings: { openAtLogin: false } }))).toBe(false)
+  })
+  test('영문·한글 키워드가 바뀌면 수집한다: 같은 낱말이 같은 순서면 같은 것', () => {
+    expect(needsCollect(before, after({ profile: { keywordsEn: ['xai', 'shap'] } }))).toBe(true)
+    expect(needsCollect(before, after({ profile: { keywordsEn: [] } }))).toBe(true)
+    expect(needsCollect(before, after({ profile: { keywordsKo: ['인공지능'] } }))).toBe(true)
+    const two = st({ profile: { ...profile, keywordsEn: ['a', 'b'] }, settings })
+    expect(needsCollect(two, { ...two, profile: { ...profile, keywordsEn: ['b', 'a'] } })).toBe(
+      true
+    )
+  })
+  test('국가, 카테고리, 저장소 개수, OpenAlex 키가 바뀌면 수집한다', () => {
+    expect(needsCollect(before, after({ profile: { country: 'OTHER' } }))).toBe(true)
+    for (const c of CATEGORIES)
+      expect(
+        needsCollect(
+          before,
+          after({ settings: { enabled: { ...settings.enabled, [c]: !settings.enabled[c] } } })
+        )
+      ).toBe(true)
+    expect(needsCollect(before, after({ settings: { repoCount: 5 } }))).toBe(true)
+    expect(needsCollect(before, after({ openAlexKeyEnc: 'k2' }))).toBe(true)
+    expect(needsCollect(before, after({ openAlexKeyEnc: null }))).toBe(true)
   })
 })
 

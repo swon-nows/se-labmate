@@ -82,6 +82,23 @@ export function applyProfile(
   }
 }
 
+const sameList = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((k, i) => k === b[i])
+
+// 수집 결과를 바꾸는 값이 달라졌는가. 알림 시각과 로그인 시 열기는 수집과 무관하다.
+export function needsCollect(before: AppState, next: AppState): boolean {
+  const { profile: p, settings: s } = before
+  if (p === null || next.profile === null) return true
+  return (
+    !sameList(p.keywordsEn, next.profile.keywordsEn) ||
+    !sameList(p.keywordsKo, next.profile.keywordsKo) ||
+    p.country !== next.profile.country ||
+    CATEGORIES.some((c) => s.enabled[c] !== next.settings.enabled[c]) ||
+    s.repoCount !== next.settings.repoCount ||
+    before.openAlexKeyEnc !== next.openAlexKeyEnc
+  )
+}
+
 const RESERVED_NAMES = [...FIXED_SOURCE_NAMES, ...BUILTIN_BOARDS.map((b) => b.name)]
 
 // 출처 이름은 오류 표시의 키라서 겹치면 안 된다.

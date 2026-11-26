@@ -13,7 +13,13 @@ import { readPosts } from './core/boards/index'
 import type { Post } from './core/boards/post'
 import type { FetchText } from './core/fetch-text'
 import { hasPast, hideItem, pastItems, savedItems, takeNew } from './core/feed'
-import { applyProfile, isSaveInput, validateBoard, validateProfile } from './core/profile'
+import {
+  applyProfile,
+  isSaveInput,
+  needsCollect,
+  validateBoard,
+  validateProfile
+} from './core/profile'
 import { isHttpUrl } from './core/text'
 
 export interface IpcDeps {
@@ -59,10 +65,11 @@ export function registerIpc(d: IpcDeps): void {
     if (!isSaveInput(input)) return { ok: false, errors: ['입력 형식이 올바르지 않습니다.'] }
     const v = validateProfile(input)
     if (!v.ok) return v
+    const before = d.getState()
     let next: AppState
     try {
       const valid = { profile: v.profile, settings: v.settings, openAlexKey: input.openAlexKey }
-      next = applyProfile(d.getState(), valid, encrypt, new Date().toISOString())
+      next = applyProfile(before, valid, encrypt, new Date().toISOString())
     } catch {
       return { ok: false, errors: ['이 컴퓨터에서는 키를 안전하게 저장할 수 없습니다.'] }
     }
@@ -72,7 +79,8 @@ export function registerIpc(d: IpcDeps): void {
       return { ok: false, errors: ['설정을 저장하지 못했습니다.'] }
     }
     d.setOpenAtLogin(next.settings.openAtLogin)
-    void d.collectFresh() // 수집 중이면 끝난 뒤 새 프로필로 한 번 더 돈다
+    // 수집 중이면 끝난 뒤 새 프로필로 한 번 더 돈다. 알림 시각 같은 값만 바뀌었으면 수집하지 않는다.
+    if (needsCollect(before, next)) void d.collectFresh()
     return { ok: true }
   })
 
