@@ -1,8 +1,7 @@
 import type { UpdateInfo } from '../../shared/types'
 
-export const RELEASES_API =
-  'https://api.github.com/repos/swon-nows/research-assistant/releases/latest'
-export const RELEASES_PAGE = 'https://github.com/swon-nows/research-assistant/releases/'
+export const RELEASES_API = 'https://api.github.com/repos/swon-nows/se-labmate/releases/latest'
+export const RELEASES_PAGE = 'https://github.com/swon-nows/se-labmate/releases/'
 
 const TAG = /^v?(\d{1,6})\.(\d{1,6})\.(\d{1,6})$/
 const VERSION = /^(\d{1,6})\.(\d{1,6})\.(\d{1,6})$/
