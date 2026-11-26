@@ -7,6 +7,8 @@ import {
   alphaStep,
   canvasScale,
   frameGap,
+  frameSlot,
+  msToNextSlot,
   pointCount,
   projectAll,
   speedTarget,
@@ -119,12 +121,24 @@ describe('그리기 단계', () => {
         0.78 / ALPHA_STEPS / 2 + 1e-12
       )
   })
-  it('빠를 때는 12ms, 천천히 돌 때는 30ms 간격. 캔버스는 적어도 2배', () => {
+  it('빠를 때는 12ms, 천천히 돌 때는 30ms 간격', () => {
     expect(frameGap(true)).toBe(12)
     expect(frameGap(false)).toBe(30)
+  })
+  it('캔버스는 정확히 2배 이상: 1배·1.25배·1.5배 화면은 2배를 곱하고, 2배 이상은 그대로', () => {
     expect(canvasScale(1)).toBe(2)
-    expect(canvasScale(1.25)).toBe(2)
+    expect(canvasScale(1.25)).toBe(2.5)
+    expect(canvasScale(1.5)).toBe(3)
+    expect(canvasScale(2)).toBe(2)
     expect(canvasScale(3)).toBe(3)
     expect(canvasScale(0)).toBe(2)
+    expect(canvasScale(NaN)).toBe(2)
+  })
+  it('프레임 칸은 시각을 간격으로 나눈 몫, 다음 칸까지 남은 시간', () => {
+    expect(frameSlot(0, 30)).toBe(0)
+    expect(frameSlot(29.9, 30)).toBe(0)
+    expect(frameSlot(30, 30)).toBe(1)
+    expect(msToNextSlot(0, 30)).toBe(30)
+    expect(msToNextSlot(40, 30)).toBe(20)
   })
 })

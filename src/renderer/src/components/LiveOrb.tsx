@@ -7,6 +7,8 @@ import {
   canvasScale,
   dotRadius,
   frameGap,
+  frameSlot,
+  msToNextSlot,
   pointCount,
   projectAll,
   speedTarget,
@@ -59,7 +61,9 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     const m = { rot: 0, speed: 0.35, tx: 0, ty: 0, burst: 0, wasBusy: input.current.busy }
     let color = getComputedStyle(canvas).color
     let raf = 0
+    let timer = 0
     let last = 0
+    let lastSlot = -1
     let onScreen = true
 
     const draw = (time: number): void => {
@@ -99,12 +103,15 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
       raf = 0
       if (!moving()) return update() // 멈춰야 하면 (동작 줄이기라면 멈춘 한 장을 그리고) 고리를 끝낸다
       const i = input.current
-      // 화면 주사율만큼 다 그리지 않는다. 간격이 안 됐으면 이번 프레임은 건너뛴다.
+      // 화면 주사율만큼 다 그리지 않는다. 같은 칸이면 이번 프레임은 건너뛴다(같은 프레임의 콜백은 now가 같아 모든 오브가 같은 프레임에 그린다).
       const lively = i.busy || i.hover || i.pointer || m.wasBusy || m.burst > 0.01
-      if (last && now - last < frameGap(lively)) {
+      const gap = frameGap(lively)
+      const slot = frameSlot(now, gap)
+      if (slot === lastSlot) {
         raf = requestAnimationFrame(tick)
         return
       }
+      lastSlot = slot
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0
       last = now
       if (m.wasBusy && !i.busy) m.burst = 1 // 수집이 끝나면 한 번 튄다
@@ -115,7 +122,18 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
       m.ty = approach(m.ty, i.pointer ? i.py : 0, 6, dt)
       m.burst *= Math.pow(BURST_DECAY, dt)
       draw(now / 1000)
-      raf = requestAnimationFrame(tick)
+      if (lively) {
+        raf = requestAnimationFrame(tick)
+        return
+      }
+      // 천천히 돌 때는 다음 칸 직전까지 쉰다(수직동기마다 깨어나지 않게).
+      timer = window.setTimeout(
+        () => {
+          timer = 0
+          raf = requestAnimationFrame(tick)
+        },
+        Math.max(0, msToNextSlot(now, gap) - 4)
+      )
     }
 
     // 멈춘 한 장: 튐과 시간은 0으로 둔다(튀던 중에 멈춰도 커진 채 남지 않게).
@@ -127,15 +145,18 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     // 움직여도 되면 고리를 돌리고, 동작 줄이기면 멈춘 한 장을 그린다.
     const update = (): void => {
       if (moving()) {
-        if (!raf) {
+        if (raf === 0 && timer === 0) {
           last = 0
+          lastSlot = -1
           m.wasBusy = input.current.busy // 멈춘 동안 끝난 수집으로 다시 돌 때 늦게 튀지 않게 한다
           raf = requestAnimationFrame(tick)
         }
         return
       }
       cancelAnimationFrame(raf)
+      clearTimeout(timer)
       raf = 0
+      timer = 0
       if (reduce.matches) drawStill()
     }
     const onScheme = (): void => {
@@ -157,6 +178,7 @@ function Orb({ size, busy, hover = false, onActivate, label }: Props): React.JSX
     update()
     return () => {
       cancelAnimationFrame(raf)
+      clearTimeout(timer)
       redrawStill.current = null
       seen.disconnect()
       reduce.removeEventListener('change', update)

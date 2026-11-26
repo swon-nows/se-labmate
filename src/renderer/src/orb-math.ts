@@ -76,5 +76,14 @@ export const stepAlpha = (step: number): number => 0.22 + (0.78 * (step + 0.5)) 
 // 이전 그림과의 최소 간격(ms). 움직임이 빠를 때는 초당 60장 안팎(144Hz 화면에서도), 천천히 돌 때는 30장이면 충분하다.
 export const frameGap = (lively: boolean): number => (lively ? 12 : 30)
 
-// 캔버스 배율. 1배 화면에서는 1px 안팎의 점이 반 픽셀씩 움직이며 깜빡이므로 적어도 2배로 그려 줄여 보인다.
-export const canvasScale = (devicePixelRatio: number): number => Math.max(2, devicePixelRatio || 1)
+// 시각을 간격으로 나눈 칸. 한 프레임의 requestAnimationFrame 콜백은 now가 같아, 이 칸으로 거르면 화면의 모든 오브가 같은 프레임에 그린다.
+export const frameSlot = (now: number, gap: number): number => Math.floor(now / gap)
+export const msToNextSlot = (now: number, gap: number): number =>
+  (frameSlot(now, gap) + 1) * gap - now
+
+// 캔버스 배율. 1배 화면에서는 1px 안팎의 점이 반 픽셀씩 움직이며 깜빡이므로 2배 이상으로 그려 줄여 보인다.
+// 125%·150% 배율에서 2배가 아닌 비율로 줄이면 점이 프레임마다 다르게 보인다.
+export const canvasScale = (devicePixelRatio: number): number => {
+  const d = devicePixelRatio || 1
+  return d >= 2 ? d : 2 * d
+}
