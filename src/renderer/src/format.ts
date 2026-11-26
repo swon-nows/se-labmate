@@ -113,3 +113,30 @@ export function paperChips(
   item.keywords?.forEach((k) => add(k, false))
   return chips.slice(0, 6)
 }
+
+const SUB = '₀₁₂₃₄₅₆₇₈₉₊₋'
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻'
+const script = (text: string, map: string): string | null => {
+  let out = ''
+  for (const ch of text) {
+    const k = '0123456789+-'.indexOf(ch)
+    if (k < 0) return null
+    out += map[k]
+  }
+  return out
+}
+
+// 논문 제목·초록에 섞여 오는 LaTeX 수식에서 숫자 첨자($_{12}$, $^{3+}$, $x^2$)를 글자로 바꾸고,
+// 명령이 없는 짧은 수식($α$)은 $만 뗀다. 금액처럼 보이는 $(숫자로 시작, 띄어쓰기)는 건드리지 않는다.
+// shortcut: 그 밖의 수식(\alpha, T_c 등)은 원문 그대로 둔다. 자주 보이면 수식 표시 라이브러리를 쓴다.
+export function plainMath(text: string): string {
+  return text.replace(/\$([^$]{1,80})\$/g, (whole, body: string) => {
+    const out = body.replace(
+      /([_^])(?:\{([^{}]*)\}|(.))/g,
+      (m: string, op: string, braced?: string, single?: string) =>
+        script(braced ?? single ?? '', op === '_' ? SUB : SUP) ?? m
+    )
+    if (/[\\_^{}]/.test(out)) return whole
+    return out === body && /^\d|\s/.test(body) ? whole : out
+  })
+}

@@ -9,6 +9,7 @@ import {
   keywordList,
   longKeywords,
   paperChips,
+  plainMath,
   relativeDate,
   replaceToken,
   toggleKeyword
@@ -288,5 +289,22 @@ describe('feedCategories', () => {
   })
   it('둘 다 비면 빈 목록', () => {
     expect(feedCategories([], [])).toEqual([])
+  })
+})
+
+describe('plainMath', () => {
+  it('숫자 아래·위 첨자를 글자로 바꾼다', () => {
+    expect(plainMath('coupling in BaFe$_{12}$O$_{19}$')).toBe('coupling in BaFe₁₂O₁₉')
+    expect(plainMath('Fe$^{3+}$ and $x^2$')).toBe('Fe³⁺ and x²')
+    expect(plainMath('Defective $α$-In$_2$Se$_3$ on $D(4s,q)$')).toBe(
+      'Defective α-In₂Se₃ on D(4s,q)'
+    )
+  })
+
+  it('바꿀 수 없는 수식과 수식이 아닌 $는 그대로 둔다', () => {
+    expect(plainMath('$T_c$ in $\\mathrm{YBCO}$')).toBe('$T_c$ in $\\mathrm{YBCO}$')
+    expect(plainMath('costs $5 and $10')).toBe('costs $5 and $10')
+    expect(plainMath('$5-$10 billion')).toBe('$5-$10 billion')
+    expect(plainMath('no math')).toBe('no math')
   })
 })

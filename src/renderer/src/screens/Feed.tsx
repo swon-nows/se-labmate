@@ -242,6 +242,8 @@ export function Feed({
       const failed = !status.running && allFailed(sources, status.errors)
       // 한 번도 아무것도 모으지 못한 채 수집이 끝났다: 키워드가 문제일 가능성이 크다.
       const noneFound = !status.running && !failed && firstRun === true && session.length === 0
+      // 새 소식 탭은 아직 보지 않은 것만 보인다. 비어 있을 때 이미 본 소식이 어디 있는지 알려 준다.
+      const caughtUp = !status.running && !failed && !noneFound
       return (
         <div className="empty">
           <LiveOrb
@@ -261,6 +263,22 @@ export function Feed({
                 ? '첫 소식을 모으는 중입니다'
                 : '새 소식을 확인하는 중입니다'}
           </p>
+          {caughtUp && (
+            <>
+              <p className="hint">이미 본 소식은 Past 탭에 있습니다.</p>
+              <button
+                type="button"
+                className="btn btn-small"
+                onClick={() => {
+                  // 버튼이 사라져도 키보드 위치를 잃지 않게 Past 탭으로 옮긴다.
+                  flushSync(() => setTab('past'))
+                  document.getElementById(`${ids}-past`)?.focus()
+                }}
+              >
+                Open Past
+              </button>
+            </>
+          )}
           {noneFound && (
             <>
               <p className="hint">

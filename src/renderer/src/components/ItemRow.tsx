@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { Item } from '../../../shared/types'
-import { formatStars, isoDate, paperChips, relativeDate } from '../format'
+import { formatStars, isoDate, paperChips, plainMath, relativeDate } from '../format'
 
 interface Props {
   item: Item
@@ -31,6 +31,10 @@ export function ItemRow(p: Props): React.JSX.Element {
   const venue = item.venue || (item.source === 'arXiv' ? 'Preprint' : '')
   const published = isoDate(item.date)
   const chips = isPaper ? paperChips(item) : []
+  // 수식 표기는 논문에만 온다. 뉴스·저장소의 $(금액 등)는 건드리지 않는다.
+  const [title, summary] = isPaper
+    ? [plainMath(item.title), plainMath(item.summary)]
+    : [item.title, item.summary]
 
   const toggleSave = (): void => {
     if (busy) return
@@ -64,11 +68,11 @@ export function ItemRow(p: Props): React.JSX.Element {
         className="item-title"
         onClick={() => void window.api.openItem(item.id).catch(() => undefined)}
       >
-        <span className="item-title-text">{item.title}</span>
+        <span className="item-title-text">{title}</span>
       </button>
-      {item.summary && (
-        <p className="item-summary" title={isPaper ? item.summary : undefined}>
-          {item.summary}
+      {summary && (
+        <p className="item-summary" title={isPaper ? summary : undefined}>
+          {summary}
         </p>
       )}
       {isPaper && (
