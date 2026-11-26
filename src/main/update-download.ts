@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
-import { open, rename, rm } from 'node:fs/promises'
+import { open, readdir, rename, rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import type { UpdateAsset } from './core/update'
 
 export type DownloadFetch = (
@@ -49,5 +50,21 @@ export async function downloadFile(
   } catch (e) {
     await rm(part, { force: true })
     throw e
+  }
+}
+
+const OLD_INSTALLER = /^se-labmate-\d+\.\d+\.\d+-(arm64|x64)\.(dmg|exe)(\.part)?$/
+
+// 지난 업데이트에서 받은 설치 파일을 지운다. 거부하지 않는다: 쓰는 중이거나 이미 없는 파일, 없는 폴더는 건너뛴다.
+export async function removeOldInstallers(dir: string): Promise<void> {
+  try {
+    const entries = await readdir(dir, { withFileTypes: true })
+    await Promise.all(
+      entries
+        .filter((e) => e.isFile() && OLD_INSTALLER.test(e.name))
+        .map((e) => rm(join(dir, e.name)).catch(() => undefined))
+    )
+  } catch {
+    // 폴더를 읽지 못하면 지울 것이 없다.
   }
 }

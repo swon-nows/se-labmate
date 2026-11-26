@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import type { UpdateAsset } from '../src/main/core/update'
-import { downloadFile } from '../src/main/update-download'
+import { downloadFile, removeOldInstallers } from '../src/main/update-download'
 import type { DownloadFetch } from '../src/main/update-download'
 
 // 임시 폴더는 지우지 않고 운영체제에 맡긴다.
@@ -108,4 +115,27 @@ test('요청에 User-Agent와 시간 제한 신호를 싣는다', async () => {
   expect(seen!.url).toBe(asset().url)
   expect(seen!.init.headers).toEqual({ 'User-Agent': 'research-assistant' })
   expect(seen!.init.signal).toBeInstanceOf(AbortSignal)
+})
+
+test('옛 설치 파일과 그 .part만 지우고 그 밖의 것은 건드리지 않는다', async () => {
+  const dir = tmp()
+  const gone = [
+    'se-labmate-0.2.4-arm64.dmg',
+    'se-labmate-0.2.5-x64.exe',
+    'se-labmate-0.2.5-x64.exe.part'
+  ]
+  const kept = ['se-labmate-notes.txt', 'other-0.2.4-arm64.dmg', 'se-labmate-0.2.4-arm64.dmg.bak']
+  for (const n of [...gone, ...kept]) writeFileSync(join(dir, n), 'x')
+  const folder = join(dir, 'se-labmate-9.9.9-x64.exe') // 이름이 맞아도 폴더는 지우지 않는다
+  mkdirSync(folder)
+  writeFileSync(join(folder, 'inside.txt'), 'x')
+
+  await removeOldInstallers(dir)
+
+  expect(readdirSync(dir).sort()).toEqual([...kept, 'se-labmate-9.9.9-x64.exe'].sort())
+  expect(readdirSync(folder)).toEqual(['inside.txt'])
+})
+
+test('폴더가 없어도 거부하지 않는다', async () => {
+  await expect(removeOldInstallers(join(tmp(), 'missing'))).resolves.toBeUndefined()
 })

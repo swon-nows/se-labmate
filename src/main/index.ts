@@ -17,7 +17,7 @@ import { notify } from './notify'
 import { startScheduler } from './scheduler'
 import { loadState, saveState } from './store'
 import { createTray, setTrayUnseen } from './tray'
-import { downloadFile } from './update-download'
+import { downloadFile, removeOldInstallers } from './update-download'
 
 let win: BrowserWindow | null = null
 let quitting = false
@@ -275,6 +275,7 @@ function setMenu(): void {
 }
 
 function start(corruptBackup: string | null): void {
+  void removeOldInstallers(app.getPath('temp')) // 지난 업데이트의 설치 파일
   setMenu()
   if (state.profile) setOpenAtLogin(state.settings.openAtLogin)
 
