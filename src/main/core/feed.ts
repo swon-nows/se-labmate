@@ -25,13 +25,15 @@ export function takeNew(state: AppState, now: string): { state: AppState; groups
   return { state: { ...state, items }, groups }
 }
 
+// limit은 카테고리마다 따로 센다: 화면이 카테고리 묶음이라, 한 카테고리가 많아도 다른 카테고리의 지난 소식이 밀려나지 않는다.
 export function pastItems(state: AppState, limit: number): Item[] {
+  const taken: Partial<Record<Category, number>> = {}
   return Object.values(state.items)
     .filter((i) => i.seenAt !== null && isVisible(i, state.settings))
     .sort(
       (a, b) => Date.parse(b.seenAt as string) - Date.parse(a.seenAt as string) || byDateDesc(a, b)
     )
-    .slice(0, limit)
+    .filter((i) => (taken[i.category] = (taken[i.category] ?? 0) + 1) <= limit)
 }
 
 export function savedItems(state: AppState): Item[] {

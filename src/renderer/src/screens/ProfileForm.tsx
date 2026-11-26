@@ -85,7 +85,9 @@ export function ProfileForm({
         describedBy={tooLong ? 'pf-en-hint pf-en-long' : 'pf-en-hint'}
       >
         <p id="pf-en-hint" className="hint">
-          짧은 키워드 여러 개를 쉼표로 구분합니다. 예: graph neural network, structural analysis
+          짧은 키워드 여러 개를 쉼표로 구분합니다.
+          <br />
+          e.g. graph neural network, structural analysis
         </p>
         {tooLong && (
           <p id="pf-en-long" className="hint" role="status">

@@ -41,7 +41,7 @@ export function Feed({
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
   // 이번 보기에서 takeNew가 답했는가. 답하기 전에는 "모두 확인했습니다"라고 말하지 않는다.
   const [load, setLoad] = useState<'pending' | 'done' | 'failed'>('pending')
-  const [expanded, setExpanded] = useState<Category[]>([])
+  const [expanded, setExpanded] = useState<string[]>([]) // 펼친 묶음: '<탭>:<카테고리>'
   const [shown, setShown] = useState<Category[]>(CATEGORIES)
   const [past, setPast] = useState<Item[] | null | 'failed'>(null)
   const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
@@ -164,12 +164,11 @@ export function Feed({
     )
   }
   // order: 들어오는 줄의 지연 순서. 앞 다섯 줄만 20ms씩 늦춘다.
-  const row = (i: Item, withCategory: boolean, order: number): React.JSX.Element => (
+  const row = (i: Item, order: number): React.JSX.Element => (
     <ItemRow
       key={i.id}
       item={i}
       saved={isSaved(i)}
-      withCategory={withCategory}
       order={Math.min(4, order)}
       onToggleSave={() => toggleSave(i)}
       onHide={() => hide(i.id)}
@@ -178,6 +177,45 @@ export function Feed({
 
   const noCategory = <p className="note muted">표시할 카테고리를 선택해 주십시오.</p>
   const noMatch = <p className="note muted">선택한 카테고리에 표시할 항목이 없습니다.</p>
+
+  // 세 탭 모두 카테고리 묶음으로 보인다. 묶음 안의 순서는 받은 목록의 순서 그대로다.
+  const grouped = (list: Item[]): React.ReactNode => {
+    if (visibleCats.length === 0) return noCategory
+    const groups = visibleCats
+      .map((c) => [c, list.filter((i) => i.category === c)] as const)
+      .filter(([, items]) => items.length > 0)
+    if (groups.length === 0) return noMatch
+    return groups.map(([c, items]) => {
+      const key = `${tab}:${c}`
+      const all = expanded.includes(key)
+      return (
+        <section key={key} className="feed-group">
+          <h2 className="feed-group-title">
+            {CATEGORY_LABEL[c]} <span className="feed-group-count">{items.length}</span>
+          </h2>
+          <ul className="item-list">
+            {(all ? items : items.slice(0, FIRST_ROWS)).map((i, k) =>
+              row(i, k < FIRST_ROWS ? k : k - FIRST_ROWS)
+            )}
+          </ul>
+          {!all && items.length > FIRST_ROWS && (
+            <button
+              type="button"
+              className="btn btn-small more"
+              onClick={(e) => {
+                // 버튼이 사라져도 키보드 위치를 잃지 않게 처음 펼쳐진 줄로 옮긴다.
+                const section = e.currentTarget.parentElement
+                flushSync(() => setExpanded((x) => [...x, key]))
+                section?.querySelectorAll<HTMLElement>('.item-title')[FIRST_ROWS]?.focus()
+              }}
+            >
+              {`More (${items.length - FIRST_ROWS})`}
+            </button>
+          )}
+        </section>
+      )
+    })
+  }
 
   const newItems = (): React.ReactNode => {
     if (fresh.length === 0) {
@@ -226,8 +264,9 @@ export function Feed({
           {noneFound && (
             <>
               <p className="hint">
-                키워드를 짧게 나누어 쉼표로 구분하면 더 많이 찾습니다. 예: explainable AI,
-                structural analysis
+                키워드를 짧게 나누어 쉼표로 구분하면 더 많이 찾습니다.
+                <br />
+                e.g. explainable AI, structural analysis
               </p>
               <button type="button" className="btn btn-small" onClick={onOpenSettings}>
                 Edit keywords
@@ -237,44 +276,11 @@ export function Feed({
         </div>
       )
     }
-    if (visibleCats.length === 0) return noCategory
-    const groups = visibleCats
-      .map((c) => [c, fresh.filter((i) => i.category === c)] as const)
-      .filter(([, items]) => items.length > 0)
-    if (groups.length === 0) return noMatch
-    return groups.map(([c, items]) => {
-      const all = expanded.includes(c)
-      return (
-        <section key={c} className="feed-group">
-          <h2 className="feed-group-title">
-            {CATEGORY_LABEL[c]} <span className="muted">{items.length}</span>
-          </h2>
-          <ul className="item-list">
-            {(all ? items : items.slice(0, FIRST_ROWS)).map((i, k) =>
-              row(i, false, k < FIRST_ROWS ? k : k - FIRST_ROWS)
-            )}
-          </ul>
-          {!all && items.length > FIRST_ROWS && (
-            <button
-              type="button"
-              className="btn btn-small more"
-              onClick={(e) => {
-                // 버튼이 사라져도 키보드 위치를 잃지 않게 처음 펼쳐진 줄로 옮긴다.
-                const section = e.currentTarget.parentElement
-                flushSync(() => setExpanded((x) => [...x, c]))
-                section?.querySelectorAll<HTMLElement>('.item-title')[FIRST_ROWS]?.focus()
-              }}
-            >
-              {`More (${items.length - FIRST_ROWS})`}
-            </button>
-          )}
-        </section>
-      )
-    })
+    return grouped(fresh)
   }
 
   // list는 열린 탭의 목록이다. 늘어놓을 항목은 위에서 고른 listed다.
-  const flatItems = (list: Item[] | null | 'failed', emptyText: string): React.ReactNode => {
+  const listItems = (list: Item[] | null | 'failed', emptyText: string): React.ReactNode => {
     if (list === null) return null
     if (list === 'failed')
       return (
@@ -283,10 +289,7 @@ export function Feed({
         </p>
       )
     if (listed.length === 0) return <p className="note muted">{emptyText}</p>
-    if (visibleCats.length === 0) return noCategory
-    const rows = listed.filter((i) => shown.includes(i.category))
-    if (rows.length === 0) return noMatch
-    return <ul className="item-list flat">{rows.map((i, k) => row(i, true, k))}</ul>
+    return grouped(listed)
   }
 
   return (
@@ -313,8 +316,8 @@ export function Feed({
       />
       <div role="tabpanel" aria-labelledby={`${ids}-${tab}`}>
         {tab === 'new' && newItems()}
-        {tab === 'past' && flatItems(past, '지난 소식이 없습니다.')}
-        {tab === 'saved' && flatItems(saved, '저장한 항목이 없습니다.')}
+        {tab === 'past' && listItems(past, '지난 소식이 없습니다.')}
+        {tab === 'saved' && listItems(saved, '저장한 항목이 없습니다.')}
       </div>
     </>
   )

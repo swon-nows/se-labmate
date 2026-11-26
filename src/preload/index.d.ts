@@ -14,7 +14,7 @@ export interface Api {
   getState(): Promise<PublicState>
   saveProfile(input: SaveInput): Promise<SaveResult>
   takeNew(): Promise<FeedGroup[]>
-  getPast(): Promise<Item[]> // pastItems(state, 100)
+  getPast(): Promise<Item[]> // pastItems(state, 100): 카테고리마다 100건까지
   getSaved(): Promise<Item[]>
   setSaved(id: string, saved: boolean): Promise<void>
   hide(id: string): Promise<void>

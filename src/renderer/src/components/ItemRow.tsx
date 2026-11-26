@@ -1,13 +1,11 @@
 import { useId, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { CATEGORY_LABEL } from '../../../shared/types'
 import type { Item } from '../../../shared/types'
 import { formatStars, isoDate, paperChips, relativeDate } from '../format'
 
 interface Props {
   item: Item
   saved: boolean
-  withCategory: boolean // 지난 소식·저장함처럼 카테고리 제목이 없는 목록
   order: number // 들어올 때의 지연 순서 (0~4)
   onToggleSave: () => Promise<void>
   onHide: () => void
@@ -21,8 +19,8 @@ export function ItemRow(p: Props): React.JSX.Element {
   const busy = pending || leaving
 
   const isPaper = item.category === 'paper'
-  // 논문 줄은 출처·날짜·일치한 키워드를 아래 정보 줄과 칩으로 보이므로 여기엔 카테고리 이름만 남긴다.
-  const parts = [p.withCategory ? CATEGORY_LABEL[item.category] : '']
+  // 논문 줄은 출처·날짜·일치한 키워드를 아래 정보 줄과 칩으로 보인다. 카테고리는 묶음 제목이 말한다.
+  const parts: string[] = []
   if (!isPaper) {
     parts.push(item.source, relativeDate(item.date, new Date()))
     if (item.category === 'repo' && item.stars !== undefined)

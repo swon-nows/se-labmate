@@ -72,6 +72,16 @@ describe('pastItems', () => {
   test('limit만큼만 준다', () => {
     expect(pastItems(state, 2).map((i) => i.id)).toEqual(['b', 'c'])
   })
+
+  test('limit은 카테고리마다 따로 센다', () => {
+    const mixed = st({
+      items: {
+        ...state.items,
+        r: mk({ id: 'r', category: 'repo', seenAt: '2026-10-01T00:00:00.000Z' })
+      }
+    })
+    expect(pastItems(mixed, 2).map((i) => i.id)).toEqual(['b', 'c', 'r'])
+  })
 })
 
 test('savedItems는 숨김과 상관없이 저장한 항목을 날짜 최신순으로 준다', () => {
