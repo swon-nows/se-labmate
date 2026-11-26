@@ -1,5 +1,5 @@
 import { CATEGORIES, MAX_KEYWORDS } from '../../shared/types'
-import type { Category, Item } from '../../shared/types'
+import type { Category, Item, UpdateInfo } from '../../shared/types'
 
 const pad = (n: number): string => String(n).padStart(2, '0')
 const dayNumber = (d: Date): number => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5
@@ -139,4 +139,25 @@ export function plainMath(text: string): string {
     if (/[\\_^{}]/.test(out)) return whole
     return out === body && /^\d|\s/.test(body) ? whole : out
   })
+}
+
+// 새 버전 알림 줄의 글과 버튼. busy는 눌러도 동작하지 않는 때다.
+export function updateBar(u: UpdateInfo): {
+  text: string
+  button: 'Update' | 'Open page'
+  busy: boolean
+} {
+  if (u.phase === 'failed')
+    return {
+      text: '내려받지 못했습니다. 릴리스 페이지에서 직접 받아 주십시오.',
+      button: 'Open page',
+      busy: false
+    }
+  if (u.phase === 'downloading')
+    return {
+      text: `새 버전을 내려받는 중입니다${u.percent === null ? '' : ` (${u.percent}%)`}.`,
+      button: 'Update',
+      busy: true
+    }
+  return { text: `새 버전이 나왔습니다 (${u.version}).`, button: 'Update', busy: false }
 }

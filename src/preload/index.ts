@@ -20,6 +20,7 @@ const api: Api = {
   addBoard: (input) => ipcRenderer.invoke('addBoard', input),
   removeBoard: (id) => ipcRenderer.invoke('removeBoard', id),
   openUpdate: () => ipcRenderer.invoke('openUpdate'),
+  installUpdate: () => ipcRenderer.invoke('installUpdate'),
   onStatus: (cb) => {
     const listener = (_e: IpcRendererEvent, s: CollectStatus): void => cb(s)
     ipcRenderer.on('status', listener)

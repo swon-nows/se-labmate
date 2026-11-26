@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, Menu, nativeTheme, net, safeStorage } from 'electron'
+import { spawn } from 'node:child_process'
+import { app, BrowserWindow, dialog, Menu, nativeTheme, net, safeStorage, shell } from 'electron'
 import type { MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -8,13 +9,15 @@ import { createCollectRunner, markUnreadableKey } from './core/collect-runner'
 import { unseenCounts } from './core/feed'
 import { createFetchText } from './core/fetch-text'
 import { createTick } from './core/tick'
-import { newerRelease, RELEASES_API } from './core/update'
+import { findInstaller, newerRelease, RELEASES_API } from './core/update'
+import type { UpdateAsset } from './core/update'
 import { isWindowOpen } from './core/visibility'
 import { registerIpc } from './ipc'
 import { notify } from './notify'
 import { startScheduler } from './scheduler'
 import { loadState, saveState } from './store'
 import { createTray, setTrayUnseen } from './tray'
+import { downloadFile } from './update-download'
 
 let win: BrowserWindow | null = null
 let quitting = false
@@ -23,6 +26,7 @@ let sentVisible: boolean | null = null // 렌더러에 마지막으로 보낸 wi
 let state: AppState
 let file = ''
 let updateInfo: UpdateInfo | null = null
+let updateAsset: UpdateAsset | null = null // 이 버전의 설치 파일. 없으면 앱 안에서 받지 못한다
 
 // 저장이 실패하면 메모리 상태도 바꾸지 않는다.
 function update(next: AppState): void {
@@ -60,16 +64,68 @@ function sendStatus(status: CollectStatus): void {
   if (win && !win.isDestroyed()) win.webContents.send('status', status)
 }
 
+function setUpdate(next: UpdateInfo): void {
+  updateInfo = next
+  if (win && !win.isDestroyed()) win.webContents.send('update', next)
+}
+
+const downloading = (): boolean => updateInfo?.phase === 'downloading'
+
 // 실패(오프라인·HTTP 오류 등)는 조용히 넘기고 알려 둔 값을 그대로 둔다. 거부하지 않는다.
 async function checkUpdate(): Promise<void> {
+  if (downloading()) return
   try {
     const body = await fetchText(RELEASES_API, { Accept: 'application/vnd.github+json' })
     const found = newerRelease(app.getVersion(), body)
-    if (!found || found.version === updateInfo?.version) return
-    updateInfo = found
-    if (win && !win.isDestroyed()) win.webContents.send('update', updateInfo)
+    // 응답을 기다리는 사이에 내려받기가 시작됐을 수 있다.
+    if (!found || found.version === updateInfo?.version || downloading()) return
+    updateAsset = findInstaller(body, found.version, process.platform, process.arch)
+    setUpdate(found)
   } catch {
     // 다음 확인 때 다시 본다.
+  }
+}
+
+// 설치 파일이 실제로 시작된 뒤에만 끝난다. 시작하지 못하면 거부한다.
+const startInstaller = (path: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const child = spawn(path, [], { detached: true, stdio: 'ignore' })
+    child.once('error', reject)
+    child.once('spawn', resolve)
+    child.unref()
+  })
+
+// 거부하지 않는다. 어느 단계에서 실패하든 화면에는 릴리스 페이지를 안내한다.
+async function installUpdate(): Promise<void> {
+  const info = updateInfo
+  const asset = updateAsset
+  if (!info || info.phase === 'downloading') return
+  if (!asset) {
+    setUpdate({ ...info, phase: 'failed', percent: null })
+    return
+  }
+  const progress = (percent: number): void => setUpdate({ ...info, phase: 'downloading', percent })
+  progress(0)
+  try {
+    const file = join(app.getPath('temp'), asset.name)
+    await downloadFile((url, init) => net.fetch(url, init), asset, file, progress)
+    if (process.platform === 'darwin') {
+      const failed = await shell.openPath(file)
+      if (failed !== '') throw new Error(failed)
+      await dialog.showMessageBox({
+        type: 'info',
+        title: 'SE LabMate',
+        message: '설치 창을 열었습니다.',
+        detail:
+          "열린 창에서 SE LabMate를 Applications 폴더로 끌어 놓고 '대치'를 누른 다음 다시 열어 주십시오. 지금 실행 중인 앱은 종료됩니다.",
+        buttons: ['확인']
+      })
+    } else {
+      await startInstaller(file)
+    }
+    app.quit()
+  } catch {
+    setUpdate({ ...info, phase: 'failed', percent: null })
   }
 }
 
@@ -239,7 +295,8 @@ function start(corruptBackup: string | null): void {
     setOpenAtLogin,
     testNotification: () => notify('알림 테스트입니다', showWindow),
     fetchText,
-    updateInfo: () => updateInfo
+    updateInfo: () => updateInfo,
+    installUpdate
   })
   win = createWindow(atLogin)
   if (corruptBackup)

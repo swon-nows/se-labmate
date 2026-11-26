@@ -85,6 +85,8 @@ export interface CollectStatus {
 export interface UpdateInfo {
   version: string // 앞의 v를 뺀 새 버전
   url: string // 릴리스 페이지
+  phase: 'ready' | 'downloading' | 'failed'
+  percent: number | null // 내려받는 중일 때만 0~100
 }
 export interface PublicState {
   profile: Profile | null

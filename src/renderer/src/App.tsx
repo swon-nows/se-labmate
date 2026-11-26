@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { activeSources } from '../../shared/sources'
 import { CATEGORIES } from '../../shared/types'
-import type { PublicState } from '../../shared/types'
+import type { PublicState, UpdateInfo } from '../../shared/types'
 import { LiveOrb } from './components/LiveOrb'
+import { updateBar } from './format'
 import { Feed } from './screens/Feed'
 import { Onboarding } from './screens/Onboarding'
 import { Settings } from './screens/Settings'
@@ -26,6 +27,26 @@ function RefreshButton({ running }: { running: boolean }): React.JSX.Element {
       <LiveOrb size={22} busy={running} hover={hover} />
       <span>{collecting ? 'Collecting' : 'Refresh'}</span>
     </button>
+  )
+}
+
+function UpdateBar({ update }: { update: UpdateInfo }): React.JSX.Element {
+  const { text, button, busy } = updateBar(update)
+  return (
+    <div className="update-bar" role="status">
+      <span>{text}</span>
+      <button
+        type="button"
+        className="btn btn-small"
+        aria-disabled={busy || undefined}
+        onClick={() => {
+          if (busy) return
+          void (button === 'Update' ? window.api.installUpdate() : window.api.openUpdate())
+        }}
+      >
+        {button}
+      </button>
+    </div>
   )
 }
 
@@ -101,18 +122,7 @@ function App(): React.JSX.Element | null {
         </div>
       </header>
       <main className="content">
-        {state.update && (
-          <div className="update-bar" role="status">
-            <span>{`새 버전이 나왔습니다 (${state.update.version}).`}</span>
-            <button
-              type="button"
-              className="btn btn-small"
-              onClick={() => void window.api.openUpdate()}
-            >
-              Download
-            </button>
-          </div>
-        )}
+        {state.update && <UpdateBar update={state.update} />}
         {/* 설정을 다녀와도 이번 새 소식 목록이 남도록 피드는 숨기기만 한다. */}
         <div hidden={screen !== 'feed'}>
           <Feed

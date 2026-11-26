@@ -12,7 +12,8 @@ import {
   plainMath,
   relativeDate,
   replaceToken,
-  toggleKeyword
+  toggleKeyword,
+  updateBar
 } from '../src/renderer/src/format'
 import { KEYWORD_SUGGESTIONS } from '../src/shared/keyword-suggestions'
 import {
@@ -23,7 +24,7 @@ import {
   allUnreachable,
   sourceErrorText
 } from '../src/shared/sources'
-import type { Board, Category, Profile, Settings } from '../src/shared/types'
+import type { Board, Category, Profile, Settings, UpdateInfo } from '../src/shared/types'
 
 describe('relativeDate', () => {
   const now = new Date(2026, 10, 24, 15, 0)
@@ -307,5 +308,45 @@ describe('plainMath', () => {
     expect(plainMath('costs $5 and $10')).toBe('costs $5 and $10')
     expect(plainMath('$5-$10 billion')).toBe('$5-$10 billion')
     expect(plainMath('no math')).toBe('no math')
+  })
+})
+
+describe('updateBar', () => {
+  const u = (over: Partial<UpdateInfo>): UpdateInfo => ({
+    version: '0.2.5',
+    url: 'https://github.com/swon-nows/se-labmate/releases/tag/v0.2.5',
+    phase: 'ready',
+    percent: null,
+    ...over
+  })
+
+  it('ready: 새 버전을 알리고 Update 버튼을 보인다', () => {
+    expect(updateBar(u({}))).toEqual({
+      text: '새 버전이 나왔습니다 (0.2.5).',
+      button: 'Update',
+      busy: false
+    })
+  })
+  it('downloading: 진행률과 눌러도 동작하지 않는 Update 버튼', () => {
+    expect(updateBar(u({ phase: 'downloading', percent: 42 }))).toEqual({
+      text: '새 버전을 내려받는 중입니다 (42%).',
+      button: 'Update',
+      busy: true
+    })
+    expect(updateBar(u({ phase: 'downloading', percent: 0 })).text).toContain('(0%)')
+  })
+  it('downloading인데 진행률을 모르면 괄호를 뺀다', () => {
+    expect(updateBar(u({ phase: 'downloading', percent: null }))).toEqual({
+      text: '새 버전을 내려받는 중입니다.',
+      button: 'Update',
+      busy: true
+    })
+  })
+  it('failed: 직접 받으라고 알리고 Open page 버튼을 보인다', () => {
+    expect(updateBar(u({ phase: 'failed' }))).toEqual({
+      text: '내려받지 못했습니다. 릴리스 페이지에서 직접 받아 주십시오.',
+      button: 'Open page',
+      busy: false
+    })
   })
 })

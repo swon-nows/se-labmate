@@ -27,6 +27,7 @@ export interface IpcDeps {
   testNotification(): void
   fetchText: FetchText
   updateInfo(): UpdateInfo | null
+  installUpdate(): Promise<void> // 거부하지 않는다
 }
 
 const encrypt = (key: string): string => {
@@ -112,6 +113,9 @@ export function registerIpc(d: IpcDeps): void {
     const u = d.updateInfo()
     if (u) await shell.openExternal(u.url)
   })
+
+  // 렌더러에서 받은 값 없이 main이 알고 있는 릴리스의 설치 파일만 받는다.
+  ipcMain.handle('installUpdate', () => d.installUpdate())
 
   ipcMain.handle('testNotification', () => d.testNotification())
 

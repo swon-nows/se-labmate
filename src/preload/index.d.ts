@@ -27,6 +27,7 @@ export interface Api {
   addBoard(input: BoardInput): Promise<BoardResult> // 저장한 뒤 수집을 시작한다
   removeBoard(id: string): Promise<void> // 이미 모은 항목은 남긴다
   openUpdate(): Promise<void> // 알고 있는 새 릴리스 페이지를 연다. 인자를 받지 않는다
+  installUpdate(): Promise<void> // 새 버전의 설치 파일을 받아 실행한다. 인자를 받지 않고 거부하지 않는다
   onStatus(cb: (s: CollectStatus) => void): () => void // 구독 해제 함수 반환
   onUpdate(cb: (u: UpdateInfo | null) => void): () => void // 새 버전을 알게 될 때마다. 구독 해제 함수 반환
   // 창이 열려 있는지(트레이로 닫지 않았고, 내리지 않았고, 앱을 가리지 않음. 다른 창에 덮인 것은 열린 것).
