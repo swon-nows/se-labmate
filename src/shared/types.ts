@@ -18,6 +18,7 @@ export interface RawItem {
   date: string // ISO 8601
   summary: string // 없으면 ''
   stars?: number
+  weekStars?: number // GitHub Trending에서 이번 주에 받은 별
   venue?: string // 저널·학회·저장소 이름
   keywords?: string[]
 }
@@ -31,6 +32,8 @@ export interface Item extends RawItem {
 // 언어마다 저장하는 키워드 수와 사용자가 등록하는 게시판 수(기본 게시판은 세지 않는다). 화면과 main이 함께 쓴다.
 export const MAX_KEYWORDS = 8
 export const MAX_BOARDS = 10
+export const DEFAULT_REPO_COUNT = 10
+export const MAX_REPO_COUNT = 25
 export interface Profile {
   keywordsEn: string[]
   keywordsKo: string[]
@@ -40,6 +43,7 @@ export interface Settings {
   notifyTime: string
   openAtLogin: boolean
   enabled: Record<Category, boolean>
+  repoCount: number // 한 주 인기 저장소를 몇 개 가져올지
 }
 export type BoardCategory = 'grant' | 'conference' | 'school'
 export const BOARD_CATEGORIES: BoardCategory[] = ['school', 'conference', 'grant']

@@ -1,5 +1,5 @@
 import { BUILTIN_BOARDS, FIXED_SOURCE_NAMES } from '../../shared/sources'
-import { BOARD_CATEGORIES, CATEGORIES, MAX_BOARDS } from '../../shared/types'
+import { BOARD_CATEGORIES, CATEGORIES, MAX_BOARDS, MAX_REPO_COUNT } from '../../shared/types'
 import type {
   AppState,
   Board,
@@ -23,6 +23,9 @@ export function validateProfile(input: {
   if (keywordsEn.length === 0) errors.push('Keywords (English)를 1개 이상 입력해 주십시오.')
   if (!TIME_FORMAT.test(input.settings.notifyTime))
     errors.push('Notify at은 00:00~23:59 형식이어야 합니다.')
+  const n = input.settings.repoCount
+  if (!Number.isInteger(n) || n < 1 || n > MAX_REPO_COUNT)
+    errors.push(`Trending repos는 1~${MAX_REPO_COUNT} 사이의 정수여야 합니다.`)
   if (errors.length > 0) return { ok: false, errors }
   return {
     ok: true,
@@ -46,6 +49,7 @@ export function isSaveInput(x: unknown): x is SaveInput {
     (p.country === 'KR' || p.country === 'OTHER') &&
     typeof s.notifyTime === 'string' &&
     typeof s.openAtLogin === 'boolean' &&
+    typeof s.repoCount === 'number' &&
     isObject(enabled) &&
     CATEGORIES.every((c) => typeof enabled[c] === 'boolean') &&
     (k === undefined || k === null || typeof k === 'string')
@@ -62,7 +66,7 @@ export function applyProfile(
 ): AppState {
   const key = input.openAlexKey === null ? '' : input.openAlexKey?.trim()
   const { keywordsEn, keywordsKo, country } = input.profile
-  const { notifyTime, openAtLogin, enabled } = input.settings
+  const { notifyTime, openAtLogin, enabled, repoCount } = input.settings
   // 렌더러가 보낸 그 밖의 키는 저장하지 않는다.
   return {
     ...state,
@@ -70,7 +74,8 @@ export function applyProfile(
     settings: {
       notifyTime,
       openAtLogin,
-      enabled: Object.fromEntries(CATEGORIES.map((c) => [c, enabled[c]])) as Settings['enabled']
+      enabled: Object.fromEntries(CATEGORIES.map((c) => [c, enabled[c]])) as Settings['enabled'],
+      repoCount
     },
     openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
     lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt

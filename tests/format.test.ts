@@ -60,7 +60,8 @@ describe('activeSources', () => {
   const settings: Settings = {
     notifyTime: '09:00',
     openAtLogin: true,
-    enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true }
+    enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
+    repoCount: 10
   }
   const off = (c: Category): Settings => ({
     ...settings,

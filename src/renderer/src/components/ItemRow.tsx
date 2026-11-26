@@ -22,9 +22,12 @@ export function ItemRow(p: Props): React.JSX.Element {
   // 논문 줄은 출처·날짜·일치한 키워드를 아래 정보 줄과 칩으로 보인다. 카테고리는 묶음 제목이 말한다.
   const parts: string[] = []
   if (!isPaper) {
-    parts.push(item.source, relativeDate(item.date, new Date()))
+    parts.push(item.source)
+    // 한 주 인기 저장소의 날짜는 수집한 시각일 뿐이라 보이지 않는다.
+    if (item.weekStars === undefined) parts.push(relativeDate(item.date, new Date()))
     if (item.category === 'repo' && item.stars !== undefined)
       parts.push(`★${formatStars(item.stars)}`)
+    if (item.weekStars !== undefined) parts.push(`+${formatStars(item.weekStars)} this week`)
     if (item.matched.length > 0) parts.push(`Match: ${item.matched.join(', ')}`)
   }
   const meta = parts.filter(Boolean).join(' · ')

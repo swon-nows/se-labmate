@@ -232,6 +232,10 @@ select {
   width: auto;
 }
 
+.input-count {
+  width: 6rem;
+}
+
 select.input {
   width: auto;
   min-width: 8rem;

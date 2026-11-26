@@ -31,6 +31,27 @@ test('없으면 기본 상태', () => {
   expect(loadState(join(dir, 'state.json'))).toEqual(defaultState())
 })
 
+test('기본 상태의 저장소 개수는 10', () => {
+  expect(defaultState().settings.repoCount).toBe(10)
+})
+
+// repoCount가 없거나 틀린 v2 파일(옛 버전이 쓴 파일, 손으로 고친 파일)도 늘 올바른 값으로 읽힌다.
+test.each([
+  ['없으면', undefined, 10],
+  ['5면 그대로', 5, 5],
+  ['1이면 그대로', 1, 1],
+  ['25면 그대로', 25, 25],
+  ['99는', 99, 10],
+  ['0은', 0, 10],
+  ['2.5는', 2.5, 10],
+  ['문자열 "7"은', '7', 10]
+])('v2 파일의 repoCount가 %s', (_, stored, expected) => {
+  const f = join(tmp(), 'state.v2.json')
+  const s = defaultState()
+  writeFileSync(f, JSON.stringify({ ...s, settings: { ...s.settings, repoCount: stored } }))
+  expect(loadState(f).settings.repoCount).toBe(expected)
+})
+
 test('저장하고 다시 읽기', () => {
   const f = join(tmp(), 'state.json')
   const s = st({
@@ -114,6 +135,7 @@ const v1State = (): Record<string, unknown> => {
   const v1: Record<string, unknown> = {
     ...defaultState(),
     version: 1,
+    settings: { ...defaultState().settings, repoCount: undefined }, // 옛 파일에는 repoCount가 없다
     profile: { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' },
     openAlexKeyEnc: 'ZW5j',
     lastDailyRunAt: NOW,
@@ -159,6 +181,7 @@ test('v2 파일이 없으면 옛 v1 파일을 메모리에서만 v2로 옮기고
     saved: true
   })
   expect(s.items['paper:b']).toMatchObject({ summary: 'abstract…' })
+  expect(s.settings.repoCount).toBe(10)
   expect(s.items['paper:b'].venue).toBeUndefined()
   expect(readFileSync(old).equals(bytes)).toBe(true)
   expect(readdirSync(dir).sort()).toEqual(['state.json'])

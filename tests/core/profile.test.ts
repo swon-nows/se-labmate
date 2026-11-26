@@ -14,7 +14,8 @@ const profile: Profile = { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' }
 const settings: Settings = {
   notifyTime: '09:00',
   openAtLogin: true,
-  enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true }
+  enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
+  repoCount: 10
 }
 const base = { profile, settings }
 
@@ -32,6 +33,28 @@ describe('validateProfile', () => {
   })
   test('유효한 값은 통과한다', () => {
     expect(validateProfile(base)).toMatchObject({ ok: true })
+  })
+  test.each([0, 26, 2.5, -1, NaN])('Trending repos가 %s이면 거부한다', (repoCount) => {
+    expect(validateProfile({ ...base, settings: { ...base.settings, repoCount } })).toEqual({
+      ok: false,
+      errors: ['Trending repos는 1~25 사이의 정수여야 합니다.']
+    })
+  })
+  test.each([1, 25])('Trending repos가 %s이면 통과한다', (repoCount) => {
+    expect(validateProfile({ ...base, settings: { ...base.settings, repoCount } })).toMatchObject({
+      ok: true
+    })
+  })
+  test('오류는 한꺼번에 모아 돌려준다', () => {
+    const bad = { ...base.settings, notifyTime: '25:00', repoCount: 0 }
+    expect(validateProfile({ profile: { ...profile, keywordsEn: [] }, settings: bad })).toEqual({
+      ok: false,
+      errors: [
+        'Keywords (English)를 1개 이상 입력해 주십시오.',
+        'Notify at은 00:00~23:59 형식이어야 합니다.',
+        'Trending repos는 1~25 사이의 정수여야 합니다.'
+      ]
+    })
   })
 })
 
@@ -52,6 +75,8 @@ describe('isSaveInput', () => {
     ['잘못된 국가', { ...base, profile: { ...profile, country: 'JP' } }],
     ['notifyTime이 문자열이 아님', { ...base, settings: { ...settings, notifyTime: 900 } }],
     ['openAtLogin이 boolean이 아님', { ...base, settings: { ...settings, openAtLogin: 'yes' } }],
+    ['repoCount 없음', { ...base, settings: { ...settings, repoCount: undefined } }],
+    ['문자열 repoCount', { ...base, settings: { ...settings, repoCount: '7' } }],
     ['enabled 키 빠짐', { ...base, settings: { ...settings, enabled: missingPaper } }],
     ['숫자 openAlexKey', { ...base, openAlexKey: 1 }],
     [
@@ -70,6 +95,10 @@ describe('applyProfile', () => {
   test('처음 만든 프로필이면 lastDailyRunAt을 지금으로 둔다', () => {
     const out = applyProfile(st(), base, enc, NOW)
     expect(out).toMatchObject({ profile, settings, lastDailyRunAt: NOW, openAlexKeyEnc: null })
+  })
+  test('repoCount를 저장한다', () => {
+    const out = applyProfile(st(), { ...base, settings: { ...settings, repoCount: 4 } }, enc, NOW)
+    expect(out.settings.repoCount).toBe(4)
   })
   test('기존 프로필을 고치면 lastDailyRunAt을 그대로 둔다', () => {
     const before = st({ profile, lastDailyRunAt: '2026-11-01T00:00:00.000Z' })

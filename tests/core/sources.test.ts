@@ -5,10 +5,11 @@ import { isHttpUrl, normalizeTitle } from '../../src/main/core/text'
 import { buildArxivUrl, parseArxiv } from '../../src/main/core/sources/arxiv'
 import { buildOpenAlexUrl, parseOpenAlex } from '../../src/main/core/sources/openalex'
 import { abstractText, keySentence } from '../../src/main/core/sources/summary'
-import { buildGithubUrls, parseGithub } from '../../src/main/core/sources/github'
+import { parseTrending } from '../../src/main/core/sources/github'
 import { buildGnewsUrl, parseGnews } from '../../src/main/core/sources/gnews'
 
 const fx = (n: string): string => readFileSync(`tests/fixtures/${n}`, 'utf8')
+const NOW = new Date('2026-11-26T03:00:00Z')
 const wellFormed = (items: RawItem[], cat: Category, prefix: string): void => {
   expect(items.length).toBeGreaterThan(0)
   for (const it of items) {
@@ -100,11 +101,10 @@ const GNEWS_PLAIN = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><c
 test('fixtures', () => {
   wellFormed(parseArxiv(fx('arxiv.xml')), 'paper', 'paper:')
   wellFormed(parseOpenAlex(fx('openalex.json')), 'paper', 'paper:')
-  wellFormed(parseGithub(fx('github.json')), 'repo', 'repo:')
+  wellFormed(parseTrending(fx('github-trending.html'), NOW, 25), 'repo', 'repo:')
   wellFormed(parseGnews(fx('gnews-ko.xml')), 'news', 'news:')
   wellFormed(parseGnews(fx('gnews-en.xml')), 'news', 'news:')
   expect(parseGnews(fx('gnews-ko.xml')).length).toBeLessThanOrEqual(30)
-  expect(parseGithub(fx('github.json'))[0].stars).toEqual(expect.any(Number))
 })
 test('같은 제목은 출처가 달라도 같은 id', () => {
   // 인라인 최소 XML/JSON: 제목 'A Study of X' (arXiv) 와 'A study of X.' (OpenAlex)
@@ -116,7 +116,6 @@ test('결과 1건·0건', () => {
   expect(parseGnews(GNEWS_ONE)).toHaveLength(1)
 })
 test('기대와 다른 응답은 던진다', () => {
-  expect(() => parseGithub('{"message":"API rate limit exceeded"}')).toThrow()
   expect(() => parseGnews('<html><body>동의</body></html>')).toThrow()
   expect(() => parseOpenAlex('not json')).toThrow()
 })
@@ -201,15 +200,6 @@ test('URL', () => {
   expect(new URL(buildArxivUrl(['a b', 'c'])).searchParams.get('search_query')).toBe(
     'all:"a b" OR all:"c"'
   )
-  expect(buildGithubUrls(['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7'], today)).toHaveLength(2)
-  expect(new URL(buildGithubUrls(['k1'], today)[0]).searchParams.get('q')).toBe(
-    '"k1" in:name,description,topics created:>=2026-08-26'
-  )
-  const forty = Array.from({ length: 6 }, (_, i) => String(i).repeat(40))
-  const qs = buildGithubUrls(forty, today).map((u) => new URL(u).searchParams.get('q') ?? '')
-  expect(qs.length).toBeGreaterThan(1)
-  for (const q of qs) expect(q.length).toBeLessThanOrEqual(256)
-  expect(qs.join(' ').match(/"\d+"/g)).toHaveLength(6)
   const g = new URL(buildGnewsUrl(['인공지능', '구조공학'], 'ko'))
   expect(g.searchParams.get('q')).toBe('"인공지능" OR "구조공학" when:7d')
   expect(g.searchParams.get('ceid')).toBe('KR:ko')
@@ -339,4 +329,95 @@ test('arXiv: 분류와 journal_ref', () => {
   const dup = parseArxiv(ARXIV_DUP_CATS)[0]
   expect(dup.keywords).toEqual(['cs.LG', 'stat.ML'])
   expect('venue' in dup).toBe(false)
+})
+
+const ENTRY = (path: string, week = '1,764 stars this week'): string =>
+  `<article><h2><a href="/${path}">${path}</a></h2><p>설명 <b>글</b></p>` +
+  `<a href="/${path}/stargazers"><svg><path d="M8 .25"></path></svg> 15,104</a><span>${week}</span></article>`
+const NO_LIST = 'GitHub Trending 목록을 찾지 못했습니다'
+
+test('GitHub Trending: 실제 페이지에서 이번 주 별이 많은 순서로 limit개를 읽는다', () => {
+  const html = fx('github-trending.html')
+  const top = parseTrending(html, NOW, 10)
+  expect(top.map((i) => i.title)).toEqual([
+    'mvanhorn/last30days-skill',
+    'kajisho5/ffmpeg-skill',
+    'meta/astryx',
+    'google-labs-code/stitch-skills',
+    'dream-num/univer',
+    'GoogleChrome/modern-web-guidance-src',
+    'alibaba/open-code-review',
+    'backnotprop/plannotator',
+    'we-promise/sure',
+    'tradermonty/claude-trading-skills'
+  ])
+  expect(top[0]).toMatchObject({
+    id: 'repo:mvanhorn/last30days-skill',
+    category: 'repo',
+    source: 'GitHub',
+    url: 'https://github.com/mvanhorn/last30days-skill',
+    date: '2026-11-26T03:00:00.000Z',
+    stars: 75190,
+    weekStars: 5302
+  })
+  const plan = top.find((i) => i.title === 'backnotprop/plannotator')!
+  expect(plan).toMatchObject({ stars: 15104, weekStars: 1764 })
+  expect(plan.summary.startsWith('The workspace to stay in the loop')).toBe(true)
+  expect(parseTrending(html, NOW, 25)).toHaveLength(14)
+  expect(parseTrending(html, NOW, 3)).toHaveLength(3)
+  for (const n of [3, 10, 25]) wellFormed(parseTrending(html, NOW, n), 'repo', 'repo:')
+})
+
+test('GitHub Trending: 이번 주 별이 없거나 경로가 이상하거나 겹치는 항목은 버린다', () => {
+  const html = [
+    ENTRY('a/good'),
+    '<article><h2><a href="/a/no-week">a/no-week</a></h2><p>x</p></article>',
+    '<article><h2><a href="/only-one-part">only</a></h2><span>5 stars this week</span></article>',
+    '<article><h2><a href="javascript:alert(1)">js</a></h2><span>5 stars this week</span></article>',
+    ENTRY('A/Good', '9 stars this week')
+  ].join('\n')
+  const items = parseTrending(html, NOW, 10)
+  expect(items).toHaveLength(1)
+  expect(items[0]).toMatchObject({
+    id: 'repo:a/good',
+    title: 'a/good',
+    summary: '설명 글',
+    stars: 15104,
+    weekStars: 1764
+  })
+  expect(parseTrending(ENTRY('a/one', '1 star this week'), NOW, 10)[0].weekStars).toBe(1)
+})
+
+test('GitHub Trending: 닫는 article이 없는 마지막 항목도 읽고, 같은 주 별이면 페이지 순서를 지킨다', () => {
+  const html =
+    ENTRY('a/first', '5 stars this week') +
+    ENTRY('a/second', '5 stars this week') +
+    '<article><h2><a href="/a/last">x</a></h2><span>7 stars this week</span>'
+  expect(parseTrending(html, NOW, 10).map((i) => i.title)).toEqual([
+    'a/last',
+    'a/first',
+    'a/second'
+  ])
+})
+
+test('GitHub Trending: 목록이 없으면 던진다', () => {
+  expect(() => parseTrending('<html><body>no list</body></html>', NOW, 10)).toThrow(NO_LIST)
+  expect(() => parseTrending('<article><h2><a href="/a/b">b</a></h2></article>', NOW, 10)).toThrow(
+    NO_LIST
+  )
+})
+
+test('GitHub Trending: 큰 문서도 오래 걸리지 않는다', () => {
+  for (const html of [
+    '<article><h2 href="/'.repeat(100_000),
+    '<article>' + '1'.repeat(2_000_000) + ' this week'
+  ]) {
+    const t = Date.now()
+    try {
+      parseTrending(html, NOW, 10)
+    } catch {
+      // 던지는 것도 끝난 것으로 본다
+    }
+    expect(Date.now() - t).toBeLessThan(1000)
+  }
 })

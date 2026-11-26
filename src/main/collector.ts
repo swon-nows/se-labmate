@@ -4,7 +4,7 @@ import { readBoard } from './core/boards/index'
 import type { FetchText } from './core/fetch-text'
 import { mergeIncoming, pruneOld } from './core/merge'
 import { buildArxivUrl, parseArxiv } from './core/sources/arxiv'
-import { buildGithubUrls, parseGithub } from './core/sources/github'
+import { GITHUB_TRENDING_URL, parseTrending } from './core/sources/github'
 import { buildGnewsUrl, parseGnews } from './core/sources/gnews'
 import { buildOpenAlexUrl, parseOpenAlex } from './core/sources/openalex'
 
@@ -13,8 +13,6 @@ export interface CollectDeps {
   now(): Date
   openAlexKey: string | null
 }
-
-const GITHUB_HEADERS = { Accept: 'application/vnd.github+json', 'User-Agent': 'research-assistant' }
 
 export async function collect(state: AppState, deps: CollectDeps): Promise<AppState> {
   const { profile } = state
@@ -47,12 +45,9 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
     parseOpenAlex(await deps.fetchText(buildOpenAlexUrl(en, now, key)))
   )
   await run('arXiv', async () => parseArxiv(await deps.fetchText(buildArxivUrl(en))))
-  await run('GitHub', async () => {
-    const out: RawItem[] = []
-    for (const url of buildGithubUrls(en, now))
-      out.push(...parseGithub(await deps.fetchText(url, GITHUB_HEADERS)))
-    return out
-  })
+  await run('GitHub', async () =>
+    parseTrending(await deps.fetchText(GITHUB_TRENDING_URL), now, state.settings.repoCount)
+  )
   await run('Google News (KO)', async () =>
     parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))
   )

@@ -7,6 +7,7 @@ import { boardId } from '../src/main/core/boards/index'
 import { pastItems, takeNew } from '../src/main/core/feed'
 import { applyCollected } from '../src/main/core/merge'
 import { validateBoard } from '../src/main/core/profile'
+import { GITHUB_TRENDING_URL } from '../src/main/core/sources/github'
 import { defaultState, loadState, saveState } from '../src/main/store'
 import { BUILTIN_BOARDS } from '../src/shared/sources'
 import type { AppState, Profile } from '../src/shared/types'
@@ -16,7 +17,7 @@ const fx = (n: string): string => readFileSync(`tests/fixtures/${n}`, 'utf8')
 const FILE: Record<string, string> = {
   'api.openalex.org': 'openalex.json',
   'export.arxiv.org': 'arxiv.xml',
-  'api.github.com': 'github.json',
+  'github.com': 'github-trending.html',
   'www.iris.go.kr': 'boards/iris.json',
   'www.nrf.re.kr': 'boards/nrf.html',
   'architecture.snu.ac.kr': 'boards/snu-daae.json',
@@ -74,7 +75,7 @@ test('키가 없으면 OpenAlex를 부르지 않는다', async () => {
 })
 
 test('한 출처가 실패해도 나머지는 계속한다', async () => {
-  const out = await collect(withProfile, deps({ fail: ['api.github.com'] }))
+  const out = await collect(withProfile, deps({ fail: ['github.com'] }))
   expect(Object.keys(out.sourceErrors)).toEqual(['GitHub'])
   expect(Object.values(out.items).some((i) => i.category === 'paper')).toBe(true)
 })
@@ -87,7 +88,7 @@ test('인터넷이 끊겨도 저장된 항목은 그대로다', async () => {
       fail: [
         'api.openalex.org',
         'export.arxiv.org',
-        'api.github.com',
+        'github.com',
         'news.google.com',
         'www.iris.go.kr',
         'www.nrf.re.kr'
@@ -138,14 +139,24 @@ test('입력 상태를 바꾸지 않는다', async () => {
   expect(out.sourceErrors).toEqual({ OpenAlex: 'network down' })
 })
 
-test('GitHub에만 정해진 헤더를 보낸다', async () => {
+test('GitHub는 Trending 페이지를 헤더 없이 한 번만 부른다', async () => {
   const d = deps({ openAlexKey: 'K' })
   await collect(withProfile, d)
-  expect(d.headers['api.github.com']).toEqual({
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'research-assistant'
-  })
+  const github = d.calls.filter((u) => new URL(u).hostname === 'github.com')
+  expect(github).toEqual([GITHUB_TRENDING_URL])
+  expect(d.calls.some((u) => new URL(u).hostname === 'api.github.com')).toBe(false)
+  expect(d.headers['github.com']).toBeUndefined()
   expect(d.headers['export.arxiv.org']).toBeUndefined()
+})
+
+test('저장소는 키워드와 무관하게 설정한 개수만큼 가져온다', async () => {
+  const repos = (s: AppState): string[] =>
+    Object.values(s.items)
+      .filter((i) => i.category === 'repo')
+      .map((i) => i.id)
+  expect(repos(await collect(withProfile, deps()))).toHaveLength(10)
+  const three = st({ ...withProfile, settings: { ...withProfile.settings, repoCount: 3 } })
+  expect(repos(await collect(three, deps()))).toHaveLength(3)
 })
 
 test('건너뛴 출처의 이전 오류는 지워지고 실패한 출처만 남는다', async () => {
@@ -159,7 +170,7 @@ test('건너뛴 출처의 이전 오류는 지워지고 실패한 출처만 남�
       GitHub: 'HTTP 403'
     }
   })
-  const out = await collect(before, deps({ openAlexKey: null, fail: ['api.github.com'] }))
+  const out = await collect(before, deps({ openAlexKey: null, fail: ['github.com'] }))
   expect(Object.keys(out.sourceErrors)).toEqual(['GitHub'])
   expect(out.sourceErrors.GitHub).toBe('network down')
 })
@@ -182,7 +193,6 @@ test('영문 키워드와 한글 키워드를 알맞은 출처로 보낸다', as
   for (const en of [
     to('news.google.com', 'en-US'),
     to('export.arxiv.org'),
-    to('api.github.com'),
     to('api.openalex.org')
   ]) {
     expect(en).toHaveLength(1)

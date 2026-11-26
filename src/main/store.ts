@@ -9,6 +9,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { DEFAULT_REPO_COUNT, MAX_REPO_COUNT } from '../shared/types'
 import type { AppState } from '../shared/types'
 
 export function defaultState(): AppState {
@@ -18,7 +19,8 @@ export function defaultState(): AppState {
     settings: {
       notifyTime: '09:00',
       openAtLogin: true,
-      enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true }
+      enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
+      repoCount: DEFAULT_REPO_COUNT
     },
     openAlexKeyEnc: null,
     items: {},
@@ -45,6 +47,13 @@ function isState(v: unknown): v is AppState {
   )
 }
 
+// 저장된 repoCount가 1~MAX_REPO_COUNT의 정수가 아니면(옛 파일에는 없다) 기본값으로 바꿔 늘 쓸 수 있는 값을 둔다.
+function withDefaults(state: AppState): AppState {
+  const n = state.settings.repoCount
+  if (Number.isInteger(n) && n >= 1 && n <= MAX_REPO_COUNT) return state
+  return { ...state, settings: { ...state.settings, repoCount: DEFAULT_REPO_COUNT } }
+}
+
 // v1 → v2(메모리에서만): OpenAlex의 저널 이름을 summary에서 venue로 옮긴다.
 function migrateV1(v: Record<string, unknown>): unknown {
   if (!isObject(v.items)) return { ...v, version: 2, boards: [], boardKnown: {} }
@@ -64,7 +73,7 @@ function loadLegacy(legacyFile: string): AppState {
   try {
     const value: unknown = JSON.parse(readFileSync(legacyFile, 'utf8'))
     const migrated = isObject(value) && value.version === 1 ? migrateV1(value) : null
-    if (isState(migrated)) return migrated
+    if (isState(migrated)) return withDefaults(migrated)
   } catch {
     // 읽거나 해석할 수 없는 옛 파일
   }
@@ -86,7 +95,7 @@ export function loadState(
   } catch {
     value = null
   }
-  if (isState(value)) return value
+  if (isState(value)) return withDefaults(value)
   // 깨진 파일은 지우지 않고 옆에 남겨 둔다.
   const backup = join(dirname(file), `state.corrupt-${Date.now()}.json`)
   renameSync(file, backup)

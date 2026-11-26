@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATEGORIES, CATEGORY_LABEL } from '../../../shared/types'
+import { CATEGORIES, CATEGORY_LABEL, MAX_REPO_COUNT } from '../../../shared/types'
 import type { Category, Profile, PublicState, SaveInput } from '../../../shared/types'
 import { KeywordField } from '../components/KeywordField'
 import { keywordList, longKeywords } from '../format'
@@ -26,6 +26,7 @@ export function ProfileForm({
   const [country, setCountry] = useState<Profile['country']>(profile?.country ?? 'KR')
   const [keyText, setKeyText] = useState('')
   const [deleteKey, setDeleteKey] = useState(false)
+  const [repoCount, setRepoCount] = useState(String(settings.repoCount))
   const [notifyTime, setNotifyTime] = useState(settings.notifyTime)
   const [openAtLogin, setOpenAtLogin] = useState(settings.openAtLogin)
   const [enabled, setEnabled] = useState(settings.enabled)
@@ -46,7 +47,8 @@ export function ProfileForm({
         keywordsKo: keywordList(keywordsKo),
         country
       },
-      settings: { ...settings, notifyTime, openAtLogin, enabled }
+      // 범위는 여기서 검사하지 않는다. 틀린 값은 저장할 때 오류로 돌아와 아래 목록에 보인다.
+      settings: { ...settings, repoCount: Number(repoCount), notifyTime, openAtLogin, enabled }
     }
     // 입력 없음은 유지, 삭제 표시는 null. 공백뿐인 입력은 입력으로 치지 않는다(서버는 공백뿐인 키를 삭제로 본다).
     if (typedKey) input.openAlexKey = keyText
@@ -167,6 +169,29 @@ export function ProfileForm({
             <span id="pf-key-hint">키가 없으면 논문은 arXiv에서만 가져옵니다.</span>
           )}
         </div>
+      </div>
+
+      <div className="field">
+        <label className="label" htmlFor="pf-repos">
+          Trending repos
+        </label>
+        <input
+          id="pf-repos"
+          className="input input-count"
+          type="number"
+          min={1}
+          max={MAX_REPO_COUNT}
+          step={1}
+          inputMode="numeric"
+          value={repoCount}
+          onChange={(e) => setRepoCount(e.target.value)}
+          aria-describedby="pf-repos-hint"
+        />
+        <p id="pf-repos-hint" className="hint">
+          GitHub에서 한 주 동안 별을 가장 많이 받은 저장소를 이 개수만큼 가져옵니다(1~
+          {MAX_REPO_COUNT}
+          ). 키워드와는 무관합니다.
+        </p>
       </div>
 
       <div className="field">

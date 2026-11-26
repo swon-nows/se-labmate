@@ -153,6 +153,16 @@ test('score 순서', () => {
   expect(score(mk({ stars: 1200 }), now)).toBeGreaterThan(score(mk({ stars: 3 }), now))
 })
 
+test('한 주 인기 저장소는 이번 주에 받은 별이 많을수록 높고, 별 합계·일치 키워드와 무관하다', () => {
+  const now = new Date(NOW)
+  const repo = (weekStars: number, p: Parameters<typeof mk>[0] = {}): number =>
+    score(mk({ category: 'repo', weekStars, ...p }), now)
+  expect(repo(900, { stars: 5, matched: [] })).toBeGreaterThan(
+    repo(800, { stars: 90_000, title: 'xai', matched: ['xai'] })
+  )
+  expect(repo(1)).toBe(1)
+})
+
 describe('applyCollected', () => {
   test('수집 중에 확인한 항목은 확인된 채로 남고, 새 id만 더해지고, sourceErrors는 바뀐다', () => {
     const live = st({
