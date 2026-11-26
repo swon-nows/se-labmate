@@ -121,8 +121,9 @@ export function ProfileForm({
           <option value="OTHER">Other</option>
         </select>
         <p id="pf-country-hint" className="hint">
-          Korea를 고르면 한국어 뉴스와 국내 과제 공고(IRIS, 한국연구재단)를 함께 가져옵니다. Other는
-          영문 소식만 가져옵니다.
+          Korea : 한국어 뉴스와 국내 과제 공고(IRIS, 한국연구재단)도 가져옵니다.
+          <br />
+          Other : 영문 소식만 가져옵니다.
         </p>
       </div>
 
