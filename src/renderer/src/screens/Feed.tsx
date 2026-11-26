@@ -77,10 +77,10 @@ export function Feed({
     )
   }, [])
 
-  // 지난 소식은 수집이 시작·끝날 때와 창이 보일 때 다시 본다. 늦게 온 빈 답이 이미 받은 새 소식을 덮지 않게 sessionEmpty도 함께 본다.
+  // 지난 소식이 있는지는 수집이 시작·끝날 때와 창이 보일 때 다시 본다. 늦게 온 빈 답이 이미 받은 새 소식을 덮지 않게 sessionEmpty도 함께 본다.
   useEffect(() => {
-    window.api.getPast().then(
-      (p) => setFirstRun(p.length === 0 && sessionEmpty.current),
+    window.api.hasPast().then(
+      (has) => setFirstRun(!has && sessionEmpty.current),
       () => setFirstRun(false)
     )
   }, [status.running, visit])

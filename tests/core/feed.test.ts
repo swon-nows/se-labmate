@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { hideItem, pastItems, savedItems, takeNew, unseenCounts } from '../../src/main/core/feed'
+import {
+  hasPast,
+  hideItem,
+  pastItems,
+  savedItems,
+  takeNew,
+  unseenCounts
+} from '../../src/main/core/feed'
 import { NOW, mk, st } from '../helpers'
 
 test('takeNew는 보이는 미확인만 묶어 주고 확인 처리한다', () => {
@@ -81,6 +88,28 @@ describe('pastItems', () => {
       }
     })
     expect(pastItems(mixed, 2).map((i) => i.id)).toEqual(['b', 'c', 'r'])
+  })
+})
+
+describe('hasPast', () => {
+  test('보이는 확인 항목이 하나라도 있으면 true', () => {
+    const state = st({ items: { a: mk({ id: 'a', seenAt: NOW }), u: mk({ id: 'u' }) } })
+    expect(hasPast(state)).toBe(true)
+  })
+
+  test('확인한 항목이 숨겼거나 카테고리가 꺼져 있으면 false', () => {
+    const hidden = st({ items: { h: mk({ id: 'h', seenAt: NOW, hidden: true }) } })
+    expect(hasPast(hidden)).toBe(false)
+    const off = st({
+      items: { n: mk({ id: 'n', category: 'news', seenAt: NOW }) },
+      enabled: { news: false }
+    })
+    expect(hasPast(off)).toBe(false)
+  })
+
+  test('확인한 항목이 없거나 비어 있으면 false', () => {
+    expect(hasPast(st({ items: { u: mk({ id: 'u' }) } }))).toBe(false)
+    expect(hasPast(st())).toBe(false)
   })
 })
 

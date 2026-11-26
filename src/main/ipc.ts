@@ -12,7 +12,7 @@ import type {
 import { readPosts } from './core/boards/index'
 import type { Post } from './core/boards/post'
 import type { FetchText } from './core/fetch-text'
-import { hideItem, pastItems, savedItems, takeNew } from './core/feed'
+import { hasPast, hideItem, pastItems, savedItems, takeNew } from './core/feed'
 import { applyProfile, isSaveInput, validateBoard, validateProfile } from './core/profile'
 import { isHttpUrl } from './core/text'
 
@@ -85,6 +85,7 @@ export function registerIpc(d: IpcDeps): void {
 
   ipcMain.handle('windowVisible', () => d.windowVisible())
   ipcMain.handle('getPast', () => pastItems(d.getState(), 100))
+  ipcMain.handle('hasPast', () => hasPast(d.getState()))
   ipcMain.handle('getSaved', () => savedItems(d.getState()))
   ipcMain.handle('setSaved', (_e, id: unknown, saved: unknown) => {
     if (typeof saved === 'boolean') patchItem(id, { saved })

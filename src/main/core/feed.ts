@@ -36,6 +36,11 @@ export function pastItems(state: AppState, limit: number): Item[] {
     .filter((i) => (taken[i.category] = (taken[i.category] ?? 0) + 1) <= limit)
 }
 
+// 지난 소식이 있는가. 목록을 만들어 보내지 않고 있는지만 묻는다.
+export function hasPast(state: AppState): boolean {
+  return Object.values(state.items).some((i) => i.seenAt !== null && isVisible(i, state.settings))
+}
+
 export function savedItems(state: AppState): Item[] {
   return Object.values(state.items)
     .filter((i) => i.saved)

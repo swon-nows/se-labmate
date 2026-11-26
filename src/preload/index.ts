@@ -9,6 +9,7 @@ const api: Api = {
   saveProfile: (input) => ipcRenderer.invoke('saveProfile', input),
   takeNew: () => ipcRenderer.invoke('takeNew'),
   getPast: () => ipcRenderer.invoke('getPast'),
+  hasPast: () => ipcRenderer.invoke('hasPast'),
   getSaved: () => ipcRenderer.invoke('getSaved'),
   setSaved: (id, saved) => ipcRenderer.invoke('setSaved', id, saved),
   hide: (id) => ipcRenderer.invoke('hide', id),
