@@ -29,7 +29,6 @@ function Checking({ active }: { active: boolean }): React.JSX.Element {
 
 export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
   const [saved, setSaved] = useState(false)
-  const [notified, setNotified] = useState(false)
   // 저장이 끝나 다시 불러오면 폼을 새 상태로 다시 만든다(주제어는 서버가 다듬은 값, 키는 새 저장 여부).
   const [formKey, setFormKey] = useState(0)
   const { profile, settings, hasOpenAlexKey } = state
@@ -44,6 +43,8 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
         initial={state}
         submitLabel="Save"
         showCategories
+        onTestNotification={() => window.api.testNotification()}
+        savedText={saved ? '저장했습니다.' : ''}
         onSubmitStart={() => setSaved(false)}
         onSaved={async () => {
           await onSaved()
@@ -51,9 +52,6 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
           setSaved(true)
         }}
       />
-      <p className="saved" role="status">
-        {saved ? '저장했습니다.' : ''}
-      </p>
 
       <BoardsEditor boards={state.boards} onChanged={onSaved} />
 
@@ -76,21 +74,6 @@ export function Settings({ state, status, onSaved }: Props): React.JSX.Element {
             )
           })}
         </ul>
-        <button
-          type="button"
-          className="btn"
-          onClick={() =>
-            window.api.testNotification().then(
-              () => setNotified(true),
-              () => undefined
-            )
-          }
-        >
-          Test notification
-        </button>
-        <p className="saved" role="status">
-          {notified ? '알림을 보냈습니다. 보이지 않으면 시스템의 알림 설정을 확인해 주십시오.' : ''}
-        </p>
       </section>
     </>
   )

@@ -38,6 +38,8 @@ html {
   scrollbar-gutter: stable;
   /* 키보드로 옮겨 간 줄이 붙어 있는 위쪽 줄과 묶음 제목 밑에 가려지지 않는다. */
   scroll-padding-top: 96px;
+  /* 붙어 있는 Save 줄에 포커스 간 칸이 가려지지 않게 한다. */
+  scroll-padding-bottom: 72px;
 }
 
 body {
@@ -305,6 +307,37 @@ select.input {
 .saved {
   min-height: 1.6em;
   margin-top: 8px;
+}
+
+/* 설정 폼의 묶음 제목(Collection, Notifications): 위 칸과 떼어 놓는다. */
+.form-section {
+  margin-top: 28px;
+}
+
+/* 알림 시각과 시험 버튼이 한 줄에 놓인다. */
+.time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 저장 줄: 폼이 길어도 화면 아래에 붙어 있다. 폼 칸보다 10px씩 넓게 깔아 칸이 뒤로 비치지 않는다. */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px -10px 0;
+  padding: 12px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.form-actions .saved {
+  margin: 0;
 }
 
 /* 출처 상태, 게시판 */

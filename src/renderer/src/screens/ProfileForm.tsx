@@ -11,6 +11,8 @@ interface Props {
   onSubmitStart?: () => void
   submitLabel: string
   showCategories?: boolean
+  onTestNotification?: () => Promise<void> // 있으면 알림 시각 옆에 시험 버튼이 생긴다
+  savedText?: string // 저장 버튼 옆에 알린다
 }
 
 export function ProfileForm({
@@ -18,7 +20,9 @@ export function ProfileForm({
   onSaved,
   onSubmitStart,
   submitLabel,
-  showCategories = false
+  showCategories = false,
+  onTestNotification,
+  savedText
 }: Props): React.JSX.Element {
   const { profile, settings } = initial
   const [keywordsEn, setKeywordsEn] = useState(profile?.keywordsEn.join(', ') ?? '')
@@ -32,6 +36,7 @@ export function ProfileForm({
   const [enabled, setEnabled] = useState(settings.enabled)
   const [errors, setErrors] = useState<string[]>([])
   const [pending, setPending] = useState(false)
+  const [notified, setNotified] = useState(false)
 
   const tooLong = longKeywords(keywordsEn).length > 0
   const hasKey = initial.hasOpenAlexKey
@@ -105,6 +110,8 @@ export function ProfileForm({
         value={keywordsKo}
         onChange={setKeywordsKo}
       />
+
+      <h2 className="section-title form-section">Collection</h2>
 
       <div className="field">
         <label className="label" htmlFor="pf-country">
@@ -195,30 +202,6 @@ export function ProfileForm({
         </p>
       </div>
 
-      <div className="field">
-        <label className="label" htmlFor="pf-time">
-          Notify at
-        </label>
-        <input
-          id="pf-time"
-          className="input input-time"
-          type="time"
-          value={notifyTime}
-          onChange={(e) => setNotifyTime(e.target.value)}
-        />
-      </div>
-
-      <div className="field">
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={openAtLogin}
-            onChange={(e) => setOpenAtLogin(e.target.checked)}
-          />
-          <span>Open at login</span>
-        </label>
-      </div>
-
       {showCategories && (
         <fieldset className="field group">
           <legend>Categories</legend>
@@ -239,6 +222,53 @@ export function ProfileForm({
         </fieldset>
       )}
 
+      <h2 className="section-title form-section">Notifications</h2>
+
+      <div className="field">
+        <label className="label" htmlFor="pf-time">
+          Notify at
+        </label>
+        <div className="time-row">
+          <input
+            id="pf-time"
+            className="input input-time"
+            type="time"
+            value={notifyTime}
+            onChange={(e) => setNotifyTime(e.target.value)}
+          />
+          {onTestNotification && (
+            <button
+              type="button"
+              className="btn"
+              onClick={() =>
+                onTestNotification().then(
+                  () => setNotified(true),
+                  () => undefined
+                )
+              }
+            >
+              Test notification
+            </button>
+          )}
+        </div>
+        {notified && (
+          <p className="hint" role="status">
+            알림을 보냈습니다. 보이지 않으면 시스템의 알림 설정을 확인해 주십시오.
+          </p>
+        )}
+      </div>
+
+      <div className="field">
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={openAtLogin}
+            onChange={(e) => setOpenAtLogin(e.target.checked)}
+          />
+          <span>Open at login</span>
+        </label>
+      </div>
+
       {errors.length > 0 && (
         <div role="alert">
           <ul className="errors">
@@ -249,9 +279,14 @@ export function ProfileForm({
         </div>
       )}
 
-      <button type="submit" className="btn btn-primary" disabled={pending}>
-        {submitLabel}
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary" disabled={pending}>
+          {submitLabel}
+        </button>
+        <span className="saved" role="status">
+          {savedText ?? ''}
+        </span>
+      </div>
     </form>
   )
 }
