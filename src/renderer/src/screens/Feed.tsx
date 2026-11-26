@@ -6,7 +6,7 @@ import type { Category, CollectStatus, Item } from '../../../shared/types'
 import { CategoryChips } from '../components/CategoryChips'
 import { ItemRow } from '../components/ItemRow'
 import { LiveOrb } from '../components/LiveOrb'
-import { feedCategories } from '../format'
+import { MORE_STEP, feedCategories, rowOrder, shownCount } from '../format'
 import { mergeBatch } from '../session'
 
 interface Props {
@@ -25,7 +25,6 @@ const TABS: [Tab, string][] = [
   ['past', 'Past'],
   ['saved', 'Saved']
 ]
-const FIRST_ROWS = 5
 
 export function Feed({
   status,
@@ -41,7 +40,8 @@ export function Feed({
   const [session, setSession] = useState<Item[]>([]) // 이번에 창을 연 동안 받은 새 소식
   // 이번 보기에서 takeNew가 답했는가. 답하기 전에는 "모두 확인했습니다"라고 말하지 않는다.
   const [load, setLoad] = useState<'pending' | 'done' | 'failed'>('pending')
-  const [expanded, setExpanded] = useState<string[]>([]) // 펼친 묶음: '<탭>:<카테고리>'
+  // More로 더 보인 줄 수: '<탭>:<카테고리>' → 처음 5줄에 더한 줄 수
+  const [expanded, setExpanded] = useState<Record<string, number>>({})
   const [shown, setShown] = useState<Category[]>(CATEGORIES)
   const [past, setPast] = useState<Item[] | null | 'failed'>(null)
   const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
@@ -94,7 +94,7 @@ export function Feed({
       seq.current++
       sessionEmpty.current = true
       setSession([])
-      setExpanded([])
+      setExpanded({})
       setLoad('pending')
       setTab('new')
       setShown(CATEGORIES)
@@ -163,13 +163,13 @@ export function Feed({
       })
     )
   }
-  // order: 들어오는 줄의 지연 순서. 앞 다섯 줄만 20ms씩 늦춘다.
+  // order: 들어오는 줄의 지연 순서(rowOrder). 20ms씩 늦춘다.
   const row = (i: Item, order: number): React.JSX.Element => (
     <ItemRow
       key={i.id}
       item={i}
       saved={isSaved(i)}
-      order={Math.min(4, order)}
+      order={order}
       onToggleSave={() => toggleSave(i)}
       onHide={() => hide(i.id)}
     />
@@ -187,29 +187,26 @@ export function Feed({
     if (groups.length === 0) return noMatch
     return groups.map(([c, items]) => {
       const key = `${tab}:${c}`
-      const all = expanded.includes(key)
+      const extra = expanded[key] ?? 0
+      const count = shownCount(items.length, extra)
       return (
         <section key={key} className="feed-group">
           <h2 className="feed-group-title">
             {CATEGORY_LABEL[c]} <span className="feed-group-count">{items.length}</span>
           </h2>
-          <ul className="item-list">
-            {(all ? items : items.slice(0, FIRST_ROWS)).map((i, k) =>
-              row(i, k < FIRST_ROWS ? k : k - FIRST_ROWS)
-            )}
-          </ul>
-          {!all && items.length > FIRST_ROWS && (
+          <ul className="item-list">{items.slice(0, count).map((i, k) => row(i, rowOrder(k)))}</ul>
+          {count < items.length && (
             <button
               type="button"
               className="btn btn-small more"
               onClick={(e) => {
-                // 버튼이 사라져도 키보드 위치를 잃지 않게 처음 펼쳐진 줄로 옮긴다.
+                // 버튼이 사라져도 키보드 위치를 잃지 않게 처음 새로 보인 줄로 옮긴다.
                 const section = e.currentTarget.parentElement
-                flushSync(() => setExpanded((x) => [...x, key]))
-                section?.querySelectorAll<HTMLElement>('.item-title')[FIRST_ROWS]?.focus()
+                flushSync(() => setExpanded((x) => ({ ...x, [key]: extra + MORE_STEP })))
+                section?.querySelectorAll<HTMLElement>('.item-title')[count]?.focus()
               }}
             >
-              {`More (${items.length - FIRST_ROWS})`}
+              {`More (${items.length - count})`}
             </button>
           )}
         </section>

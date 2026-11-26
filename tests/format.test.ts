@@ -12,6 +12,8 @@ import {
   plainMath,
   relativeDate,
   replaceToken,
+  rowOrder,
+  shownCount,
   toggleKeyword,
   updateBar
 } from '../src/renderer/src/format'
@@ -348,5 +350,17 @@ describe('updateBar', () => {
       button: 'Open page',
       busy: false
     })
+  })
+})
+
+describe('shownCount, rowOrder', () => {
+  it('처음에는 5줄, More를 누를 때마다 20줄씩 늘고 전체를 넘지 않는다', () => {
+    expect(shownCount(3, 0)).toBe(3)
+    expect(shownCount(61, 0)).toBe(5)
+    expect(shownCount(61, 20)).toBe(25)
+    expect(shownCount(61, 60)).toBe(61)
+  })
+  it('들어오는 순서는 앞 다섯 줄은 0…4, 더 보인 줄은 20줄마다 0부터 다시 4까지', () => {
+    expect([0, 4, 5, 9, 24, 25].map(rowOrder)).toEqual([0, 4, 0, 4, 4, 0])
   })
 })

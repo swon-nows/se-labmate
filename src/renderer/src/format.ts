@@ -161,3 +161,14 @@ export function updateBar(u: UpdateInfo): {
     }
   return { text: `새 버전이 나왔습니다 (${u.version}).`, button: 'Update', busy: false }
 }
+
+export const FIRST_ROWS = 5
+export const MORE_STEP = 20
+
+// 카테고리 묶음이 보여 줄 줄 수: 처음 5줄에 More로 더한 만큼(extra), 전체를 넘지 않는다.
+export const shownCount = (total: number, extra: number): number =>
+  Math.min(total, FIRST_ROWS + extra)
+
+// 들어오는 줄의 지연 순서: 앞 다섯 줄은 제 순서, 더 보인 줄은 한 번에 나온 20줄 안에서 0부터 4까지 되풀이한다.
+export const rowOrder = (k: number): number =>
+  k < FIRST_ROWS ? k : Math.min(4, (k - FIRST_ROWS) % MORE_STEP)
