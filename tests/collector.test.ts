@@ -61,6 +61,52 @@ const PROFILE: Profile = {
 }
 const withProfile = st({ profile: PROFILE })
 
+// 요청마다 답을 직접 풀어 주는 가짜 fetchText: 어떤 요청이 언제 시작됐는지 볼 수 있다. patch는 받은 본문을 고친다.
+type Gate = { host: string; open: boolean; answer: () => void }
+function gatedDeps(
+  o: Opts,
+  patch: (host: string, text: string) => string = (_h, t) => t
+): CollectDeps & { gates: Gate[] } {
+  const inner = deps(o)
+  const gates: Gate[] = []
+  return {
+    ...inner,
+    gates,
+    fetchText: (url, h) =>
+      new Promise<string>((resolve, reject) => {
+        const host = new URL(url).hostname
+        const gate: Gate = {
+          host,
+          open: true,
+          answer: () => {
+            gate.open = false
+            void inner.fetchText(url, h).then((t) => resolve(patch(host, t)), reject)
+          }
+        }
+        gates.push(gate)
+      })
+  }
+}
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0))
+// 게시판은 요청이 이어지므로 새로 생기는 요청까지 더 나오지 않을 때까지 답한다.
+const answer = async (g: { gates: Gate[] }, ...hosts: string[]): Promise<void> => {
+  for (let more = true; more;) {
+    const now = g.gates.filter((x) => x.open && hosts.includes(x.host))
+    more = now.length > 0
+    for (const x of now) x.answer()
+    await tick()
+  }
+}
+const STARTED = [
+  'api.openalex.org',
+  'architecture.snu.ac.kr',
+  'export.arxiv.org',
+  'github.com',
+  'news.google.com',
+  'www.iris.go.kr',
+  'www.nrf.re.kr'
+]
+
 test('모든 출처를 모아 합친다', async () => {
   const out = await collect(withProfile, deps({ openAlexKey: 'K' }))
   const cats = new Set(Object.values(out.items).map((i) => i.category))
@@ -78,6 +124,41 @@ test('한 출처가 실패해도 나머지는 계속한다', async () => {
   const out = await collect(withProfile, deps({ fail: ['github.com'] }))
   expect(Object.keys(out.sourceErrors)).toEqual(['GitHub'])
   expect(Object.values(out.items).some((i) => i.category === 'paper')).toBe(true)
+})
+
+test('출처를 한꺼번에 시작하고, 늦게 온 OpenAlex도 같은 논문에서는 arXiv보다 앞선다', async () => {
+  const SHARED = 'Subgraph Filtering for Fair Graph Neural Networks' // OpenAlex 고정 파일의 논문
+  const g = gatedDeps({ openAlexKey: 'K' }, (host, text) =>
+    host === 'export.arxiv.org'
+      ? text.replace(
+          'Finite-difference neural policy iteration for high-dimensional degenerate Hamilton--Jacobi equations',
+          SHARED
+        )
+      : text
+  )
+  const url = 'https://architecture.snu.ac.kr/posts/notice'
+  const board = { id: boardId(url), name: '건축학과', url, category: 'school' as const }
+  const done = collect({ ...withProfile, boards: [board] }, g)
+  await tick()
+  // 아무 답도 오기 전에 모든 출처의 첫 요청이 나가 있다.
+  expect([...new Set(g.gates.map((x) => x.host))].sort()).toEqual(STARTED)
+  await answer(g, ...STARTED.filter((h) => h !== 'api.openalex.org'))
+  await answer(g, 'api.openalex.org')
+  const out = await done
+  const shared = Object.values(out.items).filter((i) => i.title === SHARED)
+  expect(shared.map((i) => i.source)).toEqual(['OpenAlex'])
+})
+
+test('한 출처가 먼저 실패해도 아직 오지 않은 나머지는 끝까지 기다려 합친다', async () => {
+  const g = gatedDeps({ openAlexKey: 'K', fail: ['api.openalex.org'] })
+  const done = collect(withProfile, g)
+  await tick()
+  await answer(g, 'api.openalex.org')
+  await answer(g, ...STARTED.filter((h) => h !== 'api.openalex.org'))
+  const out = await done
+  expect(out.sourceErrors).toEqual({ OpenAlex: 'network down' })
+  expect(Object.values(out.items).some((i) => i.source === 'arXiv')).toBe(true)
+  expect(Object.values(out.items).some((i) => i.category === 'repo')).toBe(true)
 })
 
 test('인터넷이 끊겨도 저장된 항목은 그대로다', async () => {

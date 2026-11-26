@@ -24,43 +24,46 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
   const sources = activeSources(profile, state.settings, key !== '', state.boards)
   const on = new Set(sources.map((s) => s.name))
 
-  const incoming: RawItem[] = []
   // 꺼진 출처·지운 게시판·옛 이름의 오류는 지운다.
   const sourceErrors = Object.fromEntries(
     Object.entries(state.sourceErrors).filter(([name]) => on.has(name))
   )
   const boardKnown = { ...state.boardKnown }
-  // 출처 하나가 던져도 나머지는 계속한다. 출처는 await로 하나씩 차례로 돌린다. 꺼진 출처는 요청하지 않는다.
-  const run = async (name: string, job: () => Promise<RawItem[]>): Promise<void> => {
-    if (!on.has(name)) return
+  // 출처 하나가 던져도 나머지는 계속한다. 출처는 한꺼번에 시작한다. 꺼진 출처는 요청하지 않는다.
+  const run = async (name: string, job: () => Promise<RawItem[]>): Promise<RawItem[]> => {
+    if (!on.has(name)) return []
     try {
-      incoming.push(...(await job()))
+      const got = await job()
       delete sourceErrors[name]
+      return got
     } catch (e) {
       sourceErrors[name] = e instanceof Error ? e.message : String(e)
+      return []
     }
   }
 
-  await run('OpenAlex', async () =>
-    parseOpenAlex(await deps.fetchText(buildOpenAlexUrl(en, now, key)))
-  )
-  await run('arXiv', async () => parseArxiv(await deps.fetchText(buildArxivUrl(en))))
-  await run('GitHub', async () =>
-    parseTrending(await deps.fetchText(GITHUB_TRENDING_URL), now, state.settings.repoCount)
-  )
-  await run('Google News (KO)', async () =>
-    parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))
-  )
-  await run('Google News (EN)', async () =>
-    parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en')))
-  )
+  const runs = [
+    run('OpenAlex', async () =>
+      parseOpenAlex(await deps.fetchText(buildOpenAlexUrl(en, now, key)))
+    ),
+    run('arXiv', async () => parseArxiv(await deps.fetchText(buildArxivUrl(en)))),
+    run('GitHub', async () =>
+      parseTrending(await deps.fetchText(GITHUB_TRENDING_URL), now, state.settings.repoCount)
+    ),
+    run('Google News (KO)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))),
+    run('Google News (EN)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en'))))
+  ]
   for (const { name, board } of sources)
     if (board)
-      await run(name, async () => {
-        const read = await readBoard(board, deps.fetchText, boardKnown[board.id], now)
-        boardKnown[board.id] = read.known // 실패하면 이 줄에 오지 않아 본 글이 그대로 남는다
-        return read.fresh
-      })
+      runs.push(
+        run(name, async () => {
+          const read = await readBoard(board, deps.fetchText, boardKnown[board.id], now)
+          boardKnown[board.id] = read.known // 실패하면 이 줄에 오지 않아 본 글이 그대로 남는다
+          return read.fresh
+        })
+      )
+  // 같은 id는 먼저 온 것이 남으므로 끝나는 순서가 아니라 위의 순서대로 잇는다.
+  const incoming = (await Promise.all(runs)).flat()
 
   return {
     ...state,
