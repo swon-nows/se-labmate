@@ -54,6 +54,13 @@ export function hideItem(state: AppState, id: string): AppState {
   return { ...state, items: { ...state.items, [id]: item } }
 }
 
+// 숨김 취소: 숨기면서 푼 저장은 부른 쪽이 기억해 둔 값(saved)으로 되돌린다.
+export function unhideItem(state: AppState, id: string, saved: boolean): AppState {
+  if (!Object.hasOwn(state.items, id)) return state
+  const item = { ...state.items[id], hidden: false, saved }
+  return { ...state, items: { ...state.items, [id]: item } }
+}
+
 export function unseenCounts(state: AppState): Partial<Record<Category, number>> {
   const counts: Partial<Record<Category, number>> = {}
   for (const i of unseen(state)) counts[i.category] = (counts[i.category] ?? 0) + 1

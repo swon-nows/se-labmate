@@ -62,6 +62,7 @@ export function ItemRow(p: Props): React.JSX.Element {
 
   return (
     <li
+      data-id={item.id} // 숨김을 취소하면 이 줄의 제목으로 키보드 위치를 돌려준다
       className={leaving ? 'item is-leaving' : 'item'}
       style={{ '--i': p.order } as React.CSSProperties}
     >

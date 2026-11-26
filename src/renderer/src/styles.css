@@ -683,6 +683,24 @@ select.input {
   margin-top: 10px;
 }
 
+/* 숨긴 뒤 되돌리기: 화면 아래 가운데에 떠 있다. */
+.undo-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 .retry {
   margin-top: 8px;
 }

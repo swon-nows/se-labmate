@@ -20,6 +20,7 @@ export interface Api {
   getSaved(): Promise<Item[]>
   setSaved(id: string, saved: boolean): Promise<void>
   hide(id: string): Promise<void>
+  unhide(id: string, saved: boolean): Promise<void> // 숨김을 취소하고 저장 여부를 saved로 되돌린다
   refresh(): Promise<void> // 수집이 끝나면 resolve
   openItem(id: string): Promise<void> // 저장된 항목의 url이 isHttpUrl일 때만 shell.openExternal
   openHelp(which: 'openalex-key'): Promise<void> // https://openalex.org/settings/api

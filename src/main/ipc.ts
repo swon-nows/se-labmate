@@ -12,7 +12,7 @@ import type {
 import { readPosts } from './core/boards/index'
 import type { Post } from './core/boards/post'
 import type { FetchText } from './core/fetch-text'
-import { hasPast, hideItem, pastItems, savedItems, takeNew } from './core/feed'
+import { hasPast, hideItem, pastItems, savedItems, takeNew, unhideItem } from './core/feed'
 import {
   applyProfile,
   isSaveInput,
@@ -102,6 +102,12 @@ export function registerIpc(d: IpcDeps): void {
     if (typeof id !== 'string') return
     const s = d.getState()
     const next = hideItem(s, id)
+    if (next !== s) d.update(next)
+  })
+  ipcMain.handle('unhide', (_e, id: unknown, saved: unknown) => {
+    if (typeof id !== 'string' || typeof saved !== 'boolean') return
+    const s = d.getState()
+    const next = unhideItem(s, id, saved)
     if (next !== s) d.update(next)
   })
   ipcMain.handle('refresh', () => d.collectNow())

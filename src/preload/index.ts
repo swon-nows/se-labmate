@@ -13,6 +13,7 @@ const api: Api = {
   getSaved: () => ipcRenderer.invoke('getSaved'),
   setSaved: (id, saved) => ipcRenderer.invoke('setSaved', id, saved),
   hide: (id) => ipcRenderer.invoke('hide', id),
+  unhide: (id, saved) => ipcRenderer.invoke('unhide', id, saved),
   refresh: () => ipcRenderer.invoke('refresh'),
   openItem: (id) => ipcRenderer.invoke('openItem', id),
   openHelp: (which) => ipcRenderer.invoke('openHelp', which),

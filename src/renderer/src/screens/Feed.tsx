@@ -47,6 +47,8 @@ export function Feed({
   const [saved, setSaved] = useState<Item[] | null | 'failed'>(null)
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set())
   const [savedNow, setSavedNow] = useState<ReadonlyMap<string, boolean>>(new Map())
+  // 마지막으로 숨긴 항목과 숨기기 전의 저장 여부. 숨기면 저장도 풀리므로 되돌릴 때 이 값으로 돌린다.
+  const [lastHidden, setLastHidden] = useState<{ id: string; saved: boolean } | null>(null)
   // 아직 아무것도 모은 적이 없는가: 이번 새 소식 목록이 비었고 지난 소식도 없다.
   const [firstRun, setFirstRun] = useState<boolean | null>(null)
   const seq = useRef(0) // 가장 최근 takeNew만 load를 정한다
@@ -94,6 +96,7 @@ export function Feed({
       seq.current++
       sessionEmpty.current = true
       setSession([])
+      setLastHidden(null)
       setExpanded({})
       setLoad('pending')
       setTab('new')
@@ -122,6 +125,18 @@ export function Feed({
   useEffect(() => {
     if (visible) loadList(tab)
   }, [visible, visit, tab, loadList])
+
+  // 되돌리기 줄은 6초 뒤에 사라진다(탭을 바꿀 때와 창을 숨길 때도).
+  useEffect(() => {
+    if (!lastHidden) return
+    const t = window.setTimeout(() => setLastHidden(null), 6000)
+    return () => window.clearTimeout(t)
+  }, [lastHidden])
+
+  const switchTab = (t: Tab): void => {
+    setLastHidden(null)
+    setTab(t)
+  }
 
   const fresh = session.filter((i) => !hidden.has(i.id) && enabled[i.category])
   useEffect(() => {
@@ -153,15 +168,35 @@ export function Feed({
     mark(next)
     return window.api.setSaved(i.id, next).catch(() => mark(!next))
   }
-  const hide = (id: string): void => {
-    setHidden((h) => new Set(h).add(id))
-    window.api.hide(id).catch(() =>
-      setHidden((h) => {
-        const back = new Set(h)
-        back.delete(id)
-        return back
-      })
+  const withHidden = (id: string, on: boolean): void =>
+    setHidden((h) => {
+      const next = new Set(h)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  const hide = (i: Item): void => {
+    withHidden(i.id, true)
+    setLastHidden({ id: i.id, saved: isSaved(i) })
+    window.api.hide(i.id).catch(() => {
+      withHidden(i.id, false)
+      setLastHidden((u) => (u?.id === i.id ? null : u))
+    })
+  }
+  const undo = (): void => {
+    if (!lastHidden) return
+    const { id, saved } = lastHidden
+    flushSync(() => {
+      withHidden(id, false)
+      setSavedNow((m) => new Map(m).set(id, saved))
+      setLastHidden(null)
+    })
+    window.api.unhide(id, saved).catch(() => withHidden(id, true))
+    // 줄이 화면에 있으면 그 제목으로 키보드 위치를 돌려준다.
+    const li = [...document.querySelectorAll<HTMLElement>('li.item')].find(
+      (e) => e.dataset.id === id
     )
+    li?.querySelector<HTMLElement>('.item-title')?.focus()
   }
   // order: 들어오는 줄의 지연 순서(rowOrder). 20ms씩 늦춘다.
   const row = (i: Item, order: number): React.JSX.Element => (
@@ -171,7 +206,7 @@ export function Feed({
       saved={isSaved(i)}
       order={order}
       onToggleSave={() => toggleSave(i)}
-      onHide={() => hide(i.id)}
+      onHide={() => hide(i)}
     />
   )
 
@@ -268,7 +303,7 @@ export function Feed({
                 className="btn btn-small"
                 onClick={() => {
                   // 버튼이 사라져도 키보드 위치를 잃지 않게 Past 탭으로 옮긴다.
-                  flushSync(() => setTab('past'))
+                  flushSync(() => switchTab('past'))
                   document.getElementById(`${ids}-past`)?.focus()
                 }}
               >
@@ -318,7 +353,7 @@ export function Feed({
             role="tab"
             className="tab"
             aria-selected={tab === t}
-            onClick={() => (t === tab ? loadList(t) : setTab(t))}
+            onClick={() => (t === tab ? loadList(t) : switchTab(t))}
           >
             {label}
           </button>
@@ -333,6 +368,14 @@ export function Feed({
         {tab === 'new' && newItems()}
         {tab === 'past' && listItems(past, '지난 소식이 없습니다.')}
         {tab === 'saved' && listItems(saved, '저장한 항목이 없습니다.')}
+        {lastHidden && (
+          <div className="undo-bar" role="status">
+            <span>숨겼습니다.</span>
+            <button type="button" className="btn btn-small" onClick={undo}>
+              Undo
+            </button>
+          </div>
+        )}
       </div>
     </>
   )

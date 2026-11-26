@@ -5,6 +5,7 @@ import {
   pastItems,
   savedItems,
   takeNew,
+  unhideItem,
   unseenCounts
 } from '../../src/main/core/feed'
 import { NOW, mk, st } from '../helpers'
@@ -143,5 +144,23 @@ describe('hideItem', () => {
   test('없는 id나 상속된 이름이면 같은 상태를 그대로 돌려준다', () => {
     expect(hideItem(state, 'nope')).toBe(state)
     expect(hideItem(state, '__proto__')).toBe(state)
+  })
+
+  test('되돌리면 숨김과 저장이 그대로 돌아온다', () => {
+    const saved = unhideItem(hideItem(state, 's'), 's', true)
+    expect(saved.items.s).toEqual(state.items.s)
+    expect(savedItems(saved).map((i) => i.id)).toEqual(['s'])
+    const plain = unhideItem(hideItem(state, 'o'), 'o', false)
+    expect(plain.items.o).toEqual(state.items.o)
+  })
+
+  test('되돌릴 때 저장 여부는 넘긴 값을 따른다', () => {
+    const hidden = hideItem(state, 'o')
+    expect(unhideItem(hidden, 'o', true).items.o).toMatchObject({ hidden: false, saved: true })
+  })
+
+  test('되돌릴 때도 없는 id면 같은 상태를 그대로 돌려준다', () => {
+    expect(unhideItem(state, 'nope', true)).toBe(state)
+    expect(unhideItem(state, '__proto__', false)).toBe(state)
   })
 })
