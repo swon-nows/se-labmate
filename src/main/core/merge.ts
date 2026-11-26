@@ -1,5 +1,5 @@
 import { BUILTIN_BOARDS } from '../../shared/sources'
-import type { AppState, Item, RawItem } from '../../shared/types'
+import type { AppState, Category, Item, RawItem } from '../../shared/types'
 import { matchKeywords } from './text'
 
 const MAX_AGE_DAYS = 90
@@ -40,12 +40,34 @@ export function mergeIncoming(
   return out
 }
 
-// 날짜가 있는 출처는 mergeIncoming이 90일보다 오래된 항목을 받지 않아 180일 뒤 지운 항목이 다시 들어올 수 없다. 게시판 글(날짜 없으면 수집 시각)을 막는 것은 boardKnown이다.
+const KEEP_SEEN = 100 // Past가 카테고리마다 보여 주는 개수
+
+// 날짜가 있는 출처는 mergeIncoming이 90일보다 오래된 항목을 받지 않아 그런 본 항목은 지워도 돌아오지 않는다(90일 뒤 다시 뜨는 저장소는 새로 보인다). 카테고리마다 최근 100건은 Past가 보여 주므로 남긴다. 게시판 글(날짜 없으면 수집 시각)을 막는 것은 boardKnown이다.
 export function pruneOld(items: Record<string, Item>, now: string): Record<string, Item> {
-  const cutoff = Date.parse(now) - 180 * 86_400_000
+  const t = Date.parse(now)
+  const collected = t - 180 * 86_400_000
+  const dated = t - MAX_AGE_DAYS * 86_400_000
+  const taken: Partial<Record<Category, number>> = {}
+  const recent = new Set(
+    Object.values(items)
+      .filter((i) => i.seenAt !== null)
+      .sort(
+        (a, b) =>
+          Date.parse(b.seenAt as string) - Date.parse(a.seenAt as string) ||
+          Date.parse(b.date) - Date.parse(a.date)
+      )
+      .filter((i) => (taken[i.category] = (taken[i.category] ?? 0) + 1) <= KEEP_SEEN)
+      .map((i) => i.id)
+  )
   return Object.fromEntries(
     Object.entries(items).filter(
-      ([, i]) => !(i.seenAt !== null && !i.saved && Date.parse(i.collectedAt) < cutoff)
+      ([, i]) =>
+        i.seenAt === null ||
+        i.saved ||
+        !(
+          Date.parse(i.collectedAt) < collected ||
+          (Date.parse(i.date) < dated && !recent.has(i.id))
+        )
     )
   )
 }

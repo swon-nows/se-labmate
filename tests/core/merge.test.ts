@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { applyCollected, mergeIncoming, pruneOld } from '../../src/main/core/merge'
 import { score } from '../../src/main/core/relevance'
+import type { Item } from '../../src/shared/types'
 import { NOW, mk, raw, st } from '../helpers'
 
 const daysBefore = (n: number): string => new Date(Date.parse(NOW) - n * 86_400_000).toISOString()
@@ -131,6 +132,60 @@ test('pruneOld는 179일 된 것은 두고 181일 된 것은 뺀다', () => {
     NOW
   )
   expect(Object.keys(out)).toEqual(['keep'])
+})
+
+describe('pruneOld: 90일 넘은 본 항목은 카테고리마다 최근 100건만', () => {
+  // i번째가 가장 최근에 본 것: seenAt은 i일 전부터 거슬러 올라간다.
+  const many = (n: number, p: (i: number) => Parameters<typeof mk>[0]): Record<string, Item> =>
+    Object.fromEntries(
+      Array.from({ length: n }, (_, i) => {
+        const id = `paper:${i}`
+        return [id, mk({ id, seenAt: daysBefore(i + 1), ...p(i) })]
+      })
+    )
+  const oldDate = { date: daysBefore(100), collectedAt: daysBefore(100) }
+
+  test('날짜가 100일 된 본 논문 105건: 가장 먼저 본 5건이 빠지고 100건이 남는다', () => {
+    const out = pruneOld(
+      many(105, () => oldDate),
+      NOW
+    )
+    expect(Object.keys(out)).toHaveLength(100)
+    for (let i = 0; i < 100; i++) expect(out[`paper:${i}`]).toBeDefined()
+    for (let i = 100; i < 105; i++) expect(out[`paper:${i}`]).toBeUndefined()
+  })
+
+  test('가장 먼저 본 쪽에 있어도 저장한 항목과 아직 안 본 항목은 남는다', () => {
+    const items = {
+      ...many(105, (i) => ({ ...oldDate, saved: i === 104 })),
+      'paper:unseen': mk({ id: 'paper:unseen', seenAt: null, ...oldDate })
+    }
+    const out = pruneOld(items, NOW)
+    expect(out['paper:104']).toBeDefined()
+    expect(out['paper:unseen']).toBeDefined()
+    expect(Object.keys(out)).toHaveLength(102)
+  })
+
+  test('날짜가 80일 된 본 항목은 100건을 넘어도 모두 남는다', () => {
+    const out = pruneOld(
+      many(105, () => ({ date: daysBefore(80), collectedAt: daysBefore(80) })),
+      NOW
+    )
+    expect(Object.keys(out)).toHaveLength(105)
+  })
+
+  test('카테고리는 따로 센다', () => {
+    const items = {
+      ...many(100, () => oldDate),
+      ...Object.fromEntries(
+        Array.from({ length: 100 }, (_, i) => {
+          const id = `repo:${i}`
+          return [id, mk({ id, category: 'repo' as const, seenAt: daysBefore(i + 1), ...oldDate })]
+        })
+      )
+    }
+    expect(Object.keys(pruneOld(items, NOW))).toHaveLength(200)
+  })
 })
 
 test('정리된 항목은 181일 뒤 같은 id·같은 날짜로 다시 와도 들어오지 않는다', () => {
