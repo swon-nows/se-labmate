@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/feed.png" width="265" alt="새 논문 목록">
-  <img src="docs/images/repos.png" width="265" alt="한 주 인기 저장소">
-  <img src="docs/images/grants.png" width="265" alt="과제 공고">
+  <img src="docs/images/feed.png" width="31%" alt="새 논문 목록">
+  <img src="docs/images/repos.png" width="31%" alt="한 주 인기 저장소">
+  <img src="docs/images/grants.png" width="31%" alt="과제 공고">
 </p>
 
 ## 받기
