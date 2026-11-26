@@ -1,7 +1,7 @@
 // sandbox: true에서 preload는 'electron'만 require할 수 있다. 나머지는 타입만 가져온다.
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { CollectStatus } from '../shared/types'
+import type { CollectStatus, UpdateInfo } from '../shared/types'
 import type { Api } from './index.d'
 
 const api: Api = {
@@ -19,11 +19,19 @@ const api: Api = {
   previewBoard: (url) => ipcRenderer.invoke('previewBoard', url),
   addBoard: (input) => ipcRenderer.invoke('addBoard', input),
   removeBoard: (id) => ipcRenderer.invoke('removeBoard', id),
+  openUpdate: () => ipcRenderer.invoke('openUpdate'),
   onStatus: (cb) => {
     const listener = (_e: IpcRendererEvent, s: CollectStatus): void => cb(s)
     ipcRenderer.on('status', listener)
     return () => {
       ipcRenderer.removeListener('status', listener)
+    }
+  },
+  onUpdate: (cb) => {
+    const listener = (_e: IpcRendererEvent, u: UpdateInfo | null): void => cb(u)
+    ipcRenderer.on('update', listener)
+    return () => {
+      ipcRenderer.removeListener('update', listener)
     }
   },
   onWindowVisible: (cb) => {

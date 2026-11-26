@@ -6,7 +6,8 @@ import type {
   Item,
   PreviewResult,
   PublicState,
-  SaveResult
+  SaveResult,
+  UpdateInfo
 } from '../shared/types'
 import { readPosts } from './core/boards/index'
 import type { Post } from './core/boards/post'
@@ -25,6 +26,7 @@ export interface IpcDeps {
   setOpenAtLogin(open: boolean): void
   testNotification(): void
   fetchText: FetchText
+  updateInfo(): UpdateInfo | null
 }
 
 const encrypt = (key: string): string => {
@@ -47,7 +49,8 @@ export function registerIpc(d: IpcDeps): void {
       settings: s.settings,
       hasOpenAlexKey: s.openAlexKeyEnc !== null,
       status: d.status(),
-      boards: s.boards
+      boards: s.boards,
+      update: d.updateInfo()
     }
   })
 
@@ -102,6 +105,12 @@ export function registerIpc(d: IpcDeps): void {
 
   ipcMain.handle('openHelp', async (_e, which: unknown) => {
     if (which === 'openalex-key') await shell.openExternal('https://openalex.org/settings/api')
+  })
+
+  // 렌더러에서 받은 값 없이 main이 알고 있는 릴리스 주소만 연다.
+  ipcMain.handle('openUpdate', async () => {
+    const u = d.updateInfo()
+    if (u) await shell.openExternal(u.url)
   })
 
   ipcMain.handle('testNotification', () => d.testNotification())

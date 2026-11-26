@@ -2,12 +2,13 @@ import { app, BrowserWindow, dialog, Menu, nativeTheme, net, safeStorage } from 
 import type { MenuItemConstructorOptions } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import type { AppState, CollectStatus } from '../shared/types'
+import type { AppState, CollectStatus, UpdateInfo } from '../shared/types'
 import { collect } from './collector'
 import { createCollectRunner, markUnreadableKey } from './core/collect-runner'
 import { unseenCounts } from './core/feed'
 import { createFetchText } from './core/fetch-text'
 import { createTick } from './core/tick'
+import { newerRelease, RELEASES_API } from './core/update'
 import { isWindowOpen } from './core/visibility'
 import { registerIpc } from './ipc'
 import { notify } from './notify'
@@ -21,6 +22,7 @@ let closedToTray = true // 트레이로 닫혀 있는가. 창을 처음 보이�
 let sentVisible: boolean | null = null // 렌더러에 마지막으로 보낸 window-visible 값
 let state: AppState
 let file = ''
+let updateInfo: UpdateInfo | null = null
 
 // 저장이 실패하면 메모리 상태도 바꾸지 않는다.
 function update(next: AppState): void {
@@ -56,6 +58,19 @@ function showWindow(): void {
 
 function sendStatus(status: CollectStatus): void {
   if (win && !win.isDestroyed()) win.webContents.send('status', status)
+}
+
+// 실패(오프라인·HTTP 오류 등)는 조용히 넘기고 알려 둔 값을 그대로 둔다. 거부하지 않는다.
+async function checkUpdate(): Promise<void> {
+  try {
+    const body = await fetchText(RELEASES_API, { Accept: 'application/vnd.github+json' })
+    const found = newerRelease(app.getVersion(), body)
+    if (!found || found.version === updateInfo?.version) return
+    updateInfo = found
+    if (win && !win.isDestroyed()) win.webContents.send('update', updateInfo)
+  } catch {
+    // 다음 확인 때 다시 본다.
+  }
 }
 
 function decryptKey(enc: string | null): string | null {
@@ -223,7 +238,8 @@ function start(corruptBackup: string | null): void {
     windowVisible: windowOpen,
     setOpenAtLogin,
     testNotification: () => notify('알림 테스트입니다', showWindow),
-    fetchText
+    fetchText,
+    updateInfo: () => updateInfo
   })
   win = createWindow(atLogin)
   if (corruptBackup)
@@ -235,6 +251,8 @@ function start(corruptBackup: string | null): void {
     })
 
   void runner.collectNow()
+  void checkUpdate()
+  setInterval(() => void checkUpdate(), 6 * 60 * 60 * 1000) // 며칠씩 켜 두는 앱이라 하루에 몇 번 다시 본다
   startScheduler(
     createTick({
       getState,

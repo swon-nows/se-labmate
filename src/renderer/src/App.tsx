@@ -50,7 +50,12 @@ function App(): React.JSX.Element | null {
   )
   useEffect(() => {
     void load()
-    return window.api.onStatus((status) => setState((s) => (s ? { ...s, status } : s)))
+    const offStatus = window.api.onStatus((status) => setState((s) => (s ? { ...s, status } : s)))
+    const offUpdate = window.api.onUpdate((update) => setState((s) => (s ? { ...s, update } : s)))
+    return () => {
+      offStatus()
+      offUpdate()
+    }
   }, [load])
   // 창을 숨기거나 내리면 피드로 돌아간다. 다음에 열 때(알림을 눌렀을 때 등) 새 소식부터 보인다.
   useEffect(
@@ -96,6 +101,18 @@ function App(): React.JSX.Element | null {
         </div>
       </header>
       <main className="content">
+        {state.update && (
+          <div className="update-bar" role="status">
+            <span>{`새 버전이 나왔습니다 (${state.update.version}).`}</span>
+            <button
+              type="button"
+              className="btn btn-small"
+              onClick={() => void window.api.openUpdate()}
+            >
+              Download
+            </button>
+          </div>
+        )}
         {/* 설정을 다녀와도 이번 새 소식 목록이 남도록 피드는 숨기기만 한다. */}
         <div hidden={screen !== 'feed'}>
           <Feed

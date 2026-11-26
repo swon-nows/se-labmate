@@ -82,12 +82,17 @@ export interface CollectStatus {
   lastFinishedAt: string | null
   errors: Record<string, string>
 }
+export interface UpdateInfo {
+  version: string // 앞의 v를 뺀 새 버전
+  url: string // 릴리스 페이지
+}
 export interface PublicState {
   profile: Profile | null
   settings: Settings
   hasOpenAlexKey: boolean
   status: CollectStatus
   boards: Board[]
+  update: UpdateInfo | null
 }
 export interface SaveInput {
   profile: Profile
