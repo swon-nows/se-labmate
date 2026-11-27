@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { FIRST_READ_MAX, diffPosts } from '../../src/main/core/boards/diff'
 
 const now = new Date('2026-11-25T03:00:00Z')
@@ -101,4 +101,45 @@ test('목록에 여러 번 나오는 주소는 글을 가리지 못한다(모든
   expect(r1.known).not.toContain('https://a.b/feed')
   const r2 = diffPosts([post('c'), post('a'), post('b')], r1.known, now)
   expect(r2.fresh.map((p) => p.id)).toEqual(['c'])
+})
+
+describe('일정 목록(upcoming)', () => {
+  test('처음 읽을 때는 다가오는 행사를 가까운 순으로 보이고, 모든 글을 기록한다', () => {
+    const posts = [
+      s('past', at(-day)),
+      s('d2', at(2 * day)),
+      s('d400', at(400 * day)),
+      s('d40', at(40 * day)),
+      s('undated', null)
+    ]
+    const { fresh, known } = diffPosts(posts, undefined, now, true)
+    expect(fresh.map((p) => p.id)).toEqual(['d2', 'd40', 'd400'])
+    expect(known).toEqual(expect.arrayContaining(posts.flatMap((p) => [p.id, p.url])))
+    expect(known).toHaveLength(10)
+  })
+
+  test('다가오는 행사가 많으면 가까운 10건만', () => {
+    const posts = Array.from({ length: 12 }, (_, i) => s('f' + i, at((12 - i) * day)))
+    expect(diffPosts(posts, undefined, now, true).fresh.map((p) => p.id)).toEqual(
+      Array.from({ length: 10 }, (_, i) => 'f' + (11 - i))
+    )
+  })
+
+  test('지금과 같은 날짜는 다가오는 행사가 아니다', () => {
+    expect(
+      diffPosts([s('now', at(0)), s('soon', at(1))], undefined, now, true).fresh.map((p) => p.id)
+    ).toEqual(['soon'])
+  })
+
+  test('그다음부터는 플래그가 있어도 처음 보는 글만', () => {
+    const first = diffPosts([s('a', at(day)), s('b', at(-day))], undefined, now, true)
+    const next = [s('c', at(-5 * day)), s('a', at(day)), s('b', at(-day))]
+    expect(diffPosts(next, first.known, now, true).fresh.map((p) => p.id)).toEqual(['c'])
+    expect(diffPosts(next, first.known, now).fresh.map((p) => p.id)).toEqual(['c'])
+  })
+
+  test('플래그가 없으면 처음 읽기는 그대로다', () => {
+    const posts = [s('past', at(-day)), s('d2', at(2 * day))]
+    expect(diffPosts(posts, undefined, now).fresh.map((p) => p.id)).toEqual(['past'])
+  })
 })

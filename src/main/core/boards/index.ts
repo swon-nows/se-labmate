@@ -34,7 +34,8 @@ export async function readBoard(
   board: Board,
   fetchText: FetchText,
   known: string[] | undefined,
-  now: Date
+  now: Date,
+  upcoming = false
 ): Promise<{ fresh: RawItem[]; known: string[] }> {
   const grant = board.category === 'grant'
   const posts = (await readPosts(board.url, fetchText))
@@ -43,7 +44,7 @@ export async function readBoard(
       id: grant ? `grant:${normalizeTitle(p.title)}` : `board:${board.id}:${p.key}`
     }))
     .filter((p) => p.id !== 'grant:')
-  const diff = diffPosts(posts, known, now)
+  const diff = diffPosts(posts, known, now, upcoming)
   return {
     fresh: diff.fresh.map((p) => ({
       id: p.id,

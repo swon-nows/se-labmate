@@ -11,7 +11,8 @@ export interface Seen {
 export function diffPosts<T extends Seen>(
   all: T[],
   known: string[] | undefined,
-  now: Date
+  now: Date,
+  upcoming = false
 ): { fresh: T[]; known: string[] } {
   // known은 글마다 id와 url 둘을 담으므로, 새 글 판별과 기록을 같은 앞쪽 글로만 해야
   // 600개를 넘는 목록이 읽을 때마다 새 글로 되풀이되지 않는다.
@@ -24,12 +25,20 @@ export function diffPosts<T extends Seen>(
   let fresh: T[]
   // 빈 기록도 처음 읽는 것이다: 빈 목록을 먼저 읽고 저장한 뒤 옛 글이 한꺼번에 새 글로 쏟아지지 않게 한다.
   if (known === undefined || known.length === 0) {
-    const since = now.getTime() - FIRST_READ_DAYS * 864e5
-    const until = now.getTime() + 864e5 // 마감일이 글 날짜로 읽힌 먼 미래는 최근 글이 아니다
-    fresh = posts
-      .filter((p) => ms(p) >= since && ms(p) <= until)
-      .sort((a, b) => ms(b) - ms(a))
-      .slice(0, FIRST_READ_MAX)
+    // 일정 목록의 날짜는 행사일이라 처음에는 다가오는 행사를 보인다.
+    if (upcoming) {
+      fresh = posts
+        .filter((p) => ms(p) > now.getTime())
+        .sort((a, b) => ms(a) - ms(b))
+        .slice(0, FIRST_READ_MAX)
+    } else {
+      const since = now.getTime() - FIRST_READ_DAYS * 864e5
+      const until = now.getTime() + 864e5 // 마감일이 글 날짜로 읽힌 먼 미래는 최근 글이 아니다
+      fresh = posts
+        .filter((p) => ms(p) >= since && ms(p) <= until)
+        .sort((a, b) => ms(b) - ms(a))
+        .slice(0, FIRST_READ_MAX)
+    }
   } else {
     const have = new Set(known)
     fresh = posts.filter((p) => !keys(p).some((k) => have.has(k)))

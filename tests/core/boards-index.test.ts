@@ -130,3 +130,15 @@ test('readBoard: 처음 읽을 때는 최근 날짜의 글만 새 글이고, 모
     expect.arrayContaining(['board:b1:g1', 'https://a.b/1', 'board:b1:g2', 'https://a.b/2'])
   )
 })
+
+test('readBoard: upcoming이면 처음 읽을 때 먼 미래 날짜의 글도 새 글이다', async () => {
+  const rss = `<rss><channel>
+    <item><title>2027 총회</title><link>https://a.b/1</link><guid>g1</guid><pubDate>Tue, 01 Jun 2027 00:00:00 GMT</pubDate></item>
+  </channel></rss>`
+  const board = { id: 'b1', name: '일정', url: 'https://a.b/feed', category: 'conference' as const }
+  const without = await readBoard(board, fake(rss), undefined, NOW)
+  const upcoming = await readBoard(board, fake(rss), undefined, NOW, true)
+  expect(without.fresh).toEqual([])
+  expect(upcoming.fresh.map((i) => i.id)).toEqual(['board:b1:g1'])
+  expect(upcoming.fresh[0].date).toBe('2027-06-01T00:00:00.000Z')
+})
