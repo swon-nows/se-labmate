@@ -32,6 +32,36 @@ test('takeNew는 보이는 미확인만 묶어 주고 확인 처리한다', () =
   expect(unseenCounts(state)).toEqual({ paper: 1, repo: 1 })
 })
 
+test('News 묶음은 키워드 뉴스와 GeekNews를 번갈아 놓는다(각자의 순서는 그대로)', () => {
+  const day = (d: number): string => new Date(Date.parse(NOW) - d * 864e5).toISOString()
+  const n = (
+    id: string,
+    d: number,
+    p: Partial<Parameters<typeof mk>[0]> = {}
+  ): ReturnType<typeof mk> => mk({ id, category: 'news', date: day(d), ...p })
+  const state = st({
+    items: {
+      'geeknews:1': n('geeknews:1', 0),
+      'geeknews:2': n('geeknews:2', 1),
+      'geeknews:3': n('geeknews:3', 2),
+      'news:a': n('news:a', 3, { title: 'xai', matched: ['xai'] }),
+      'news:b': n('news:b', 5),
+      'paper:p': mk({ id: 'paper:p' })
+    }
+  })
+  const news = takeNew(state, NOW).groups.find((g) => g.category === 'news')
+  expect(news?.items.map((i) => i.id)).toEqual([
+    'news:a',
+    'geeknews:1',
+    'news:b',
+    'geeknews:2',
+    'geeknews:3'
+  ])
+  // GeekNews만 있거나 없으면 점수 순서 그대로
+  const only = st({ items: { 'geeknews:1': n('geeknews:1', 2), 'geeknews:2': n('geeknews:2', 0) } })
+  expect(takeNew(only, NOW).groups[0].items.map((i) => i.id)).toEqual(['geeknews:2', 'geeknews:1'])
+})
+
 describe('takeNew 정렬', () => {
   test('묶음 안은 score 높은 순, 같으면 날짜 최신순', () => {
     const state = st({

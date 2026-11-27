@@ -11,14 +11,29 @@ const byDateDesc = (a: Item, b: Item): number => Date.parse(b.date) - Date.parse
 const unseen = (state: AppState): Item[] =>
   Object.values(state.items).filter((i) => i.seenAt === null && isVisible(i, state.settings))
 
+// GeekNews는 키워드와 무관해 점수로는 키워드 뉴스와 견줄 수 없다: 어느 쪽도 묻히지 않게 번갈아 놓는다(키워드 뉴스 먼저, 각자의 순서는 그대로).
+function alternate(sorted: Item[]): Item[] {
+  const geek = sorted.filter((i) => i.id.startsWith('geeknews:'))
+  if (geek.length === 0 || geek.length === sorted.length) return sorted
+  const rest = sorted.filter((i) => !i.id.startsWith('geeknews:'))
+  const out: Item[] = []
+  for (let k = 0; k < Math.max(rest.length, geek.length); k++) {
+    if (k < rest.length) out.push(rest[k])
+    if (k < geek.length) out.push(geek[k])
+  }
+  return out
+}
+
 export function takeNew(state: AppState, now: string): { state: AppState; groups: FeedGroup[] } {
   const at = new Date(now)
   const fresh = unseen(state)
   const groups = CATEGORIES.map((category) => ({
     category,
-    items: fresh
-      .filter((i) => i.category === category)
-      .sort((a, b) => score(b, at) - score(a, at) || byDateDesc(a, b))
+    items: alternate(
+      fresh
+        .filter((i) => i.category === category)
+        .sort((a, b) => score(b, at) - score(a, at) || byDateDesc(a, b))
+    )
   })).filter((g) => g.items.length > 0)
   const items = { ...state.items }
   for (const g of groups) for (const i of g.items) items[i.id] = { ...i, seenAt: now }
