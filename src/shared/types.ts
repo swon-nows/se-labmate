@@ -52,6 +52,7 @@ export interface Settings {
   enabled: Record<Category, boolean>
   repoCount: number // 한 주 인기 저장소를 몇 개 가져올지
   conferenceFields: ConferenceField[] // 학회 소식을 받을 분야
+  geekNews: boolean // GeekNews(개발·기술 뉴스)의 새 글을 News에 넣을지
 }
 export type BoardCategory = 'grant' | 'conference' | 'school'
 export const BOARD_CATEGORIES: BoardCategory[] = ['school', 'conference', 'grant']

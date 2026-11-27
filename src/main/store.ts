@@ -21,7 +21,8 @@ export function defaultState(): AppState {
       openAtLogin: true,
       enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
       repoCount: DEFAULT_REPO_COUNT,
-      conferenceFields: []
+      conferenceFields: [],
+      geekNews: false
     },
     openAlexKeyEnc: null,
     items: {},
@@ -48,16 +49,17 @@ function isState(v: unknown): v is AppState {
   )
 }
 
-// 저장된 repoCount가 1~MAX_REPO_COUNT의 정수가 아니거나 conferenceFields가 알려진 분야의 배열이 아니면(옛 파일에는 둘 다 없다) 기본값으로 바꿔 늘 쓸 수 있는 값을 둔다.
+// 저장된 repoCount가 1~MAX_REPO_COUNT의 정수가 아니거나 conferenceFields가 알려진 분야의 배열이 아니거나 geekNews가 boolean이 아니면(옛 파일에는 셋 다 없다) 기본값으로 바꿔 늘 쓸 수 있는 값을 둔다.
 function withDefaults(state: AppState): AppState {
-  const { repoCount: n, conferenceFields: f } = state.settings
+  const { repoCount: n, conferenceFields: f, geekNews: g } = state.settings
   const fieldsOk = Array.isArray(f) && f.every((x) => CONFERENCE_FIELDS.includes(x))
   return {
     ...state,
     settings: {
       ...state.settings,
       repoCount: Number.isInteger(n) && n >= 1 && n <= MAX_REPO_COUNT ? n : DEFAULT_REPO_COUNT,
-      conferenceFields: fieldsOk ? f : []
+      conferenceFields: fieldsOk ? f : [],
+      geekNews: typeof g === 'boolean' ? g : false
     }
   }
 }

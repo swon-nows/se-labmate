@@ -23,6 +23,7 @@ import {
   BUILTIN_BOARDS,
   FIELD_BOARDS,
   FIXED_SOURCE_NAMES,
+  GEEKNEWS_URL,
   activeSources,
   allFailed,
   allUnreachable,
@@ -82,7 +83,8 @@ describe('activeSources', () => {
     openAtLogin: true,
     enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
     repoCount: 10,
-    conferenceFields: []
+    conferenceFields: [],
+    geekNews: false
   }
   const off = (c: Category): Settings => ({
     ...settings,
@@ -109,9 +111,10 @@ describe('activeSources', () => {
     )
   })
   it('게시판이 아닌 출처의 이름은 모두 FIXED_SOURCE_NAMES에 있다', () => {
-    const withAi: Settings = { ...settings, conferenceFields: ['ai'] }
-    const fixed = activeSources(profile, withAi, true, [school]).filter((s) => !s.board)
+    const all: Settings = { ...settings, conferenceFields: ['ai'], geekNews: true }
+    const fixed = activeSources(profile, all, true, [school]).filter((s) => !s.board)
     expect(fixed.map((s) => s.name)).toContain('CCF Deadlines')
+    expect(fixed.map((s) => s.name)).toContain('GeekNews')
     for (const s of fixed) expect(FIXED_SOURCE_NAMES).toContain(s.name)
   })
   it('키가 없으면 OpenAlex가 빠진다', () => {
@@ -252,6 +255,51 @@ describe('activeSources', () => {
         expect(got.filter((s) => s.board?.id === mine.id)).toHaveLength(1)
         expect(got.at(-1)?.board).toBe(mine)
         expect(got.filter((s) => s.board).length).toBe(2 + structural.length) // 하나 빠지고 하나 더해진다
+      }
+    })
+  })
+
+  describe('GeekNews', () => {
+    const on: Settings = { ...settings, geekNews: true }
+    const other: Profile = { ...profile, country: 'OTHER' }
+    const myBoard = (over: Partial<Board>): Board => ({
+      id: 'u1',
+      name: '내 뉴스',
+      url: 'https://a.b/n',
+      category: 'school',
+      ...over
+    })
+
+    it('기본은 꺼짐: 출처에 없다', () => {
+      expect(names(profile, settings, true)).not.toContain('GeekNews')
+    })
+    it('켜면 Google News (EN) 바로 뒤, CCF Deadlines 앞에 온다', () => {
+      expect(names(other, on, true)).toEqual([
+        'OpenAlex',
+        'arXiv',
+        'GitHub',
+        'Google News (EN)',
+        'GeekNews'
+      ])
+      expect(names(profile, { ...on, conferenceFields: ['ai'] }, true).slice(3, 9)).toEqual([
+        'Google News (KO)',
+        'Google News (EN)',
+        'GeekNews',
+        'CCF Deadlines',
+        'IRIS',
+        '한국연구재단'
+      ])
+      const got = activeSources(profile, on, true, []).find((s) => s.name === 'GeekNews')
+      expect(got).toEqual({ name: 'GeekNews', category: 'news' })
+    })
+    it('News를 끄면 빠진다', () => {
+      expect(names(profile, { ...off('news'), geekNews: true }, true)).not.toContain('GeekNews')
+    })
+    it('사용자가 같은 이름이나 같은 주소의 게시판을 등록했으면 고정 출처는 빠진다', () => {
+      for (const mine of [myBoard({ name: 'GeekNews' }), myBoard({ url: GEEKNEWS_URL })]) {
+        const got = activeSources(profile, on, true, [mine])
+        expect(got.filter((s) => !s.board).map((s) => s.name)).not.toContain('GeekNews')
+        expect(got.filter((s) => s.board?.id === mine.id)).toHaveLength(1)
       }
     })
   })

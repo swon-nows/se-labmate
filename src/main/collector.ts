@@ -1,4 +1,4 @@
-import { FIELD_BOARDS, activeSources } from '../shared/sources'
+import { FIELD_BOARDS, GEEKNEWS_URL, activeSources } from '../shared/sources'
 import type { AppState, RawItem } from '../shared/types'
 import { isEventTitle } from './core/boards/events'
 import { readBoard } from './core/boards/index'
@@ -6,6 +6,7 @@ import type { FetchText } from './core/fetch-text'
 import { mergeIncoming, pruneOld } from './core/merge'
 import { buildArxivUrl, parseArxiv } from './core/sources/arxiv'
 import { DEADLINES_URL, parseDeadlines } from './core/sources/deadlines'
+import { parseGeekNews } from './core/sources/geeknews'
 import { GITHUB_TRENDING_URL, parseTrending } from './core/sources/github'
 import { buildGnewsUrl, parseGnews } from './core/sources/gnews'
 import { buildOpenAlexUrl, parseOpenAlex } from './core/sources/openalex'
@@ -54,6 +55,7 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
     ),
     run('Google News (KO)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))),
     run('Google News (EN)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en')))),
+    run('GeekNews', async () => parseGeekNews(await deps.fetchText(GEEKNEWS_URL), now)),
     run('CCF Deadlines', async () =>
       parseDeadlines(await deps.fetchText(DEADLINES_URL), now, ['AI'])
     )

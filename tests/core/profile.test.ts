@@ -17,7 +17,8 @@ const settings: Settings = {
   openAtLogin: true,
   enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
   repoCount: 10,
-  conferenceFields: []
+  conferenceFields: [],
+  geekNews: false
 }
 const base = { profile, settings }
 
@@ -105,6 +106,8 @@ describe('isSaveInput', () => {
     ['문자열 repoCount', { ...base, settings: { ...settings, repoCount: '7' } }],
     ['conferenceFields 없음', { ...base, settings: { ...settings, conferenceFields: undefined } }],
     ['문자열 conferenceFields', { ...base, settings: { ...settings, conferenceFields: 'ai' } }],
+    ['geekNews 없음', { ...base, settings: { ...settings, geekNews: undefined } }],
+    ['문자열 geekNews', { ...base, settings: { ...settings, geekNews: 'yes' } }],
     ['enabled 키 빠짐', { ...base, settings: { ...settings, enabled: missingPaper } }],
     ['숫자 openAlexKey', { ...base, openAlexKey: 1 }],
     [
@@ -131,6 +134,10 @@ describe('applyProfile', () => {
   test('conferenceFields를 저장한다', () => {
     const input = { ...base, settings: { ...settings, conferenceFields: ['ai' as const] } }
     expect(applyProfile(st(), input, enc, NOW).settings.conferenceFields).toEqual(['ai'])
+  })
+  test('geekNews를 저장한다', () => {
+    const input = { ...base, settings: { ...settings, geekNews: true } }
+    expect(applyProfile(st(), input, enc, NOW).settings.geekNews).toBe(true)
   })
   test('기존 프로필을 고치면 lastDailyRunAt을 그대로 둔다', () => {
     const before = st({ profile, lastDailyRunAt: '2026-11-01T00:00:00.000Z' })
@@ -225,6 +232,20 @@ describe('needsCollect: 학회 분야', () => {
     expect(needsCollect(withFields(['ai']), withFields(['ai', 'structural']))).toBe(true)
     expect(needsCollect(withFields(['ai']), withFields(['ai']))).toBe(false)
     expect(needsCollect(before, withFields([]))).toBe(false)
+  })
+})
+
+describe('needsCollect: GeekNews', () => {
+  const before = st({ profile, settings })
+  const withGeekNews = (geekNews: boolean): ReturnType<typeof st> => ({
+    ...before,
+    settings: { ...settings, geekNews }
+  })
+  test('켜거나 끄면 수집하고, 같으면 수집하지 않는다', () => {
+    expect(needsCollect(before, withGeekNews(true))).toBe(true)
+    expect(needsCollect(withGeekNews(true), withGeekNews(false))).toBe(true)
+    expect(needsCollect(withGeekNews(true), withGeekNews(true))).toBe(false)
+    expect(needsCollect(before, withGeekNews(false))).toBe(false)
   })
 })
 

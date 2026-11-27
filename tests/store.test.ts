@@ -72,6 +72,24 @@ test.each([
   expect(loadState(f).settings.conferenceFields).toEqual(expected)
 })
 
+test('기본 상태에서는 GeekNews가 꺼져 있다', () => {
+  expect(defaultState().settings.geekNews).toBe(false)
+})
+
+// geekNews가 없거나 boolean이 아닌 v2 파일(옛 버전이 쓴 파일, 손으로 고친 파일)은 꺼진 것으로 읽힌다.
+test.each([
+  ['없으면', undefined, false],
+  ['true면 그대로', true, true],
+  ['false면 그대로', false, false],
+  ['문자열 "yes"는', 'yes', false],
+  ['null은', null, false]
+])('v2 파일의 geekNews가 %s', (_, stored, expected) => {
+  const f = join(tmp(), 'state.v2.json')
+  const s = defaultState()
+  writeFileSync(f, JSON.stringify({ ...s, settings: { ...s.settings, geekNews: stored } }))
+  expect(loadState(f).settings.geekNews).toBe(expected)
+})
+
 test('repoCount와 conferenceFields가 둘 다 틀려도 둘 다 고쳐 읽는다', () => {
   const f = join(tmp(), 'state.v2.json')
   const s = defaultState()
@@ -165,8 +183,13 @@ const v1State = (): Record<string, unknown> => {
   const v1: Record<string, unknown> = {
     ...defaultState(),
     version: 1,
-    // 옛 파일에는 repoCount와 conferenceFields가 없다
-    settings: { ...defaultState().settings, repoCount: undefined, conferenceFields: undefined },
+    // 옛 파일에는 repoCount, conferenceFields, geekNews가 없다
+    settings: {
+      ...defaultState().settings,
+      repoCount: undefined,
+      conferenceFields: undefined,
+      geekNews: undefined
+    },
     profile: { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' },
     openAlexKeyEnc: 'ZW5j',
     lastDailyRunAt: NOW,
@@ -214,6 +237,7 @@ test('v2 파일이 없으면 옛 v1 파일을 메모리에서만 v2로 옮기고
   expect(s.items['paper:b']).toMatchObject({ summary: 'abstract…' })
   expect(s.settings.repoCount).toBe(10)
   expect(s.settings.conferenceFields).toEqual([])
+  expect(s.settings.geekNews).toBe(false)
   expect(s.items['paper:b'].venue).toBeUndefined()
   expect(readFileSync(old).equals(bytes)).toBe(true)
   expect(readdirSync(dir).sort()).toEqual(['state.json'])

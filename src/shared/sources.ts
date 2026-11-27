@@ -127,6 +127,8 @@ export const FIELD_BOARDS: FieldBoard[] = [
 ]
 export const ALL_BUILTIN_BOARDS: Board[] = [...BUILTIN_BOARDS, ...FIELD_BOARDS]
 
+export const GEEKNEWS_URL = 'https://news.hada.io/rss/news'
+
 // 게시판이 아닌 출처의 이름. 사용자 게시판 이름이 이것과 겹치면 안 된다.
 export const FIXED_SOURCE_NAMES = [
   'OpenAlex',
@@ -134,6 +136,7 @@ export const FIXED_SOURCE_NAMES = [
   'GitHub',
   'Google News (KO)',
   'Google News (EN)',
+  'GeekNews',
   'CCF Deadlines'
 ]
 
@@ -159,12 +162,17 @@ export function activeSources(
       // 사용자가 같은 게시판을 이미 등록했으면 겹치지 않게 뺀다.
       !boards.some((u) => u.url === b.url || u.name === b.name)
   )
+  const geekNews =
+    settings.geekNews &&
+    // 사용자가 같은 것을 이미 등록했으면 겹치지 않게 뺀다.
+    !boards.some((u) => u.url === GEEKNEWS_URL || u.name === 'GeekNews')
   const all: (Source | false)[] = [
     hasOpenAlexKey && { name: 'OpenAlex', category: 'paper' },
     { name: 'arXiv', category: 'paper' },
     { name: 'GitHub', category: 'repo' },
     kr && profile.keywordsKo.length > 0 && { name: 'Google News (KO)', category: 'news' },
     { name: 'Google News (EN)', category: 'news' },
+    geekNews && { name: 'GeekNews', category: 'news' },
     fields.includes('ai') && { name: 'CCF Deadlines', category: 'conference' },
     ...[...(kr ? BUILTIN_BOARDS : []), ...fieldBoards, ...boards].map((board) => ({
       name: board.name,

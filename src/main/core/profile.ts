@@ -67,6 +67,7 @@ export function isSaveInput(x: unknown): x is SaveInput {
     typeof s.openAtLogin === 'boolean' &&
     typeof s.repoCount === 'number' &&
     isStrings(s.conferenceFields) &&
+    typeof s.geekNews === 'boolean' &&
     isObject(enabled) &&
     CATEGORIES.every((c) => typeof enabled[c] === 'boolean') &&
     (k === undefined || k === null || typeof k === 'string')
@@ -83,7 +84,7 @@ export function applyProfile(
 ): AppState {
   const key = input.openAlexKey === null ? '' : input.openAlexKey?.trim()
   const { keywordsEn, keywordsKo, country } = input.profile
-  const { notifyTime, openAtLogin, enabled, repoCount, conferenceFields } = input.settings
+  const { notifyTime, openAtLogin, enabled, repoCount, conferenceFields, geekNews } = input.settings
   // 렌더러가 보낸 그 밖의 키는 저장하지 않는다.
   return {
     ...state,
@@ -93,7 +94,8 @@ export function applyProfile(
       openAtLogin,
       enabled: Object.fromEntries(CATEGORIES.map((c) => [c, enabled[c]])) as Settings['enabled'],
       repoCount,
-      conferenceFields
+      conferenceFields,
+      geekNews
     },
     openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
     lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt
@@ -114,6 +116,7 @@ export function needsCollect(before: AppState, next: AppState): boolean {
     CATEGORIES.some((c) => s.enabled[c] !== next.settings.enabled[c]) ||
     s.repoCount !== next.settings.repoCount ||
     !sameList(s.conferenceFields, next.settings.conferenceFields) ||
+    s.geekNews !== next.settings.geekNews ||
     before.openAlexKeyEnc !== next.openAlexKeyEnc
   )
 }

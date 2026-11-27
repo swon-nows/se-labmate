@@ -10,7 +10,7 @@ import { validateBoard } from '../src/main/core/profile'
 import { DEADLINES_URL } from '../src/main/core/sources/deadlines'
 import { GITHUB_TRENDING_URL } from '../src/main/core/sources/github'
 import { defaultState, loadState, saveState } from '../src/main/store'
-import { BUILTIN_BOARDS, FIELD_BOARDS } from '../src/shared/sources'
+import { BUILTIN_BOARDS, FIELD_BOARDS, GEEKNEWS_URL } from '../src/shared/sources'
 import type { AppState, ConferenceField, Profile } from '../src/shared/types'
 import { NOW, mk, st } from './helpers'
 
@@ -23,7 +23,8 @@ const FILE: Record<string, string> = {
   'www.nrf.re.kr': 'boards/nrf.html',
   'architecture.snu.ac.kr': 'boards/snu-daae.json',
   'cse.snu.ac.kr': 'boards/cse-snu.html',
-  'ccfddl.com': 'ccf-deadlines.json'
+  'ccfddl.com': 'ccf-deadlines.json',
+  'news.hada.io': 'geeknews.xml'
 }
 
 // bodies: 호스트 → 그 호스트가 돌려줄 본문(fixture 대신)
@@ -604,5 +605,41 @@ describe('학회 분야', () => {
       ['fib', 'Commission 7 meeting']
     ])
     expect(out.boardKnown[fib.id]).toHaveLength(4)
+  })
+})
+
+describe('GeekNews', () => {
+  const withGeekNews = (geekNews: boolean): AppState =>
+    st({
+      profile: { ...PROFILE, country: 'OTHER' },
+      settings: { ...defaultState().settings, geekNews }
+    })
+  const geek = (s: AppState): AppState['items'][string][] =>
+    Object.values(s.items).filter((i) => i.source === 'GeekNews')
+
+  test('켜면 피드를 한 번 요청해 News에 스무 건을 저장하고, 다시 수집하면 더하지 않는다', async () => {
+    const d = deps()
+    const out = await collect(withGeekNews(true), d)
+    expect(d.calls.filter((u) => u === GEEKNEWS_URL)).toHaveLength(1)
+    expect(d.calls.filter((u) => new URL(u).hostname === 'news.hada.io')).toHaveLength(1)
+    expect(geek(out)).toHaveLength(20)
+    expect(geek(out).every((i) => i.category === 'news')).toBe(true)
+    expect(out.sourceErrors).toEqual({})
+    const again = await collect(out, deps())
+    expect(Object.keys(again.items).sort()).toEqual(Object.keys(out.items).sort())
+  })
+
+  test('꺼져 있으면 news.hada.io를 요청하지 않는다', async () => {
+    const d = deps()
+    const out = await collect(withGeekNews(false), d)
+    expect(d.calls.some((u) => new URL(u).hostname === 'news.hada.io')).toBe(false)
+    expect(geek(out)).toEqual([])
+  })
+
+  test('실패하면 그 출처의 오류만 남고 나머지는 온다', async () => {
+    const out = await collect(withGeekNews(true), deps({ fail: ['news.hada.io'] }))
+    expect(out.sourceErrors).toEqual({ GeekNews: 'network down' })
+    expect(geek(out)).toEqual([])
+    expect(Object.values(out.items).some((i) => i.category === 'paper')).toBe(true)
   })
 })
