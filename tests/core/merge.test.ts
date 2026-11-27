@@ -215,6 +215,13 @@ test('score 순서', () => {
     score(mk({ date: '2026-10-01T00:00:00.000Z' }), now)
   )
   expect(score(mk({ stars: 1200 }), now)).toBeGreaterThan(score(mk({ stars: 3 }), now))
+  // 앞날(행사일): 가까운 행사가 먼 행사보다 위, 1년보다 먼 행사는 30일 지난 글과 같다
+  const ahead = (d: number): number =>
+    score(mk({ date: new Date(now.getTime() + d * 864e5).toISOString() }), now)
+  expect(ahead(5)).toBeGreaterThan(ahead(200))
+  expect(ahead(200)).toBeGreaterThan(ahead(400))
+  expect(ahead(400)).toBe(score(mk({ date: '2026-10-01T00:00:00.000Z' }), now))
+  expect(score(mk({ date: NOW }), now)).toBeGreaterThan(ahead(5))
 })
 
 test('한 주 인기 저장소는 이번 주에 받은 별이 많을수록 높고, 별 합계·일치 키워드와 무관하다', () => {

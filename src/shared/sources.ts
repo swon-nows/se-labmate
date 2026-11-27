@@ -20,6 +20,7 @@ export interface FieldBoard extends Board {
   field: ConferenceField
   kr: boolean // 국내 학회 게시판: Region이 Korea일 때만 읽는다
   kind: 'notices' | 'calendar'
+  prefix?: string // 목록이 제목 앞에 붙이는 분류 이름. 떼고 보인다
 }
 
 export const FIELD_BOARDS: FieldBoard[] = [
@@ -39,7 +40,8 @@ export const FIELD_BOARDS: FieldBoard[] = [
     category: 'conference',
     field: 'structural',
     kr: true,
-    kind: 'notices'
+    kind: 'notices',
+    prefix: '학술행사'
   },
   {
     id: 'conf-kssc',

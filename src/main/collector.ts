@@ -60,7 +60,12 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
   ]
   for (const { name, board } of sources)
     if (board) {
-      const kind = FIELD_BOARDS.find((f) => f.id === board.id)?.kind
+      const { kind, prefix } = FIELD_BOARDS.find((f) => f.id === board.id) ?? {}
+      // 목록이 제목 앞에 붙인 분류 이름은 떼고 나서 제목을 본다(붙은 채로는 모든 글이 행사 글로 읽힌다).
+      const bare = (i: RawItem): RawItem =>
+        prefix && i.title.startsWith(prefix + ' ')
+          ? { ...i, title: i.title.slice(prefix.length + 1) }
+          : i
       runs.push(
         run(name, async () => {
           const read = await readBoard(
@@ -72,7 +77,9 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
           )
           boardKnown[board.id] = read.known // 실패하면 이 줄에 오지 않아 본 글이 그대로 남는다
           // 거른 글도 읽은 글이다(known에 있다): 다음에 다시 새 글로 오지 않는다.
-          return kind === 'notices' ? read.fresh.filter((i) => isEventTitle(i.title)) : read.fresh
+          return kind === 'notices'
+            ? read.fresh.map(bare).filter((i) => isEventTitle(i.title))
+            : read.fresh
         })
       )
     }

@@ -22,7 +22,13 @@ test.each([
   ['2026년 제5회 한국강구조학회장배 당구대회 개최 (26.12.05)', false],
   ['[부고] 전남대학교 김선후 교수 부친상', false],
   ['장기미납회원 재가입', false],
-  ['Adrian Rodriguez-Marek Selected as 2027 Joyner Lecturer', false]
+  ['Adrian Rodriguez-Marek Selected as 2027 Joyner Lecturer', false],
+  ['2026 한국공간구조학회 추계학술발표대회 출장 협조의뢰 건(공문 다운로드)', false],
+  ['2026 가을 학술대회 참가확인서 발급안내', false],
+  ['2026 추계학술발표대회 숙박 장소 추천 리스트 (부산)', false],
+  ['가을 학술대회기간 주문도서 택배발송 중지 안내(11/2~11/9)', false],
+  ['2026 가을 학술대회 프로그램 안내', true],
+  ['미래 공동주택 활성화 포럼(11/24)', true]
 ])('%s → %s', (title, keep) => {
   expect(isEventTitle(title)).toBe(keep)
 })

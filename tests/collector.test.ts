@@ -547,6 +547,26 @@ describe('학회 분야', () => {
     expect(conferences(third)).toEqual([])
   })
 
+  test('분류 이름이 제목 앞에 붙는 게시판(대한건축학회)은 그것을 떼고 보이고, 뗀 제목으로 거른다', async () => {
+    const aik = structural.find((b) => b.id === 'conf-aik') as (typeof structural)[number]
+    const h = host(aik.url)
+    const body = feed(h, [
+      ['학술행사 제39회 AIK 월례세미나', RECENT],
+      ['학술행사 제22회 건축의날 기념식 안내', RECENT],
+      ['학술행사장 대관 세미나실 안내', RECENT]
+    ])
+    const out = await collect(
+      withFields(['structural'], 'KR'),
+      deps({ bodies: { ...answers(structural), [h]: body } })
+    )
+    expect(
+      conferences(out)
+        .filter((i) => i.source === '대한건축학회')
+        .map((i) => i.title)
+        .sort()
+    ).toEqual(['제39회 AIK 월례세미나', '학술행사장 대관 세미나실 안내'].sort())
+  })
+
   test('사용자가 등록한 게시판은 제목을 거르지 않는다', async () => {
     const url = 'https://society.example/feed'
     const board = {
