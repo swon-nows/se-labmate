@@ -22,6 +22,14 @@ export function relativeDate(iso: string, now: Date): string {
   return isoDate(iso)
 }
 
+// 마감까지 남은 날. 지났으면 Closed.
+export function dday(iso: string, now: Date): string {
+  const left = Date.parse(iso) - now.getTime()
+  if (left < 0) return 'Closed'
+  const days = Math.floor(left / 864e5)
+  return days === 0 ? 'D-day' : `D-${days}`
+}
+
 export function formatStars(n: number): string {
   return n < 1000 ? String(n) : `${(n / 1000).toFixed(1)}k`
 }

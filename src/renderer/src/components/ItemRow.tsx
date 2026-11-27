@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { Item } from '../../../shared/types'
-import { formatStars, isoDate, paperChips, plainMath, relativeDate } from '../format'
+import { dday, formatStars, isoDate, paperChips, plainMath, relativeDate } from '../format'
 
 interface Props {
   item: Item
@@ -23,8 +23,9 @@ export function ItemRow(p: Props): React.JSX.Element {
   const parts: string[] = []
   if (!isPaper) {
     parts.push(item.source)
-    // 한 주 인기 저장소의 날짜는 수집한 시각일 뿐이라 보이지 않는다.
-    if (item.weekStars === undefined) parts.push(relativeDate(item.date, new Date()))
+    // 한 주 인기 저장소의 날짜는 수집한 시각일 뿐이라 보이지 않는다. 학회 마감 항목은 날짜 대신 마감까지 남은 날을 보인다.
+    if (item.deadline !== undefined) parts.push(dday(item.deadline, new Date()))
+    else if (item.weekStars === undefined) parts.push(relativeDate(item.date, new Date()))
     if (item.category === 'repo' && item.stars !== undefined)
       parts.push(`★${formatStars(item.stars)}`)
     if (item.weekStars !== undefined) parts.push(`+${formatStars(item.weekStars)} this week`)

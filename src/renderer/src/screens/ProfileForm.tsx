@@ -1,6 +1,18 @@
 import { useState } from 'react'
-import { CATEGORIES, CATEGORY_LABEL, MAX_REPO_COUNT } from '../../../shared/types'
-import type { Category, Profile, PublicState, SaveInput } from '../../../shared/types'
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  CONFERENCE_FIELDS,
+  CONFERENCE_FIELD_LABEL,
+  MAX_REPO_COUNT
+} from '../../../shared/types'
+import type {
+  Category,
+  ConferenceField,
+  Profile,
+  PublicState,
+  SaveInput
+} from '../../../shared/types'
 import { KeywordField } from '../components/KeywordField'
 import { keywordList, longKeywords } from '../format'
 
@@ -34,6 +46,7 @@ export function ProfileForm({
   const [notifyTime, setNotifyTime] = useState(settings.notifyTime)
   const [openAtLogin, setOpenAtLogin] = useState(settings.openAtLogin)
   const [enabled, setEnabled] = useState(settings.enabled)
+  const [fields, setFields] = useState(settings.conferenceFields)
   const [errors, setErrors] = useState<string[]>([])
   const [pending, setPending] = useState(false)
   const [notified, setNotified] = useState(false)
@@ -53,7 +66,14 @@ export function ProfileForm({
         country
       },
       // 범위는 여기서 검사하지 않는다. 틀린 값은 저장할 때 오류로 돌아와 아래 목록에 보인다.
-      settings: { ...settings, repoCount: Number(repoCount), notifyTime, openAtLogin, enabled }
+      settings: {
+        ...settings,
+        repoCount: Number(repoCount),
+        notifyTime,
+        openAtLogin,
+        enabled,
+        conferenceFields: fields
+      }
     }
     // 입력 없음은 유지, 삭제 표시는 null. 공백뿐인 입력은 입력으로 치지 않는다(서버는 공백뿐인 키를 삭제로 본다).
     if (typedKey) input.openAlexKey = keyText
@@ -79,6 +99,9 @@ export function ProfileForm({
 
   const toggleCategory = (c: Category, on: boolean): void =>
     setEnabled((prev) => ({ ...prev, [c]: on }))
+
+  const toggleField = (f: ConferenceField, on: boolean): void =>
+    setFields((prev) => CONFERENCE_FIELDS.filter((x) => (x === f ? on : prev.includes(x))))
 
   return (
     <form className="form" onSubmit={(e) => void submit(e)} noValidate>
@@ -202,6 +225,27 @@ export function ProfileForm({
         </p>
       </div>
 
+      <fieldset className="field group">
+        <legend>Conference fields</legend>
+        {CONFERENCE_FIELDS.map((f) => (
+          <label key={f} className="check">
+            <input
+              type="checkbox"
+              checked={fields.includes(f)}
+              onChange={(e) => toggleField(f, e.target.checked)}
+            />
+            <span>{CONFERENCE_FIELD_LABEL[f]}</span>
+          </label>
+        ))}
+        <p className="hint">
+          AI : 주요 AI 학회의 논문 마감이 90일 안으로 다가오면 알려 줍니다.
+          <br />
+          Structural engineering : 국내 구조·건축 학회 8곳과 fib, EERI의 학술행사 공지를 가져옵니다.
+          <br />
+          국내 학회 공지는 Region이 Korea일 때만 가져옵니다.
+        </p>
+      </fieldset>
+
       {showCategories && (
         <fieldset className="field group">
           <legend>Categories</legend>
@@ -216,8 +260,9 @@ export function ProfileForm({
             </label>
           ))}
           <p className="hint">
-            Grants는 Region이 Korea일 때 IRIS와 한국연구재단의 신규 공고를 가져옵니다. Conferences와
-            School은 아래 Boards에 등록한 주소에서 가져옵니다.
+            Grants는 Region이 Korea일 때 IRIS와 한국연구재단의 신규 공고를 가져옵니다. Conferences는
+            위에서 고른 분야와 아래 Boards에 등록한 주소에서, School은 Boards에 등록한 주소에서
+            가져옵니다.
           </p>
         </fieldset>
       )}

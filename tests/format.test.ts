@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { cleanKeywords } from '../src/main/core/text'
 import {
   currentToken,
+  dday,
   feedCategories,
   formatStars,
   hasKeyword,
@@ -49,6 +50,20 @@ describe('relativeDate', () => {
   it('미래 날짜는 오늘이 아니라 날짜로 보인다', () => {
     expect(relativeDate(at(2026, 10, 25, 9, 0), now)).toBe('2026-11-25')
     expect(relativeDate(at(2027, 0, 5, 12, 0), now)).toBe('2027-01-05')
+  })
+})
+
+describe('dday', () => {
+  const deadline = '2027-01-23T11:59:59.000Z'
+  const before = (ms: number): Date => new Date(Date.parse(deadline) - ms)
+  it('마감 직전은 D-day, 하루 전은 D-1, 56일 3시간 전은 D-56', () => {
+    expect(dday(deadline, before(1))).toBe('D-day')
+    expect(dday(deadline, before(0))).toBe('D-day')
+    expect(dday(deadline, before(864e5))).toBe('D-1')
+    expect(dday(deadline, before(56 * 864e5 + 3 * 36e5))).toBe('D-56')
+  })
+  it('마감이 1밀리초라도 지났으면 Closed', () => {
+    expect(dday(deadline, before(-1))).toBe('Closed')
   })
 })
 
