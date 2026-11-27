@@ -52,6 +52,36 @@ test.each([
   expect(loadState(f).settings.repoCount).toBe(expected)
 })
 
+test('기본 상태에서는 고른 학회 분야가 없다', () => {
+  expect(defaultState().settings.conferenceFields).toEqual([])
+})
+
+// conferenceFields가 없거나 틀린 v2 파일(옛 버전이 쓴 파일, 손으로 고친 파일)도 늘 올바른 값으로 읽힌다.
+test.each([
+  ['없으면', undefined, []],
+  ['["ai"]면 그대로', ['ai'], ['ai']],
+  ['두 분야면 그대로', ['ai', 'structural'], ['ai', 'structural']],
+  ['["x"]는', ['x'], []],
+  ['["ai", "x"]는', ['ai', 'x'], []],
+  ['문자열 "ai"는', 'ai', []],
+  ['null은', null, []]
+])('v2 파일의 conferenceFields가 %s', (_, stored, expected) => {
+  const f = join(tmp(), 'state.v2.json')
+  const s = defaultState()
+  writeFileSync(f, JSON.stringify({ ...s, settings: { ...s.settings, conferenceFields: stored } }))
+  expect(loadState(f).settings.conferenceFields).toEqual(expected)
+})
+
+test('repoCount와 conferenceFields가 둘 다 틀려도 둘 다 고쳐 읽는다', () => {
+  const f = join(tmp(), 'state.v2.json')
+  const s = defaultState()
+  writeFileSync(
+    f,
+    JSON.stringify({ ...s, settings: { ...s.settings, repoCount: 99, conferenceFields: ['x'] } })
+  )
+  expect(loadState(f).settings).toMatchObject({ repoCount: 10, conferenceFields: [] })
+})
+
 test('저장하고 다시 읽기', () => {
   const f = join(tmp(), 'state.json')
   const s = st({
@@ -135,7 +165,8 @@ const v1State = (): Record<string, unknown> => {
   const v1: Record<string, unknown> = {
     ...defaultState(),
     version: 1,
-    settings: { ...defaultState().settings, repoCount: undefined }, // 옛 파일에는 repoCount가 없다
+    // 옛 파일에는 repoCount와 conferenceFields가 없다
+    settings: { ...defaultState().settings, repoCount: undefined, conferenceFields: undefined },
     profile: { keywordsEn: ['xai'], keywordsKo: [], country: 'KR' },
     openAlexKeyEnc: 'ZW5j',
     lastDailyRunAt: NOW,
@@ -182,6 +213,7 @@ test('v2 파일이 없으면 옛 v1 파일을 메모리에서만 v2로 옮기고
   })
   expect(s.items['paper:b']).toMatchObject({ summary: 'abstract…' })
   expect(s.settings.repoCount).toBe(10)
+  expect(s.settings.conferenceFields).toEqual([])
   expect(s.items['paper:b'].venue).toBeUndefined()
   expect(readFileSync(old).equals(bytes)).toBe(true)
   expect(readdirSync(dir).sort()).toEqual(['state.json'])

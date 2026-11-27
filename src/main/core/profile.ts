@@ -1,9 +1,16 @@
-import { BUILTIN_BOARDS, FIXED_SOURCE_NAMES } from '../../shared/sources'
-import { BOARD_CATEGORIES, CATEGORIES, MAX_BOARDS, MAX_REPO_COUNT } from '../../shared/types'
+import { ALL_BUILTIN_BOARDS, BUILTIN_BOARDS, FIXED_SOURCE_NAMES } from '../../shared/sources'
+import {
+  BOARD_CATEGORIES,
+  CATEGORIES,
+  CONFERENCE_FIELDS,
+  MAX_BOARDS,
+  MAX_REPO_COUNT
+} from '../../shared/types'
 import type {
   AppState,
   Board,
   BoardCategory,
+  ConferenceField,
   Profile,
   SaveInput,
   Settings
@@ -12,6 +19,9 @@ import { boardId } from './boards/index'
 import { cleanKeywords, isHttpUrl } from './text'
 
 const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/
+
+const isFields = (v: unknown): v is ConferenceField[] =>
+  Array.isArray(v) && v.every((f) => CONFERENCE_FIELDS.includes(f as ConferenceField))
 
 export function validateProfile(input: {
   profile: Profile
@@ -26,11 +36,17 @@ export function validateProfile(input: {
   const n = input.settings.repoCount
   if (!Number.isInteger(n) || n < 1 || n > MAX_REPO_COUNT)
     errors.push(`Trending repos는 1~${MAX_REPO_COUNT} 사이의 정수여야 합니다.`)
+  const fields = input.settings.conferenceFields
+  if (!isFields(fields)) errors.push('Conference fields 값이 올바르지 않습니다.')
   if (errors.length > 0) return { ok: false, errors }
   return {
     ok: true,
     profile: { ...input.profile, keywordsEn, keywordsKo },
-    settings: input.settings
+    // 중복 없이 정해진 순서로
+    settings: {
+      ...input.settings,
+      conferenceFields: CONFERENCE_FIELDS.filter((f) => fields.includes(f))
+    }
   }
 }
 
@@ -50,6 +66,7 @@ export function isSaveInput(x: unknown): x is SaveInput {
     typeof s.notifyTime === 'string' &&
     typeof s.openAtLogin === 'boolean' &&
     typeof s.repoCount === 'number' &&
+    isStrings(s.conferenceFields) &&
     isObject(enabled) &&
     CATEGORIES.every((c) => typeof enabled[c] === 'boolean') &&
     (k === undefined || k === null || typeof k === 'string')
@@ -66,7 +83,7 @@ export function applyProfile(
 ): AppState {
   const key = input.openAlexKey === null ? '' : input.openAlexKey?.trim()
   const { keywordsEn, keywordsKo, country } = input.profile
-  const { notifyTime, openAtLogin, enabled, repoCount } = input.settings
+  const { notifyTime, openAtLogin, enabled, repoCount, conferenceFields } = input.settings
   // 렌더러가 보낸 그 밖의 키는 저장하지 않는다.
   return {
     ...state,
@@ -75,7 +92,8 @@ export function applyProfile(
       notifyTime,
       openAtLogin,
       enabled: Object.fromEntries(CATEGORIES.map((c) => [c, enabled[c]])) as Settings['enabled'],
-      repoCount
+      repoCount,
+      conferenceFields
     },
     openAlexKeyEnc: key === undefined ? state.openAlexKeyEnc : key === '' ? null : encrypt(key),
     lastDailyRunAt: state.profile === null ? now : state.lastDailyRunAt
@@ -95,11 +113,12 @@ export function needsCollect(before: AppState, next: AppState): boolean {
     p.country !== next.profile.country ||
     CATEGORIES.some((c) => s.enabled[c] !== next.settings.enabled[c]) ||
     s.repoCount !== next.settings.repoCount ||
+    !sameList(s.conferenceFields, next.settings.conferenceFields) ||
     before.openAlexKeyEnc !== next.openAlexKeyEnc
   )
 }
 
-const RESERVED_NAMES = [...FIXED_SOURCE_NAMES, ...BUILTIN_BOARDS.map((b) => b.name)]
+const RESERVED_NAMES = [...FIXED_SOURCE_NAMES, ...ALL_BUILTIN_BOARDS.map((b) => b.name)]
 
 // 출처 이름은 오류 표시의 키라서 겹치면 안 된다.
 export function validateBoard(

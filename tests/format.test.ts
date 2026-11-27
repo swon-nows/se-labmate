@@ -20,11 +20,13 @@ import {
 import { KEYWORD_SUGGESTIONS } from '../src/shared/keyword-suggestions'
 import {
   BUILTIN_BOARDS,
+  FIELD_BOARDS,
   FIXED_SOURCE_NAMES,
   activeSources,
   allFailed,
   allUnreachable,
-  sourceErrorText
+  sourceErrorText,
+  type FieldBoard
 } from '../src/shared/sources'
 import type { Board, Category, Profile, Settings, UpdateInfo } from '../src/shared/types'
 
@@ -64,7 +66,8 @@ describe('activeSources', () => {
     notifyTime: '09:00',
     openAtLogin: true,
     enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
-    repoCount: 10
+    repoCount: 10,
+    conferenceFields: []
   }
   const off = (c: Category): Settings => ({
     ...settings,
@@ -91,8 +94,9 @@ describe('activeSources', () => {
     )
   })
   it('게시판이 아닌 출처의 이름은 모두 FIXED_SOURCE_NAMES에 있다', () => {
-    const fixed = activeSources(profile, settings, true, [school]).filter((s) => !s.board)
-    expect(fixed.length).toBeGreaterThan(0)
+    const withAi: Settings = { ...settings, conferenceFields: ['ai'] }
+    const fixed = activeSources(profile, withAi, true, [school]).filter((s) => !s.board)
+    expect(fixed.map((s) => s.name)).toContain('CCF Deadlines')
     for (const s of fixed) expect(FIXED_SOURCE_NAMES).toContain(s.name)
   })
   it('키가 없으면 OpenAlex가 빠진다', () => {
@@ -148,6 +152,131 @@ describe('activeSources', () => {
     ])
     expect(names(profile, off('school'), true, [school, conf]).slice(-1)).toEqual(['학회'])
     expect(names(profile, off('conference'), true, [school, conf]).slice(-1)).toEqual(['학과'])
+  })
+
+  describe('학회 분야', () => {
+    const fields = (conferenceFields: Settings['conferenceFields']): Settings => ({
+      ...settings,
+      conferenceFields
+    })
+    const other: Profile = { ...profile, country: 'OTHER' }
+    const structural = FIELD_BOARDS.filter((b) => b.field === 'structural')
+    const NEWS = ['Google News (KO)', 'Google News (EN)']
+
+    it('분야를 고르지 않으면 CCF Deadlines도 분야 게시판도 없다', () => {
+      const all = names(profile, settings, true)
+      expect(all).not.toContain('CCF Deadlines')
+      for (const b of FIELD_BOARDS) expect(all).not.toContain(b.name)
+    })
+    it('AI: CCF Deadlines가 Google News (EN) 바로 뒤에 온다', () => {
+      expect(names(other, fields(['ai']), true)).toEqual([
+        'OpenAlex',
+        'arXiv',
+        'GitHub',
+        'Google News (EN)',
+        'CCF Deadlines'
+      ])
+      expect(names(profile, fields(['ai']), true).slice(3, 8)).toEqual([
+        ...NEWS,
+        'CCF Deadlines',
+        'IRIS',
+        '한국연구재단'
+      ])
+      const ccf = activeSources(profile, fields(['ai']), true, []).find(
+        (s) => s.name === 'CCF Deadlines'
+      )
+      expect(ccf).toEqual({ name: 'CCF Deadlines', category: 'conference' })
+    })
+    it('Structural engineering: 한국이면 그 분야의 모든 게시판, 그 외 국가면 국내 학회를 뺀다', () => {
+      const kr = activeSources(profile, fields(['structural']), true, []).filter((s) => s.board)
+      expect(kr.map((s) => s.name)).toEqual([
+        'IRIS',
+        '한국연구재단',
+        ...structural.map((b) => b.name)
+      ])
+      expect(kr.slice(2).map((s) => [s.board?.id, s.category])).toEqual(
+        structural.map((b) => [b.id, 'conference'])
+      )
+      expect(
+        activeSources(other, fields(['structural']), true, [])
+          .filter((s) => s.board)
+          .map((s) => s.name)
+      ).toEqual(['fib', 'EERI'])
+      expect(names(profile, fields(['structural']), true)).not.toContain('CCF Deadlines')
+    })
+    it('AI는 한국이면 한국인공지능학회 게시판도 읽고, 그 외 국가면 CCF Deadlines만', () => {
+      expect(names(profile, fields(['ai']), true).slice(-3)).toEqual([
+        'IRIS',
+        '한국연구재단',
+        '한국인공지능학회'
+      ])
+      expect(names(other, fields(['ai']), true)).not.toContain('한국인공지능학회')
+    })
+    it('두 분야를 모두 고르면 FIELD_BOARDS 순서대로', () => {
+      expect(
+        names(profile, fields(['ai', 'structural']), true).slice(-FIELD_BOARDS.length)
+      ).toEqual(FIELD_BOARDS.map((b) => b.name))
+    })
+    it('Conferences를 끄면 분야 출처도 빠진다', () => {
+      expect(
+        names(profile, { ...off('conference'), conferenceFields: ['ai', 'structural'] }, true)
+      ).toEqual(['OpenAlex', 'arXiv', 'GitHub', ...NEWS, 'IRIS', '한국연구재단'])
+    })
+    it('사용자가 같은 주소나 같은 이름의 게시판을 등록했으면 그 게시판만 남는다', () => {
+      const kssc = FIELD_BOARDS.find((b) => b.id === 'conf-kssc') as FieldBoard
+      const sameUrl: Board = { id: 'u1', name: '내 강구조', url: kssc.url, category: 'school' }
+      const sameName: Board = {
+        id: 'u2',
+        name: kssc.name,
+        url: 'https://a.b/k',
+        category: 'conference'
+      }
+      for (const mine of [sameUrl, sameName]) {
+        const got = activeSources(profile, fields(['structural']), true, [mine])
+        expect(got.filter((s) => s.board?.id === kssc.id)).toEqual([])
+        expect(got.filter((s) => s.board?.id === mine.id)).toHaveLength(1)
+        expect(got.at(-1)?.board).toBe(mine)
+        expect(got.filter((s) => s.board).length).toBe(2 + structural.length) // 하나 빠지고 하나 더해진다
+      }
+    })
+  })
+
+  describe('FIELD_BOARDS', () => {
+    it('표와 같다: 순서와 분야별 개수', () => {
+      expect(FIELD_BOARDS.map((b) => b.id)).toEqual([
+        'conf-kaia',
+        'conf-aik',
+        'conf-kssc',
+        'conf-kci',
+        'conf-coseik',
+        'conf-eesk',
+        'conf-ksmi',
+        'conf-kasss',
+        'conf-ksce',
+        'conf-fib',
+        'conf-eeri'
+      ])
+      expect(FIELD_BOARDS.filter((b) => b.field === 'ai')).toHaveLength(1)
+      expect(FIELD_BOARDS.filter((b) => b.field === 'structural')).toHaveLength(10)
+      expect(FIELD_BOARDS.filter((b) => !b.kr).map((b) => b.id)).toEqual(['conf-fib', 'conf-eeri'])
+      expect(FIELD_BOARDS.filter((b) => b.kind === 'calendar').map((b) => b.id)).toEqual([
+        'conf-fib'
+      ])
+    })
+    it('id와 이름은 겹치지 않고, 기본 출처의 이름과도 다르며, 주소는 정규형 http(s)다', () => {
+      const ids = FIELD_BOARDS.map((b) => b.id)
+      const fieldNames = FIELD_BOARDS.map((b) => b.name)
+      expect(new Set(ids).size).toBe(ids.length)
+      expect(new Set(fieldNames).size).toBe(fieldNames.length)
+      const taken = [...FIXED_SOURCE_NAMES, ...BUILTIN_BOARDS.map((b) => b.name)]
+      for (const b of FIELD_BOARDS) {
+        expect(b.id.startsWith('conf-')).toBe(true)
+        expect(b.category).toBe('conference')
+        expect(taken).not.toContain(b.name)
+        expect(['https:', 'http:']).toContain(new URL(b.url).protocol)
+        expect(new URL(b.url).href).toBe(b.url)
+      }
+    })
   })
 })
 

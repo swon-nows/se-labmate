@@ -9,7 +9,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { DEFAULT_REPO_COUNT, MAX_REPO_COUNT } from '../shared/types'
+import { CONFERENCE_FIELDS, DEFAULT_REPO_COUNT, MAX_REPO_COUNT } from '../shared/types'
 import type { AppState } from '../shared/types'
 
 export function defaultState(): AppState {
@@ -20,7 +20,8 @@ export function defaultState(): AppState {
       notifyTime: '09:00',
       openAtLogin: true,
       enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
-      repoCount: DEFAULT_REPO_COUNT
+      repoCount: DEFAULT_REPO_COUNT,
+      conferenceFields: []
     },
     openAlexKeyEnc: null,
     items: {},
@@ -47,11 +48,18 @@ function isState(v: unknown): v is AppState {
   )
 }
 
-// 저장된 repoCount가 1~MAX_REPO_COUNT의 정수가 아니면(옛 파일에는 없다) 기본값으로 바꿔 늘 쓸 수 있는 값을 둔다.
+// 저장된 repoCount가 1~MAX_REPO_COUNT의 정수가 아니거나 conferenceFields가 알려진 분야의 배열이 아니면(옛 파일에는 둘 다 없다) 기본값으로 바꿔 늘 쓸 수 있는 값을 둔다.
 function withDefaults(state: AppState): AppState {
-  const n = state.settings.repoCount
-  if (Number.isInteger(n) && n >= 1 && n <= MAX_REPO_COUNT) return state
-  return { ...state, settings: { ...state.settings, repoCount: DEFAULT_REPO_COUNT } }
+  const { repoCount: n, conferenceFields: f } = state.settings
+  const fieldsOk = Array.isArray(f) && f.every((x) => CONFERENCE_FIELDS.includes(x))
+  return {
+    ...state,
+    settings: {
+      ...state.settings,
+      repoCount: Number.isInteger(n) && n >= 1 && n <= MAX_REPO_COUNT ? n : DEFAULT_REPO_COUNT,
+      conferenceFields: fieldsOk ? f : []
+    }
+  }
 }
 
 // v1 → v2(메모리에서만): OpenAlex의 저널 이름을 summary에서 venue로 옮긴다.

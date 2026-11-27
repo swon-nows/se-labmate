@@ -16,7 +16,8 @@ const settings: Settings = {
   notifyTime: '09:00',
   openAtLogin: true,
   enabled: { paper: true, repo: true, news: true, grant: true, conference: true, school: true },
-  repoCount: 10
+  repoCount: 10,
+  conferenceFields: []
 }
 const base = { profile, settings }
 
@@ -44,6 +45,30 @@ describe('validateProfile', () => {
   test.each([1, 25])('Trending repos가 %s이면 통과한다', (repoCount) => {
     expect(validateProfile({ ...base, settings: { ...base.settings, repoCount } })).toMatchObject({
       ok: true
+    })
+  })
+  test('Conference fields는 알려진 분야만 받고, 중복을 없애 정해진 순서로 돌려준다', () => {
+    const fields = (conferenceFields: unknown): ReturnType<typeof validateProfile> =>
+      validateProfile({
+        ...base,
+        settings: {
+          ...base.settings,
+          conferenceFields: conferenceFields as Settings['conferenceFields']
+        }
+      })
+    expect(fields(['ai', 'x'])).toEqual({
+      ok: false,
+      errors: ['Conference fields 값이 올바르지 않습니다.']
+    })
+    for (const bad of ['ai', undefined, null, [1]])
+      expect(fields(bad)).toEqual({
+        ok: false,
+        errors: ['Conference fields 값이 올바르지 않습니다.']
+      })
+    expect(fields([])).toMatchObject({ ok: true, settings: { conferenceFields: [] } })
+    expect(fields(['structural', 'ai', 'ai'])).toMatchObject({
+      ok: true,
+      settings: { conferenceFields: ['ai', 'structural'] }
     })
   })
   test('오류는 한꺼번에 모아 돌려준다', () => {
@@ -78,6 +103,8 @@ describe('isSaveInput', () => {
     ['openAtLogin이 boolean이 아님', { ...base, settings: { ...settings, openAtLogin: 'yes' } }],
     ['repoCount 없음', { ...base, settings: { ...settings, repoCount: undefined } }],
     ['문자열 repoCount', { ...base, settings: { ...settings, repoCount: '7' } }],
+    ['conferenceFields 없음', { ...base, settings: { ...settings, conferenceFields: undefined } }],
+    ['문자열 conferenceFields', { ...base, settings: { ...settings, conferenceFields: 'ai' } }],
     ['enabled 키 빠짐', { ...base, settings: { ...settings, enabled: missingPaper } }],
     ['숫자 openAlexKey', { ...base, openAlexKey: 1 }],
     [
@@ -100,6 +127,10 @@ describe('applyProfile', () => {
   test('repoCount를 저장한다', () => {
     const out = applyProfile(st(), { ...base, settings: { ...settings, repoCount: 4 } }, enc, NOW)
     expect(out.settings.repoCount).toBe(4)
+  })
+  test('conferenceFields를 저장한다', () => {
+    const input = { ...base, settings: { ...settings, conferenceFields: ['ai' as const] } }
+    expect(applyProfile(st(), input, enc, NOW).settings.conferenceFields).toEqual(['ai'])
   })
   test('기존 프로필을 고치면 lastDailyRunAt을 그대로 둔다', () => {
     const before = st({ profile, lastDailyRunAt: '2026-11-01T00:00:00.000Z' })
@@ -182,6 +213,21 @@ describe('needsCollect', () => {
   })
 })
 
+describe('needsCollect: 학회 분야', () => {
+  const before = st({ profile, settings })
+  const withFields = (conferenceFields: Settings['conferenceFields']): ReturnType<typeof st> => ({
+    ...before,
+    settings: { ...settings, conferenceFields }
+  })
+  test('고른 분야가 바뀌면 수집하고, 같으면 수집하지 않는다', () => {
+    expect(needsCollect(before, withFields(['ai']))).toBe(true)
+    expect(needsCollect(withFields(['ai']), withFields([]))).toBe(true)
+    expect(needsCollect(withFields(['ai']), withFields(['ai', 'structural']))).toBe(true)
+    expect(needsCollect(withFields(['ai']), withFields(['ai']))).toBe(false)
+    expect(needsCollect(before, withFields([]))).toBe(false)
+  })
+})
+
 describe('validateBoard', () => {
   const board = (i: number): Board => ({
     id: `b${i}`,
@@ -244,6 +290,17 @@ describe('validateBoard', () => {
       '한국연구재단'
     ])
       expect(err({ ...input, name })).toBe(E)
+  })
+  test('분야 게시판과 같은 이름은 거부하고, 같은 주소는 받는다', () => {
+    expect(err({ ...input, name: '한국강구조학회' })).toBe('이미 쓰고 있는 이름입니다.')
+    expect(err({ ...input, name: 'EERI' })).toBe('이미 쓰고 있는 이름입니다.')
+    expect(err({ ...input, name: 'fib' })).toBe('이미 쓰고 있는 이름입니다.')
+    expect(err({ ...input, name: 'CCF Deadlines' })).toBe('이미 쓰고 있는 이름입니다.')
+    const url = 'https://www.kssc.or.kr/welcome.do'
+    expect(validateBoard({ ...input, url, category: 'conference' }, [])).toMatchObject({
+      ok: true,
+      board: { url, category: 'conference' }
+    })
   })
   test('등록된 게시판이나 기본 과제 공고와 같은 주소는 거부', () => {
     const E = '이미 등록된 주소입니다.'

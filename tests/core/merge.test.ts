@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { applyCollected, mergeIncoming, pruneOld } from '../../src/main/core/merge'
 import { score } from '../../src/main/core/relevance'
+import { FIELD_BOARDS } from '../../src/shared/sources'
 import type { Item } from '../../src/shared/types'
 import { NOW, mk, raw, st } from '../helpers'
 
@@ -77,11 +78,19 @@ describe('mergeIncoming', () => {
   test('새 항목의 초기값', () => {
     const it = mergeIncoming(
       {},
-      [raw({ id: 'paper:b', title: 'XAI for bridges', summary: 'structural analysis' })],
+      [
+        raw({
+          id: 'paper:b',
+          title: 'XAI for bridges',
+          summary: 'structural analysis',
+          deadline: '2027-01-23T11:59:59.000Z'
+        })
+      ],
       ['xai', 'structural analysis', 'gnn'],
       NOW
     )['paper:b']
     expect(it).toMatchObject({
+      deadline: '2027-01-23T11:59:59.000Z',
       matched: ['xai', 'structural analysis'],
       collectedAt: NOW,
       seenAt: null,
@@ -260,5 +269,11 @@ describe('applyCollected', () => {
     const live = st({ boards: [board] })
     const collected = st({ boardKnown: { iris: ['a'], b1: ['b'], gone: ['c'] } })
     expect(applyCollected(live, collected, NOW).boardKnown).toEqual({ iris: ['a'], b1: ['b'] })
+  })
+
+  test('분야 게시판의 boardKnown은 live에 등록하지 않아도 남는다', () => {
+    const id = FIELD_BOARDS[0].id
+    const collected = st({ boardKnown: { [id]: ['a'], gone: ['c'] } })
+    expect(applyCollected(st(), collected, NOW).boardKnown).toEqual({ [id]: ['a'] })
   })
 })

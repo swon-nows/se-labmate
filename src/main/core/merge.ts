@@ -1,4 +1,4 @@
-import { BUILTIN_BOARDS } from '../../shared/sources'
+import { ALL_BUILTIN_BOARDS } from '../../shared/sources'
 import type { AppState, Category, Item, RawItem } from '../../shared/types'
 import { matchKeywords } from './text'
 
@@ -78,7 +78,7 @@ export function applyCollected(live: AppState, collected: AppState, now: string)
   for (const [id, item] of Object.entries(collected.items))
     if (!Object.hasOwn(items, id)) items[id] = item
   // 수집 중에 지운 게시판의 기록이 되살아나지 않도록 live에 있는 게시판의 것만 남긴다.
-  const ids = new Set([...live.boards, ...BUILTIN_BOARDS].map((b) => b.id))
+  const ids = new Set([...live.boards, ...ALL_BUILTIN_BOARDS].map((b) => b.id))
   return {
     ...live,
     items: pruneOld(items, now),

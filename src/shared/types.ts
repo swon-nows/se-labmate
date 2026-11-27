@@ -19,6 +19,7 @@ export interface RawItem {
   summary: string // 없으면 ''
   stars?: number
   weekStars?: number // GitHub Trending에서 이번 주에 받은 별
+  deadline?: string // 논문 마감 시각(ISO). 학회 마감 목록에서 온 항목에만 있다
   venue?: string // 저널·학회·저장소 이름
   keywords?: string[]
 }
@@ -34,6 +35,12 @@ export const MAX_KEYWORDS = 8
 export const MAX_BOARDS = 10
 export const DEFAULT_REPO_COUNT = 10
 export const MAX_REPO_COUNT = 25
+export type ConferenceField = 'ai' | 'structural'
+export const CONFERENCE_FIELDS: ConferenceField[] = ['ai', 'structural']
+export const CONFERENCE_FIELD_LABEL: Record<ConferenceField, string> = {
+  ai: 'AI',
+  structural: 'Structural engineering'
+}
 export interface Profile {
   keywordsEn: string[]
   keywordsKo: string[]
@@ -44,6 +51,7 @@ export interface Settings {
   openAtLogin: boolean
   enabled: Record<Category, boolean>
   repoCount: number // 한 주 인기 저장소를 몇 개 가져올지
+  conferenceFields: ConferenceField[] // 학회 소식을 받을 분야
 }
 export type BoardCategory = 'grant' | 'conference' | 'school'
 export const BOARD_CATEGORIES: BoardCategory[] = ['school', 'conference', 'grant']
