@@ -1,0 +1,612 @@
+[
+ {
+  "title": "AAMAS",
+  "description": "International Conference on Autonomous Agents and Multiagent Systems",
+  "sub": "AI",
+  "rank": {
+   "ccf": "B",
+   "core": "A*",
+   "thcpl": "B"
+  },
+  "dblp": "ifaamas",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "aamas26",
+    "link": "https://cyprusconferences.org/aamas2026",
+    "timeline": [
+     {
+      "abstract_deadline": "2025-10-01 23:59:59",
+      "deadline": "2025-10-08 23:59:59",
+      "comment": "Main track"
+     },
+     {
+      "deadline": "2025-11-17 23:59:59",
+      "comment": "AAAI track"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "May 27-29, 2026",
+    "place": "Paphos, Cyprus",
+    "opening": "2026-05-27 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "aamas27",
+    "link": "https://warwick.ac.uk/fac/sci/dcs/aamas2027/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-10-01 23:59:59",
+      "deadline": "2026-10-08 23:59:59",
+      "rebuttal_deadline": "2026-11-24 23:59:59",
+      "decision_deadline": "2026-12-21 23:59:59",
+      "comment": "Main track"
+     },
+     {
+      "deadline": "2026-12-11 23:59:59",
+      "decision_deadline": "2027-02-01 23:59:59",
+      "comment": "AAAI fast track; eligible AAAI-27 Main Technical Track resubmissions only"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "May 3-7, 2027",
+    "place": "Hanoi, Vietnam",
+    "opening": "2027-05-03 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/aamas"
+ },
+ {
+  "title": "ACL",
+  "description": "Annual Meeting of the Association for Computational Linguistics",
+  "sub": "AI",
+  "rank": {
+   "ccf": "A",
+   "core": "A*",
+   "thcpl": "A"
+  },
+  "dblp": "acl",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "acl26",
+    "link": "https://2026.aclweb.org/",
+    "timeline": [
+     {
+      "deadline": "2025-10-06 23:59:59",
+      "comment": "ARR October cycle"
+     },
+     {
+      "deadline": "2026-01-05 23:59:59",
+      "comment": "ARR January cycle"
+     },
+     {
+      "deadline": "2026-03-14 23:59:59",
+      "comment": "ARR commitment; reviewed papers only"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "July 5-7, 2026",
+    "place": "San Diego, California, United States (Hybrid)",
+    "opening": "2026-07-05 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "acl27",
+    "link": "https://2027.aclweb.org/",
+    "timeline": [
+     {
+      "deadline": "2027-01-04 23:59:59",
+      "comment": "ARR Submission"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "August 20-22, 2027",
+    "place": "Kyoto, Japan",
+    "opening": "2027-08-20 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/acl"
+ },
+ {
+  "title": "CoRL",
+  "description": "The Conference on Robot Learning",
+  "sub": "AI",
+  "rank": {
+   "ccf": "N",
+   "core": "N",
+   "thcpl": "N"
+  },
+  "dblp": "corl",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "corl26",
+    "link": "https://www.corl.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-05-25 23:59:59",
+      "deadline": "2026-05-28 23:59:59",
+      "rebuttal_deadline": "2026-08-11 23:59:59",
+      "decision_deadline": "2026-09-04 23:59:59"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "November 9-11, 2026",
+    "place": "Austin, Texas, USA",
+    "opening": "2026-11-09 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/corl"
+ },
+ {
+  "title": "CVC",
+  "description": "Computer Vision Conference",
+  "sub": "AI",
+  "rank": {
+   "ccf": "N"
+  },
+  "dblp": "cvc",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "cvc26",
+    "link": "https://saiconference.com/Conferences/CVC2026",
+    "timeline": [
+     {
+      "deadline": "2025-10-01 23:59:59",
+      "comment": "Round 1"
+     },
+     {
+      "deadline": "2026-02-01 23:59:59",
+      "comment": "Round 2"
+     },
+     {
+      "deadline": "2026-03-01 23:59:59",
+      "comment": "Late-breaking round"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "May 21-22, 2026",
+    "place": "Amsterdam, Netherlands",
+    "opening": "2026-05-21 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "cvc27",
+    "link": "https://saiconference.com/CVC",
+    "timeline": [
+     {
+      "deadline": "2026-09-01 23:59:59",
+      "decision_deadline": "2026-10-01 23:59:59",
+      "comment": "Round 1"
+     },
+     {
+      "deadline": "2026-12-01 23:59:59",
+      "decision_deadline": "2026-12-20 23:59:59",
+      "comment": "Round 2"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "April 15-16, 2027",
+    "place": "Amsterdam, Netherlands",
+    "opening": "2027-04-15 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/cvc"
+ },
+ {
+  "title": "ICAPS",
+  "description": "International Conference on Automated Planning and Scheduling",
+  "sub": "AI",
+  "rank": {
+   "ccf": "B",
+   "core": "A*",
+   "thcpl": "B"
+  },
+  "dblp": "icaps",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "icaps26",
+    "link": "https://icaps26.icaps-conference.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2025-12-02 23:59:59",
+      "deadline": "2025-12-08 23:59:59"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "June 27 - July 2, 2026",
+    "place": "Dublin, Ireland",
+    "opening": "2026-06-27 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "icaps27",
+    "link": "https://icaps27.icaps-conference.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-12-07 23:59:59",
+      "deadline": "2026-12-14 23:59:59",
+      "rebuttal_deadline": "2027-02-08 23:59:59",
+      "decision_deadline": "2027-02-26 23:59:59"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "June 30 - July 2, 2027",
+    "place": "Columbia, SC, USA",
+    "opening": "2027-06-30 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/icaps"
+ },
+ {
+  "title": "ICML",
+  "description": "International Conference on Machine Learning",
+  "sub": "AI",
+  "rank": {
+   "ccf": "A",
+   "core": "A*",
+   "thcpl": "A"
+  },
+  "dblp": "icml",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "icml26",
+    "link": "https://icml.cc/Conferences/2026",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-01-24 11:59:59",
+      "deadline": "2026-01-29 11:59:59",
+      "comment": "Paper Submissions Open on OpenReview Jan 08 2026 12:00AM UTC-0"
+     }
+    ],
+    "timezone": "UTC+0",
+    "date": "July 6-11, 2026",
+    "place": "Seoul, Korea",
+    "opening": "2026-07-06 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "icml27",
+    "link": "https://icml.cc/Conferences/2027",
+    "timeline": [
+     {
+      "abstract_deadline": "2027-01-14 23:59:59",
+      "deadline": "2027-01-22 23:59:59",
+      "decision_deadline": "2027-05-03 23:59:59"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "August 2-4, 2027",
+    "place": "Riocentro, Rio de Janeiro, Brazil",
+    "opening": "2027-08-02 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/icml"
+ },
+ {
+  "title": "ICMLA",
+  "description": "International Conference on Machine Learning and Applications",
+  "sub": "AI",
+  "rank": {
+   "ccf": "N",
+   "core": "C",
+   "thcpl": "N"
+  },
+  "dblp": "icmla",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "icmla26",
+    "link": "https://www.icmla-conference.org/icmla26/",
+    "timeline": [
+     {
+      "deadline": "2026-05-31 23:59:59",
+      "comment": "Main Conference Papers DDL."
+     }
+    ],
+    "timezone": "PT",
+    "date": "October 5-7, 2026",
+    "place": "Oakland Center, Rochester, Michigan, USA",
+    "opening": "2026-10-05 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "icmla27",
+    "link": "https://www.icmla-conference.org/icmla27/",
+    "timeline": [
+     {
+      "deadline": "2027-05-15 23:59:59",
+      "decision_deadline": "2027-06-16 04:59:59",
+      "comment": "Main Conference Papers DDL."
+     }
+    ],
+    "timezone": "PT",
+    "date": "December 14-16, 2027",
+    "place": "University of Miami, Coral Gables Campus, Miami, Florida, USA",
+    "opening": "2027-12-14 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/icmla"
+ },
+ {
+  "title": "IJCAI",
+  "description": "International Joint Conference on Artificial Intelligence",
+  "sub": "AI",
+  "rank": {
+   "ccf": "B",
+   "core": "A*",
+   "thcpl": "B"
+  },
+  "dblp": "ijcai",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "ijcai26",
+    "link": "https://2026.ijcai.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-01-12 23:59:59",
+      "deadline": "2026-01-19 23:59:59"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "August 18-21, 2026",
+    "place": "Bremen, Germany",
+    "opening": "2026-08-18 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "ijcai27",
+    "link": "https://2027.ijcai.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2027-01-04 23:59:59",
+      "deadline": "2027-01-11 23:59:59",
+      "rebuttal_deadline": "2027-04-02 23:59:59",
+      "decision_deadline": "2027-04-21 23:59:59",
+      "comment": "Separate satellite event: August 15-17, 2027, Hengqin, China"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "August 7-13, 2027",
+    "place": "Kyoto, Japan",
+    "opening": "2027-08-07 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/ijcai"
+ },
+ {
+  "title": "KR",
+  "description": "International Conference on Principles of Knowledge Representation and Reasoning",
+  "sub": "AI",
+  "rank": {
+   "ccf": "B",
+   "core": "A*",
+   "thcpl": "N"
+  },
+  "dblp": "kr",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "krd26",
+    "link": "https://kr.org/KR2026/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-02-08 23:59:59",
+      "deadline": "2026-02-13 23:59:59"
+     }
+    ],
+    "timezone": "UTC-12",
+    "date": "July 20-23, 2026",
+    "place": "Lisbon, Portugal",
+    "opening": "2026-07-20 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "krd27",
+    "link": "https://kr.org/KR2027/",
+    "timeline": [
+     {
+      "abstract_deadline": "2027-04-23 23:59:59",
+      "deadline": "2027-04-28 23:59:59",
+      "rebuttal_deadline": "2027-06-18 23:59:59",
+      "decision_deadline": "2027-06-30 23:59:59",
+      "comment": "Main track; author response period: June 15-18, 2027"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "September 21-24, 2027",
+    "place": "Buenos Aires, Argentina",
+    "opening": "2027-09-21 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/kr"
+ },
+ {
+  "title": "NeurIPS",
+  "description": "Conference on Neural Information Processing Systems",
+  "sub": "AI",
+  "rank": {
+   "ccf": "A",
+   "core": "A*",
+   "thcpl": "A"
+  },
+  "dblp": "nips",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "nips26",
+    "link": "https://neurips.cc/Conferences/2026",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-05-05 11:59:59",
+      "deadline": "2026-05-07 11:59:59",
+      "rebuttal_deadline": "2026-08-04 11:59:59",
+      "decision_deadline": "2026-09-25 11:59:59"
+     }
+    ],
+    "timezone": "UTC+0",
+    "date": "December 8-10 (Sydney), December 9-11 (Atlanta and Paris), 2026",
+    "place": "Sydney, Australia; Atlanta, USA; Paris, France",
+    "opening": "2026-12-08 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/nips"
+ },
+ {
+  "title": "RSS",
+  "description": "Robotics Science and Systems",
+  "sub": "AI",
+  "rank": {
+   "ccf": "N",
+   "core": "A*",
+   "thcpl": "A"
+  },
+  "dblp": "rss",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "rss26",
+    "link": "https://roboticsconference.org/2026/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-01-23 23:59:59",
+      "deadline": "2026-01-30 23:59:59"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "July 13-17, 2026",
+    "place": "Sydney, Australia",
+    "opening": "2026-07-13 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "rss27",
+    "link": "https://roboticsconference.org/",
+    "timeline": [
+     {
+      "deadline": "2026-12-04 23:59:59",
+      "rebuttal_deadline": "2027-02-12 23:59:59",
+      "decision_deadline": "2027-04-30 23:59:59",
+      "comment": "Stage 1: initial 6-page extended abstract submission"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "July 6-11, 2027",
+    "place": "Athens, Greece",
+    "opening": "2027-07-06 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "AI/rss"
+ },
+ {
+  "title": "SIGMOD",
+  "description": "ACM Conference on Management of Data",
+  "sub": "DB",
+  "rank": {
+   "ccf": "A",
+   "core": "A*",
+   "thcpl": "A"
+  },
+  "dblp": "sigmod",
+  "confs": [
+   {
+    "year": 2026,
+    "id": "sigmod26",
+    "link": "https://2026.sigmod.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2025-01-10 23:59:59",
+      "deadline": "2025-01-17 23:59:59",
+      "comment": "round 1"
+     },
+     {
+      "abstract_deadline": "2025-04-10 23:59:59",
+      "deadline": "2025-04-17 23:59:59",
+      "comment": "round 2"
+     },
+     {
+      "abstract_deadline": "2025-07-10 23:59:59",
+      "deadline": "2025-07-17 23:59:59",
+      "comment": "round 3"
+     },
+     {
+      "abstract_deadline": "2025-10-10 23:59:59",
+      "deadline": "2025-10-17 23:59:59",
+      "comment": "round 4"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "May 31 and June 2-4, 2026",
+    "place": "Bangalore, India",
+    "opening": "2026-05-31 08:00:00",
+    "opening_is_derived": true
+   },
+   {
+    "year": 2027,
+    "id": "sigmod27",
+    "link": "https://2027.sigmod.org/",
+    "timeline": [
+     {
+      "abstract_deadline": "2026-01-10 23:59:59",
+      "deadline": "2026-01-17 23:59:59",
+      "rebuttal_deadline": "2026-03-17 23:59:59",
+      "decision_deadline": "2026-06-12 23:59:59",
+      "comment": "round 1"
+     },
+     {
+      "abstract_deadline": "2026-04-10 23:59:59",
+      "deadline": "2026-04-17 23:59:59",
+      "rebuttal_deadline": "2026-06-17 23:59:59",
+      "decision_deadline": "2026-09-12 23:59:59",
+      "comment": "round 2"
+     },
+     {
+      "abstract_deadline": "2026-07-10 23:59:59",
+      "deadline": "2026-07-17 23:59:59",
+      "rebuttal_deadline": "2026-09-17 23:59:59",
+      "decision_deadline": "2026-12-12 23:59:59",
+      "comment": "round 3"
+     },
+     {
+      "abstract_deadline": "2026-10-10 23:59:59",
+      "deadline": "2026-10-17 23:59:59",
+      "rebuttal_deadline": "2026-12-17 23:59:59",
+      "decision_deadline": "2027-03-12 23:59:59",
+      "comment": "round 4"
+     }
+    ],
+    "timezone": "AoE",
+    "date": "June 13-19, 2027",
+    "place": "Huntington Beach, CA, USA",
+    "opening": "2027-06-13 08:00:00",
+    "opening_is_derived": true
+   }
+  ],
+  "conference_key": "DB/sigmod"
+ }
+]
