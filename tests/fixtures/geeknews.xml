@@ -1,0 +1,237 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom'>
+<title>GeekNews - 개발/기술/스타트업 뉴스 서비스</title>
+<subtitle>개발 뉴스, 기술 관련 새소식, 스타트업 정보와 노하우, 세상의 재미난 것들을 좋아하는 사람들을 위한 뉴스 사이트. 이메일 뉴스레터/X(Twitter)/Slack용 봇으로 구독 가능</subtitle>
+<link rel='alternate' type='text/html' href='https://news.hada.io' />
+<link rel='self' type='application/atom+xml' href='https://news.hada.io/rss/news' />
+<id>https://news.hada.io/rss/news</id>
+<author>
+<name>GeekNews</name>
+<email>news@hada.io</email>
+<uri>https://news.hada.io</uri>
+</author>
+<updated>2026-11-27T12:06:26+09:00</updated>
+<icon>https://social.news.hada.io/favicon.png</icon>
+<logo>https://social.news.hada.io/WideLogo500.png</logo>
+<category term='technology'/>
+<entry>
+  <title><![CDATA[Show GN: RealView - 머스크가 공개한 테슬라 Reality View 구조를 코드로 구현, 맥북 한 대로 학습]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37934&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37934</id>
+  <updated>2026-11-27T11:49:37+09:00</updated>
+  <published>2026-11-27T11:49:37+09:00</published>
+  <author>
+    <name>azetai</name>
+    <uri>https://news.hada.io/user/azetai</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><p>11월 22일 일론 머스크가 테슬라 차량 화면(Reality View)을 어떻게 만드는지 X에 짧게 공개했습니다. 비전 인코더의 특징값을 별도의 확산 모델에 넣고, 확산 모델은 자기가 직전에 그린 화면에 노이즈를 섞은 것을 디노이즈해 다음 8프레임을 그린다는 내용입니다. 이걸 그대로 코드로 옮겨 맥북 한 대로 학습했고, 코드와 가중치를 Apache-2.0으로 공개했습니다.</p><ul><li>인코더는 DINOv2-small을 고정해서 씁니다. 생성 모델은 3,300만 파라미터 확산 트랜스포머이고, mean-flow 목표로 학습해 8프레임 묶음을 한 번의 계산으로 그립니다.</li><li>데이터는 comma2k19(MIT)입니다. 21개 주행 중 19개로 학습하고 2개는 통째로 뺐습니다.</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[USAID Files - 빅테크 협력과 허위정보 대응에 관한 내부 자료]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37933&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37933</id>
+  <updated>2026-11-27T11:37:16+09:00</updated>
+  <published>2026-11-27T11:37:16+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>USAID의 내부 이메일, 브리핑, 기획 문서가 공개됐으며, 법률 자문에는 빅테크와의 협력이 <strong>언론에 드러나지 않도록 주의하라는 조언</strong>이 포함돼 있음</li><li>함께 공개된 직원용 웨비나는 <strong>봇, 알고리듬 조작, 전문 트롤</strong>을 허위정보 확산의 세 가지 수단으로 구분하고 선거 개입 사례를 분석함</li><li>필리핀의 조직적 소셜미디어 캠페인과 나이지리아의 유급 방문 전파 사례는 온라인 허위정보가 <strong>오프라인 여론과 정치 참여</strong>에도 영향을 줄 수 있음을 보여줌</li><li>대응책으로 <strong>탐지와 공개, 독립 언론 지원, 플랫폼 투명성 강화</strong>를 논의하며, 콘텐츠 관리나 이용자</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Show GN: ARCUS-STACK - 매번하는 반복을 조금 더 똑똑하게, 여러 AI 코딩 에이전트에게 시킬 수 있는 스킬팩]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37932&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37932</id>
+  <updated>2026-11-27T11:31:08+09:00</updated>
+  <published>2026-11-27T11:31:08+09:00</published>
+  <author>
+    <name>sacru2red</name>
+    <uri>https://news.hada.io/user/sacru2red</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><p>에이전트마다 스킬·룰 포맷이 달라서 불편해서 하나 만들어봤습니다.<br> 스킬은 SKILL.md 표준으로만 작성해서 Antigravity(agy), Claude Code, Codex, Cursor, OpenCode가 같은 파일을 읽도록 했습니다. MCP 서버 없이 마크다운 지침만으로 동작하고, MIT 라이선스입니다.</p><p>플랜, 리뷰, 루프 매번하는 반복을 조금 더 똑똑하게 하려고 했습니다.<br> 매 작업 후 요약 출력, 리뷰는 격리된 환경에서 제3자가 바라보는 시선으로 진짜 크리틱하게,<br> 모던한 웹기술을 알아서 사용하게, 도식화는 요즘 핫한 archify를 쓰는 것을 최우선으로 알아서,</p></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[리만 가설이란 무엇인가? 시각적으로 이해하기]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37931&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37931</id>
+  <updated>2026-11-27T10:50:02+09:00</updated>
+  <published>2026-11-27T10:50:02+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>리만 가설은 <strong>어떤 수까지 소수가 몇 개 있는지 추정할 때, 그 오차가 얼마나 커질 수 있는지</strong>와 관련된 명제임. 가령 1조까지 소수는 약 376억 개이고, 가우스의 추정치와 실제 개수의 차이는 38,263개임</li><li>소수가 나올 때마다 한 칸씩 올라가는 <strong>계단 그래프</strong>를 그릴 수 있음. 가우스의 매끄러운 추정 곡선에 제타 함수의 영점이 만드는 파동을 더하면, <strong>영점 10개를 더했을 때보다 100개를 더했을 때</strong> 실제 계단에 더 가까워짐</li><li><strong>영점은 제타 함수의 값이 0이 되는 점</strong>임. 리만 가설은 이 중 비자명한 영점이 모두 <strong>실수부가 ½인 직선</strong> 위에 놓인다는 명제임. 이 조건이 성립하면 소수 개수의 오차는 로그 요인을 감안해 대략 제곱근 규모로 제한됨</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[State of AI 2026: 올해의 가장 큰 이슈와 2027년 AGI 가능성]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37930&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37930</id>
+  <updated>2026-11-27T10:40:02+09:00</updated>
+  <published>2026-11-27T10:40:02+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>『State of AI』 보고서를 써 온 <strong>Nathan Benaich</strong>는 AI가 같은 시간 안에 법률, 금융, 투자 업무에서 자신보다 나은 결과를 낸다면 <strong>실용적으로 AGI에 가깝다</strong>고 봄. 모델 성능이 빠르게 개선되고 AI가 모델 연구에도 쓰이면서, <strong>2027년에 그 수준에 도달할 수 있다</strong>고 예상함</li><li>AI가 AI 연구를 수행하는 비중은 커지고 있지만, <strong>어떤 문제를 연구할지 고르는 안목</strong>과 좋은 연구 과정을 객관적으로 측정하는 방법은 여전히 중요한 과제로 남아 있음</li><li>인류 멸종보다 당장 현실적인 위험으로 <strong>사이버 공격</strong>을 꼽으며, 평가 환경을 벗어난 에이전트와 공격 도구의 확산에 대응할 방어 제품과 인프라 보강이 필요하다고 봄</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[AI 덕분에 셀프 호스팅이 다시 즐거워졌다]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37928&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37928</id>
+  <updated>2026-11-27T09:33:22+09:00</updated>
+  <published>2026-11-27T09:33:22+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>기존 서비스를 유지하는 데 그쳤던 개인 셀프 호스팅 환경에서 <strong>AI 코딩 에이전트</strong>가 설정 변경과 실험의 수고를 줄이면서, 새로운 기술과 서비스를 시도하는 재미가 되살아남</li><li><strong>Git 저장소</strong>로 관리하던 Docker Compose 파일과 스크립트를 AI와 함께 수정하고, 익숙하지 않았던 NixOS와 Debian 기반 bootc 이미지까지 활용 범위를 넓힘</li><li><strong>Renovate가 업데이트 PR을 만들고</strong>, 검토 후 병합하면 GitHub Actions나 Forgejo Actions가 빌드와 배포를 처리함. 예전에는 버전을 직접 바꾸고 서버에 SSH로 접속해 배포해야 했지만, 이제는 휴대폰에서 PR을 병합하는 것으로 끝날 때도 있음</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[tidy - Prettier 스타일로 코드를 정리하는 Rust 기반 고속 포매터]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37927&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37927</id>
+  <updated>2026-11-27T09:30:02+09:00</updated>
+  <published>2026-11-27T09:30:02+09:00</published>
+  <author>
+    <name>xguru</name>
+    <uri>https://news.hada.io/user/xguru</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>Prettier와 같은 코드 스타일을 빠르게 적용</strong>하는 포매터로, Node.js 없이 단일 실행 파일로 동작</li><li>JavaScript, TypeScript, JSX, HTML, Vue, CSS, SCSS, Less 등 <strong>웹 개발 언어 지원</strong></li><li>Markdown, JSON, YAML, GraphQL 외에 <strong>TOML, XML, Dockerfile, INI</strong>까지 별도 플러그인 없이 처리</li><li><strong>파일 안에 포함된 다른 언어도 함께 정리</strong><ul><li>HTML과 Vue의 스타일과 스크립트, Markdown 코드 블록과 프런트매터</li><li>JavaScript 템플릿 문자열 안의 CSS, GraphQL, HTML, Markdown</li></ul></li><li>자체 벤치마크에서 <strong>12,071개 파일 검사에 280ms</strong>, Prettier의 18.5초보다 약 <strong>66배 빠른</strong></li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Kamil Khan Mumtaz: 파키스탄에서는 존경받지만 해외에서는 거의 알려지지 않은 건축가]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37925&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37925</id>
+  <updated>2026-11-27T08:32:24+09:00</updated>
+  <published>2026-11-27T08:32:24+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>Kamil Khan Mumtaz</strong>는 주택, 사무실, 모스크, 학교를 지으며 파키스탄, 특히 라호르의 오래된 건축 전통을 되살려 온 건축가임</li><li>런던에서 배운 <strong>모더니즘</strong>을 의심 없이 받아들였지만, 자신의 건축이 지역 사람들과 소통하지 못한다는 고민과 수피 건축 전통에 관한 독서를 계기로 전통 건축으로 전환함</li><li>전통 건축을 구현할 <strong>숙련 장인</strong>이 없다는 통념과 달리, 대대로 기술을 이어 온 장인 가문을 찾아 협업하며 사라진 벽돌 쌓기와 돔 시공법 등을 재발견함</li><li>작품에는 정교한 수공예뿐 아니라 <strong>통풍과 사생활 보호</strong>, 중정과 정원의 활용이 나타나며</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Show HN: Fuck_data_brokers.py - 데이터 브로커에 개인정보 삭제를 요청하는 Python 도구]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37923&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37923</id>
+  <updated>2026-11-27T07:36:48+09:00</updated>
+  <published>2026-11-27T07:36:48+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>단일 Python 파일</strong>로 데이터 브로커 목록을 가져오고, 거주지 법률에 맞춘 삭제/판매 거부 요청서 작성부터 답변 대응, 재촉, 민원 안내까지 처리함</li><li><strong>외부 의존성이나 AI 없이</strong> 무료로 실행되며, 자신의 이메일로 요청서를 보내거나 발송용 페이지에서 직접 전송할 수 있음</li><li>미국 공식 등록부를 합친 <strong>750개 이상의 업체</strong>를 대상으로 하며, 여러 등록부에 중복된 업체에는 같은 요청을 한 번만 작성함</li><li>요청에는 <strong>이름, 이메일, 도시만</strong> 전달하지만, 자신을 모르던 업체에 정보를 새로 제공할 수 있다는 절충이 있음</li><li><strong>실제 삭제를 검증하지는 않음</strong>.</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[OpenAI가 비용 통제에 나섰을까? - GPT-6.2의 추론 토큰 감소]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37922&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37922</id>
+  <updated>2026-11-27T07:33:47+09:00</updated>
+  <published>2026-11-27T07:33:47+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>같은 작업을 두 AI 모델에 맡겨 결과를 비교하는 <strong>Agent Duel</strong>에서, GPT-6.2 Astra와 Sol은 모두 전작보다 <strong>작업당 출력 토큰과 추론 토큰을 적게 사용함</strong></li><li><strong>Astra 6과 Sol 6.1</strong>은 같은 과제를 수행한 상대 모델과 추론 토큰 사용량이 비슷한 편이었고, <strong>6.2의 두 모델은 상대보다 유독 적게 사용함</strong></li><li>두 모델 모두 <strong>출력 토큰과 추론 토큰의 감소가 통계적으로 유의</strong>했으며, 네 검정의 p값은 모두 0.05 미만이었음</li><li>토큰 수 외에도 <strong>같은 과제에서 상대 모델 대비 얼마나 지출했는지</strong>와 대결 결과를 반영한 <strong>Elo 점수</strong>를 함께 비교함</li><li>두 모델이 비용 절감</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[YouTube Ad Punisher - 광고가 재생되면 YouTube 페이지를 자동으로 새로고침]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37921&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37921</id>
+  <updated>2026-11-27T06:45:40+09:00</updated>
+  <published>2026-11-27T06:45:40+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>YouTube Ad Punisher</strong>는 광고를 감지하면 재생 위치를 저장하고 페이지를 새로고침한 뒤 해당 위치에서 영상을 이어 재생하는 브라우저 확장 프로그램임</li><li>광고 요청을 차단하는 대신 <strong>페이지 재로딩</strong>을 이용함. 프로젝트는 YouTube가 새로고침마다 광고 제공 여부를 다시 판단하며, 보통 1~2회 뒤 광고 없이 영상이 재생된다고 설명함</li><li>새로고침이 반복될 때를 위한 <strong>보조 탭 전환</strong>과 외부 미러 이동 기능도 안내하지만, README의 두 설명 사이에 실행 순서나 관계는 명확하지 않음</li><li>감지한 광고의 광고주, 길이, 영상, 재생 위치 등을 <strong>로컬 기록</strong></li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[랜섬웨어 복구업체 CTO, 고객 몰래 몸값 지급한 혐의로 기소]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37920&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37920</id>
+  <updated>2026-11-27T06:42:40+09:00</updated>
+  <published>2026-11-27T06:42:40+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>랜섬웨어 복구업체 <strong>RansomwareHelp</strong>의 CTO 겸 공동창업자가 독자 기술로 데이터를 복원한다고 홍보하면서 실제로는 공격자에게 복호화 키를 구매하고, 수행하지 않은 작업의 대금까지 고객에게 청구한 혐의로 기소됨</li><li><strong>FBI는 피해 기업과 랜섬웨어 조직 양쪽으로 위장</strong>해서 수사를 진행. 기소장에 따르면 업체는 피해 기업에 몸값을 내지 않겠다고 한 뒤, 공격자 역할의 수사관과 비밀리에 가격을 협상함</li><li>검찰에 따르면 CTO는 복호화 키 대금으로 <strong>약 6,000달러 상당의 비트코인</strong>을 지급하고, 피해 기업 역할의 수사관에게 복호화비 <strong>13,260달러</strong>와 진단비 <strong>2,750달러</strong>를 청구함</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Google, AI 에이전트의 Workspace 접근에 자사 MCP 의무화… 공개 Gmail MCP로는 메일 발송 불가]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37919&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37919</id>
+  <updated>2026-11-27T06:39:40+09:00</updated>
+  <published>2026-11-27T06:39:40+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>2027년 2월 1일부터 AI 에이전트가 Gmail이나 Drive 등 Google Workspace 데이터에 접근하려면</strong> Google 공식 MCP 서버나 Workspace CLI를 사용해야 함</li><li>공개 Gmail MCP 서버는 검색, 읽기, 초안 생성은 지원하지만 <strong>발송, 답장, 전달, 초안 수정은 파트너 전용</strong>이라 기존 이메일 에이전트의 작업 흐름을 그대로 옮기기 어려움</li><li>Workspace 사용자 데이터는 <strong>진행 중인 사용자 승인 작업</strong>에만 처리할 수 있으며, 접근 과정에서 만든 <strong>임베딩이나 메모리 인덱스 등은 30일을 넘겨 보관할 수 없음</strong></li><li>무료 Standard 등급은 제품별 프로젝트당 <strong>하루 5,000</strong></li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Llama.cpp용 AMD 특화 패치]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37917&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37917</id>
+  <updated>2026-11-27T05:32:13+09:00</updated>
+  <published>2026-11-27T05:32:13+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>llama-cpp-rdna-boosts</strong>는 llama.cpp에 소규모 AMD 특화 패치를 적용해 프리필과 토큰 생성 속도를 높이는 프로젝트임</li><li>노트북에 eGPU로 연결한 <strong>AMD R9700</strong> 테스트에서 프리필은 약 700→1,300토큰/초, 토큰 생성은 약 35→55토큰/초로 향상됐으며, 환경에 따라 결과가 달라질 수 있음</li><li>특정 llama.cpp 커밋을 기반으로 패치를 적용하고, 최신 버전에도 변경 사항을 계속 재적용하는 방식으로 <strong>작은 변경 범위</strong>를 유지함</li><li>비교 대상인 <strong>Strata</strong>는 속도를 높이기 위해 원래 선택될 전문가 대신 VRAM에 이미 올라온 전문가를 우선하는 등, 하드웨어 </li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[미증명 가정 없이 준지수 시간에 정수 소인수분해]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37916&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37916</id>
+  <updated>2026-11-27T04:31:43+09:00</updated>
+  <published>2026-11-27T04:31:43+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>모든 정수 <strong>$N \ge 2$의 완전한 소인수분해</strong>를 수행하는, 미증명 수론 가정에 의존하지 않는 고전적 확률 알고리듬을 구성함</li><li><strong>오류 없는 Las Vegas 알고리듬</strong>으로, 최악의 경우 기대 실행 시간은 $L_N[1/3, 105]$, 결정론적 작업 공간 상한은 $L_N[1/3, 40]$임</li><li>출력한 각 소인수는 <strong>Agrawal–Kayal–Saxena 소수 판정</strong>으로 결정론적으로 검증하고, 직접 곱셈으로 원래 정수 $N$과 일치하는지 확인함</li><li>전체 증명의 <strong>Lean 4 <code>v4.35.0</code> 형식화</strong>도 Mathlib만 사용해 완료했으며, 별도의 동반 제출물로 공개할 예정임</li><li>논문과 형식화는 <strong>Gemini 4 기반 Coge</strong></li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[AI가 완치한 질병 추적하기]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37915&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37915</id>
+  <updated>2026-11-27T03:49:29+09:00</updated>
+  <published>2026-11-27T03:49:29+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li><strong>AI가 발견한 치료법으로 완치한 질병은 0개</strong>로 집계됐으며, 2026년 11월 26일 기준 AI 발견 신약의 FDA 또는 EMA 승인도 없음</li><li>집계에 포함되려면 <strong>AI가 표적과 분자를 모두 선정하거나 설계</strong>하고, 임상 3상과 규제기관 승인을 거쳐 실제로 질병을 제거하거나 지속적으로 되돌려야 함</li><li><strong>영상 판독, 단백질 구조 예측, 연구 효율 개선</strong>은 완치와 구분하며, 임상시험 중인 후보물질도 집계하지 않음</li><li>가장 앞선 사례로 꼽는 <strong>Rentosertib</strong>은 폐섬유증 대상 임상 3상에 진입했지만, 성공하더라도 우선 치료제이지 완치제는 아니라는 한계가 있음</li><li>AI 기</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[재미로 AWS Lambda에서 Qwen 서빙하기, 비용은 80배 넘게]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37914&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37914</id>
+  <updated>2026-11-27T03:46:29+09:00</updated>
+  <published>2026-11-27T03:46:29+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>자체 호스팅 모델의 추론을 <strong>5,600개의 AWS Lambda</strong>로 분산하는 실험에 성공했지만, 비교 대상인 호스팅 모델보다 비용이 80배 이상 높았음</li><li>실험에는 Qwen3.5-4B를 미세 조정한 <strong>H2O-Lightning</strong>을 사용함. 문서를 읽고 선택지 하나를 고르는 의사결정 모델이라 단 한 번의 순전파에 집중할 수 있었음</li><li>Lambda 메모리를 <strong>3GB로 제한</strong>하고, 전체 모델 대신 레이어와 토큰 블록 단위로 작업을 나눔. 각 작업은 S3에서 입력을 읽고 계산 결과를 다시 저장함</li><li><strong>4,000토큰 문서</strong> 처리에 17초와 3.4센트가 들었음. 100만 토큰당 비용은 8.40달러로, Gemini</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[CIA 비기밀 시스템, 사이버공격으로 침해당해]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37913&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37913</id>
+  <updated>2026-11-27T03:43:29+09:00</updated>
+  <published>2026-11-27T03:43:29+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>사건을 아는 익명 소식통에 따르면 CIA의 <strong>공개출처정보 수집/분석 시스템</strong>이 사이버공격으로 침해당함</li><li>같은 소식통은 <strong>기밀정보는 관련되지 않았으며</strong>, 해당 문제는 해결됐다고 밝힘</li><li>침해된 구체적인 정보와 <strong>공격 주체</strong>는 확인되지 않음</li><li>이번 사건은 NSA 통신망 중단과 FBI 데이터베이스 해킹 의심 사건 등 잇따른 장애 속에서 드러나, <strong>주요 인프라와 디지털 시스템의 취약성</strong>에 관심이 쏠림</li><li>Trump 행정부는 일련의 장애가 <strong>조직적인 사이버공격은 아니라고 밝혔으며</strong>, 국가정보국장은 상당수가 AI를 활용하는 해커에 대응하기 위한 긴급 패치와</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[널 원뿔에서 출발한 중력의 대수적 양자화]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37912&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37912</id>
+  <updated>2026-11-27T03:40:29+09:00</updated>
+  <published>2026-11-27T03:40:29+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>4차원 로런츠 시공간의 진공 일반상대성이론을 대상으로, 고정된 배경 없이 유한한 영역의 경계 데이터에서 출발하는 <strong>비섭동적 양자화</strong>를 제안함</li><li>교차하는 <strong>널 원뿔(null cone)</strong> 에서 중력 제약식을 풀고, 축약 위상 공간의 푸아송 괄호를 교환 관계로 바꿔 관측량 대수와 힐베르트 공간을 구성함</li><li>유한한 중력 상수 (G_N)에서 경로 적분의 각 중간 상태 합은 <strong>절대 수렴</strong>하지만, 합산 전에 (G_N)으로 전개하면 로그 발산이 발생함</li><li>최대 크기가 주어진 거시적 <strong>인과 다이아몬드</strong>에는 유한 차원 힐베르트 공간이 대응한다는 결과를 도출함. 크기가</li></ul></div>…]]></content>
+</entry><entry>
+  <title><![CDATA[Geminispace에 들어가기, 텍스트 중심 Gemini 네트워크로 블로그 옮기기]]></title>
+  <link rel='alternate' type='text/html' href='https://news.hada.io/topic?id=37911&amp;utm_source=geeknews&amp;utm_medium=rss&amp;utm_campaign=news' />
+  <id>https://news.hada.io/topic?id=37911</id>
+  <updated>2026-11-27T03:02:55+09:00</updated>
+  <published>2026-11-27T03:02:55+09:00</published>
+  <author>
+    <name>neo</name>
+    <uri>https://news.hada.io/user/neo</uri>
+  </author>
+  <content type='html' xml:lang='ko'><![CDATA[<div><ul><li>Markdown으로 관리하던 블로그를 <strong>Gemini 캡슐</strong>로 변환해, 기존 웹사이트와 함께 텍스트 중심 네트워크에서도 읽을 수 있게 함</li><li><strong>Gemini</strong>는 문서와 링크에 집중하는 별도 인터넷 공간으로, 독자의 개인정보, 주의력, 대역폭을 존중하는 가벼운 환경을 지향함</li><li>기본 문서 형식인 <strong>Gemtext</strong>는 제목, 문단, 독립된 링크 등만 지원하며, 표현력이 제한적인 대신 단순한 클라이언트에서도 일관되게 표시됨</li><li>AI로 만든 Rust 변환 도구 <strong><code>gengems</code></strong> 는 문서 1,000개를 약 300밀리초에 캡슐로 변환하지만, 다른 모델의 검토 과정에서 <strong>버그와 테스트 누락</strong>이 발견</li></ul></div>…]]></content>
+</entry></feed>
