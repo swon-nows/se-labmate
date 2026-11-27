@@ -1,6 +1,6 @@
 {
   "name": "research-assistant",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "연구 소식을 모아 정해 둔 시각에 알려 주는 데스크탑 앱",
   "main": "./out/main/index.js",
   "author": "SE LabMate",
