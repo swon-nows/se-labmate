@@ -47,6 +47,7 @@ export function ProfileForm({
   const [openAtLogin, setOpenAtLogin] = useState(settings.openAtLogin)
   const [enabled, setEnabled] = useState(settings.enabled)
   const [fields, setFields] = useState(settings.conferenceFields)
+  const [geekNews, setGeekNews] = useState(settings.geekNews)
   const [errors, setErrors] = useState<string[]>([])
   const [pending, setPending] = useState(false)
   const [notified, setNotified] = useState(false)
@@ -72,7 +73,8 @@ export function ProfileForm({
         notifyTime,
         openAtLogin,
         enabled,
-        conferenceFields: fields
+        conferenceFields: fields,
+        geekNews
       }
     }
     // 입력 없음은 유지, 삭제 표시는 null. 공백뿐인 입력은 입력으로 치지 않는다(서버는 공백뿐인 키를 삭제로 본다).
@@ -243,6 +245,22 @@ export function ProfileForm({
           Structural engineering : 국내 구조·건축 학회 8곳과 fib, EERI의 학술행사 공지를 가져옵니다.
           <br />
           국내 학회 공지는 Region이 Korea일 때만 가져옵니다.
+        </p>
+      </fieldset>
+
+      <fieldset className="field group">
+        <legend>Tech news</legend>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={geekNews}
+            onChange={(e) => setGeekNews(e.target.checked)}
+          />
+          <span>GeekNews</span>
+        </label>
+        <p className="hint">
+          GeekNews : 개발·기술 뉴스 사이트(news.hada.io)의 새 글을 News에 가져옵니다. 키워드와는
+          무관합니다.
         </p>
       </fieldset>
 
