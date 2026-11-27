@@ -1,9 +1,11 @@
-import { activeSources } from '../shared/sources'
+import { FIELD_BOARDS, activeSources } from '../shared/sources'
 import type { AppState, RawItem } from '../shared/types'
+import { isEventTitle } from './core/boards/events'
 import { readBoard } from './core/boards/index'
 import type { FetchText } from './core/fetch-text'
 import { mergeIncoming, pruneOld } from './core/merge'
 import { buildArxivUrl, parseArxiv } from './core/sources/arxiv'
+import { DEADLINES_URL, parseDeadlines } from './core/sources/deadlines'
 import { GITHUB_TRENDING_URL, parseTrending } from './core/sources/github'
 import { buildGnewsUrl, parseGnews } from './core/sources/gnews'
 import { buildOpenAlexUrl, parseOpenAlex } from './core/sources/openalex'
@@ -51,17 +53,29 @@ export async function collect(state: AppState, deps: CollectDeps): Promise<AppSt
       parseTrending(await deps.fetchText(GITHUB_TRENDING_URL), now, state.settings.repoCount)
     ),
     run('Google News (KO)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(ko, 'ko')))),
-    run('Google News (EN)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en'))))
+    run('Google News (EN)', async () => parseGnews(await deps.fetchText(buildGnewsUrl(en, 'en')))),
+    run('CCF Deadlines', async () =>
+      parseDeadlines(await deps.fetchText(DEADLINES_URL), now, ['AI'])
+    )
   ]
   for (const { name, board } of sources)
-    if (board)
+    if (board) {
+      const kind = FIELD_BOARDS.find((f) => f.id === board.id)?.kind
       runs.push(
         run(name, async () => {
-          const read = await readBoard(board, deps.fetchText, boardKnown[board.id], now)
+          const read = await readBoard(
+            board,
+            deps.fetchText,
+            boardKnown[board.id],
+            now,
+            kind === 'calendar'
+          )
           boardKnown[board.id] = read.known // 실패하면 이 줄에 오지 않아 본 글이 그대로 남는다
-          return read.fresh
+          // 거른 글도 읽은 글이다(known에 있다): 다음에 다시 새 글로 오지 않는다.
+          return kind === 'notices' ? read.fresh.filter((i) => isEventTitle(i.title)) : read.fresh
         })
       )
+    }
   // 같은 id는 먼저 온 것이 남으므로 끝나는 순서가 아니라 위의 순서대로 잇는다.
   const incoming = (await Promise.all(runs)).flat()
 

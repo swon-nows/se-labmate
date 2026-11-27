@@ -7,10 +7,11 @@ import { boardId } from '../src/main/core/boards/index'
 import { pastItems, takeNew } from '../src/main/core/feed'
 import { applyCollected } from '../src/main/core/merge'
 import { validateBoard } from '../src/main/core/profile'
+import { DEADLINES_URL } from '../src/main/core/sources/deadlines'
 import { GITHUB_TRENDING_URL } from '../src/main/core/sources/github'
 import { defaultState, loadState, saveState } from '../src/main/store'
-import { BUILTIN_BOARDS } from '../src/shared/sources'
-import type { AppState, Profile } from '../src/shared/types'
+import { BUILTIN_BOARDS, FIELD_BOARDS } from '../src/shared/sources'
+import type { AppState, ConferenceField, Profile } from '../src/shared/types'
 import { NOW, mk, st } from './helpers'
 
 const fx = (n: string): string => readFileSync(`tests/fixtures/${n}`, 'utf8')
@@ -21,10 +22,12 @@ const FILE: Record<string, string> = {
   'www.iris.go.kr': 'boards/iris.json',
   'www.nrf.re.kr': 'boards/nrf.html',
   'architecture.snu.ac.kr': 'boards/snu-daae.json',
-  'cse.snu.ac.kr': 'boards/cse-snu.html'
+  'cse.snu.ac.kr': 'boards/cse-snu.html',
+  'ccfddl.com': 'ccf-deadlines.json'
 }
 
-type Opts = { openAlexKey?: string | null; fail?: string[] }
+// bodies: 호스트 → 그 호스트가 돌려줄 본문(fixture 대신)
+type Opts = { openAlexKey?: string | null; fail?: string[]; bodies?: Record<string, string> }
 
 // URL의 호스트로 fixture를 돌려주는 가짜 fetchText(POST 본문은 보지 않는다). 부른 URL과 호스트별 마지막 헤더를 기록한다.
 function fakeDeps(
@@ -46,6 +49,7 @@ function fakeDeps(
       calls.push(url)
       headers[u.hostname] = h
       if (o.fail?.includes(u.hostname)) throw new Error('network down')
+      if (o.bodies && Object.hasOwn(o.bodies, u.hostname)) return o.bodies[u.hostname]
       if (u.hostname === 'news.google.com')
         return fx(u.searchParams.get('hl') === 'ko' ? 'gnews-ko.xml' : 'gnews-en.xml')
       return fx(FILE[u.hostname])
@@ -437,5 +441,148 @@ describe('게시판과 과제 공고', () => {
     expect(hosts(d)).not.toContain('www.nrf.re.kr')
     expect(out.sourceErrors).toEqual({})
     expect(out.boardKnown).toEqual({})
+  })
+})
+
+describe('학회 분야', () => {
+  const withFields = (
+    conferenceFields: ConferenceField[],
+    country: Profile['country'] = 'KR'
+  ): AppState =>
+    st({
+      profile: { ...PROFILE, country },
+      settings: { ...defaultState().settings, conferenceFields }
+    })
+  const host = (url: string): string => new URL(url).hostname
+  const conferences = (s: AppState): AppState['items'][string][] =>
+    Object.values(s.items).filter((i) => i.category === 'conference')
+  const ccf = (s: AppState): AppState['items'][string][] =>
+    conferences(s).filter((i) => i.source === 'CCF Deadlines')
+
+  // 최근 글 둘: 학회 행사 글과 일반 공지
+  const feed = (h: string, posts: [string, string][]): string =>
+    `<rss><channel>${posts
+      .map(
+        ([title, date], i) =>
+          `<item><title>${title}</title><link>https://${h}/${i}</link><guid>${h}-${i}</guid><pubDate>${date}</pubDate></item>`
+      )
+      .join('')}</channel></rss>`
+  const RECENT = 'Fri, 20 Nov 2026 00:00:00 GMT'
+  const TWO: (h: string) => string = (h) =>
+    feed(h, [
+      ['2026 추계학술대회 논문모집 안내', RECENT],
+      ['사무국 부재 안내', RECENT]
+    ])
+  const structural = FIELD_BOARDS.filter((b) => b.field === 'structural')
+  const answers = (boards: { url: string }[]): Record<string, string> =>
+    Object.fromEntries(boards.map((b) => [host(b.url), TWO(host(b.url))]))
+
+  test('AI: CCF Deadlines를 한 번 요청해 마감이 있는 학회 여섯 건을 저장하고, 다시 수집하면 더하지 않는다', async () => {
+    const d = deps()
+    const out = await collect(withFields(['ai'], 'OTHER'), d)
+    expect(d.calls.filter((u) => u === DEADLINES_URL)).toHaveLength(1)
+    expect(d.calls.filter((u) => host(u) === 'ccfddl.com')).toHaveLength(1)
+    expect(ccf(out)).toHaveLength(6)
+    expect(ccf(out).every((i) => i.deadline !== undefined)).toBe(true)
+    expect(d.calls.some((u) => host(u) === 'aiassociation.kr')).toBe(false)
+    expect(out.sourceErrors).toEqual({})
+    const again = await collect(out, deps())
+    expect(Object.keys(again.items).sort()).toEqual(Object.keys(out.items).sort())
+  })
+
+  test('분야를 고르지 않으면 ccfddl.com을 요청하지 않는다', async () => {
+    const d = deps()
+    const out = await collect(withFields([], 'OTHER'), d)
+    expect(d.calls.some((u) => host(u) === 'ccfddl.com')).toBe(false)
+    expect(conferences(out)).toEqual([])
+  })
+
+  test('CCF Deadlines가 실패하면 그 출처의 오류만 남고 나머지는 온다', async () => {
+    const out = await collect(withFields(['ai'], 'OTHER'), deps({ fail: ['ccfddl.com'] }))
+    expect(out.sourceErrors).toEqual({ 'CCF Deadlines': 'network down' })
+    expect(ccf(out)).toEqual([])
+    expect(Object.values(out.items).some((i) => i.category === 'paper')).toBe(true)
+  })
+
+  test('Structural engineering(한국): 분야 게시판마다 요청하고 boardKnown에 키가 생긴다', async () => {
+    const d = deps({ bodies: answers(structural) })
+    const out = await collect(withFields(['structural']), d)
+    for (const b of structural) expect(d.calls).toContain(b.url)
+    expect(Object.keys(out.boardKnown).sort()).toEqual(
+      ['iris', 'nrf', ...structural.map((b) => b.id)].sort()
+    )
+    expect(out.sourceErrors).toEqual({})
+    // 일정 목록(fib)의 글은 지난 날짜라 처음에는 새 글이 아니다. 나머지 아홉 게시판에서 행사 글 하나씩.
+    expect(
+      conferences(out)
+        .map((i) => i.source)
+        .sort()
+    ).toEqual(
+      structural
+        .filter((b) => b.kind === 'notices')
+        .map((b) => b.name)
+        .sort()
+    )
+  })
+
+  test('그 외 국가에서는 국내 학회 게시판을 요청하지 않는다', async () => {
+    const d = deps({ bodies: answers(structural) })
+    await collect(withFields(['structural'], 'OTHER'), d)
+    expect(d.calls.map(host)).toContain('www.eeri.org')
+    expect(d.calls.map(host)).toContain('www.fib-international.org')
+    expect(d.calls.some((u) => host(u).endsWith('.or.kr'))).toBe(false)
+  })
+
+  test('공지 게시판은 제목이 행사 글인 새 글만 새 소식이고, 걸러 낸 글도 다시 새 글이 되지 않는다', async () => {
+    const eeri = structural.find((b) => b.id === 'conf-eeri') as (typeof structural)[number]
+    const o = { bodies: answers([eeri]) }
+    const first = await collect(withFields(['structural'], 'OTHER'), deps(o))
+    expect(conferences(first).map((i) => [i.source, i.title])).toEqual([
+      ['EERI', '2026 추계학술대회 논문모집 안내']
+    ])
+    expect(first.boardKnown[eeri.id]).toHaveLength(4) // 두 글의 id와 주소: 거른 글도 읽은 글이다
+    const second = await collect(first, deps(o))
+    expect(Object.keys(second.items).sort()).toEqual(Object.keys(first.items).sort())
+    const third = await collect({ ...second, items: {} }, deps(o))
+    expect(conferences(third)).toEqual([])
+  })
+
+  test('사용자가 등록한 게시판은 제목을 거르지 않는다', async () => {
+    const url = 'https://society.example/feed'
+    const board = {
+      id: boardId(url),
+      name: '내 학회',
+      url,
+      category: 'conference' as const
+    }
+    const out = await collect(
+      { ...withFields([], 'OTHER'), boards: [board] },
+      deps({ bodies: { 'society.example': TWO('society.example') } })
+    )
+    expect(
+      conferences(out)
+        .map((i) => i.title)
+        .sort()
+    ).toEqual(['2026 추계학술대회 논문모집 안내', '사무국 부재 안내'].sort())
+  })
+
+  test('일정 목록(fib)은 처음에 다가오는 행사를 제목과 상관없이 보인다', async () => {
+    const fib = structural.find((b) => b.id === 'conf-fib') as (typeof structural)[number]
+    const out = await collect(
+      withFields(['structural'], 'OTHER'),
+      deps({
+        bodies: {
+          [host(fib.url)]: feed(host(fib.url), [
+            ['Commission 7 meeting', 'Mon, 01 Mar 2027 00:00:00 GMT'],
+            ['Past gathering', 'Mon, 01 Jun 2026 00:00:00 GMT']
+          ]),
+          'www.eeri.org': feed('www.eeri.org', [])
+        }
+      })
+    )
+    expect(conferences(out).map((i) => [i.source, i.title])).toEqual([
+      ['fib', 'Commission 7 meeting']
+    ])
+    expect(out.boardKnown[fib.id]).toHaveLength(4)
   })
 })
